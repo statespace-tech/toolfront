@@ -11,6 +11,7 @@ from sqlalchemy.engine.url import make_url
 from toolfront.models.database import ConnectionResult, Database
 from toolfront.models.databases import (
     BigQuery,
+    Databricks,
     DuckDB,
     MySQL,
     PostgreSQL,
@@ -33,6 +34,8 @@ class Connection(BaseModel):
 
         if url.drivername == "bigquery":
             return BigQuery(url=url)
+        elif url.drivername == "databricks":
+            return Databricks(url=url)
         elif url.drivername == "duckdb":
             return DuckDB(url=url)
         elif url.drivername == "mysql":

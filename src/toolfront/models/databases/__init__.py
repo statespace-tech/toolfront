@@ -1,6 +1,7 @@
 from enum import Enum
 
 from .bigquery import BigQuery
+from .databricks import Databricks
 from .duckdb import DuckDB
 from .mysql import MySQL
 from .postgresql import PostgreSQL
@@ -10,6 +11,7 @@ from .sqlite import SQLite
 
 class DatabaseType(str, Enum):
     BIGQUERY = "bigquery"
+    DATABRICKS = "databricks"
     DUCKDB = "duckdb"
     MYSQL = "mysql"
     POSTGRESQL = "postgresql"
@@ -17,4 +19,4 @@ class DatabaseType(str, Enum):
     SQLITE = "sqlite"
 
 
-__all__ = ["BigQuery", "DuckDB", "MySQL", "PostgreSQL", "Snowflake", "SQLite", "DatabaseType"]
+__all__ = ["BigQuery", "Databricks", "DuckDB", "MySQL", "PostgreSQL", "Snowflake", "SQLite", "DatabaseType"]

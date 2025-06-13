@@ -44,6 +44,7 @@ dependencies = [
     "snowflake-sqlalchemy>=1.7.3",
     "sqlalchemy-bigquery>=1.14.1",
     "sqlalchemy-utils>=0.41.2",
+    "databricks-sql-connector>=2.7.0",
 ]
 
 [project.scripts]

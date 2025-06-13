@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Any, Literal
 
 from httpx import HTTPStatusError
@@ -31,14 +32,17 @@ async def _get_context_field(field: str, ctx: Context) -> Any:
     return getattr(getattr(getattr(ctx, "request_context", None), "lifespan_context", None), field, None)
 
 
-async def test(connection: Connection = Field(..., description="The data source to test.")) -> dict[str, Any]:
+async def test(
+    ctx: Context, connection: Connection = Field(..., description="The data source to test.")
+) -> dict[str, Any]:
     """
     Test whether a data source is connected.
 
     Instructions:
     1. Only use this tool if you suspect the connection to a data source is not working, and want to troubleshoot it.
     """
-    db = await connection.connect()
+    url_map = await _get_context_field("url_map", ctx)
+    db = await connection.connect(url_map=url_map)
     result = await db.test_connection()
     return {"connected": result.connected, "message": result.message}
 
@@ -166,14 +170,27 @@ async def scan(
         - Jaro-Winkler: Returns tables using Jaro-Winkler similarity algorithm (case-insensitive). Pattern must be a sentence, phrase, or space-separated words.
     2. It is recommended to start with Jaro-Winkler similarity algorithm for initial fuzzy matching, and then switch to BM25 and regex for more precise matching.
     """
+    logger = logging.getLogger("toolfront")
+    logger.debug(f"Scanning tables with pattern '{pattern}', mode '{mode}', limit {limit}")
 
     try:
         url_map = await _get_context_field("url_map", ctx)
         db = await connection.connect(url_map=url_map)
+        logger.debug(f"Connected to database: {connection.url}")
         result = await db.scan_tables(pattern=pattern, limit=limit, mode=mode)
+        logger.debug(f"Scan completed successfully. Found {len(result)} matching tables.")
+
         return {"tables": result}  # Return as dict with key
     except Exception as e:
-        raise ConnectionError(f"Failed to connect to or search {connection.url} - {str(e)}")
+        logger.error(f"Failed to scan tables: {e}", exc_info=True)
+        if "pattern" in str(e).lower() and mode == MatchMode.REGEX:
+            raise ConnectionError(
+                f"Failed to search {connection.url} - Invalid regex pattern: {pattern}. Please try a different pattern or use a different matching mode."
+            )
+        elif "connection" in str(e).lower() or "connect" in str(e).lower():
+            raise ConnectionError(f"Failed to connect to {connection.url} - {str(e)}")
+        else:
+            raise ConnectionError(f"Failed to scan tables in {connection.url} - {str(e)}")
 
 
 async def learn(
