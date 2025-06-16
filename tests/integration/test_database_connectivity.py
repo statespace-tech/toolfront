@@ -69,6 +69,26 @@ class TestDatabaseConnectivity:
         assert query_result.iloc[0]["test_value"] == 1
 
     @pytest.mark.asyncio
+    async def test_sqlserver_connection(self, sqlserver_url):
+        """Test SQL Server connection and basic operations."""
+        connection = Connection(url=sqlserver_url)
+        database = await connection.connect()
+
+        # Test connection
+        result = await database.test_connection()
+        assert result.connected, f"Failed to connect to SQL Server: {result.message}"
+
+        # Test basic query
+        query_result = await database.query("SELECT 1 as test_value")
+        assert len(query_result) == 1
+        assert query_result.iloc[0]["test_value"] == 1
+
+        # Test SQL Server-specific TOP syntax
+        query_result = await database.query("SELECT TOP 1 'sqlserver_test' as mode")
+        assert len(query_result) == 1
+        assert query_result.iloc[0]["mode"] == "sqlserver_test"
+
+    @pytest.mark.asyncio
     async def test_connection_retry_logic(self, postgres_url):
         """Test that connection retry logic works correctly."""
         # Test with invalid URL first
@@ -109,6 +129,18 @@ class TestConnectionFallback:
         database = await connection.connect()
 
         # Test async execution
+        result = await database.query("SELECT 'async_test' as mode, 1 as value")
+        assert len(result) == 1
+        assert result.iloc[0]["mode"] == "async_test"
+        assert result.iloc[0]["value"] == 1
+
+    @pytest.mark.asyncio
+    async def test_async_execution_sqlserver(self, sqlserver_url):
+        """Test async query execution with SQL Server."""
+        connection = Connection(url=sqlserver_url)
+        database = await connection.connect()
+
+        # Test async execution with SQL Server syntax
         result = await database.query("SELECT 'async_test' as mode, 1 as value")
         assert len(result) == 1
         assert result.iloc[0]["mode"] == "async_test"

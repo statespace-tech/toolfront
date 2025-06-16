@@ -70,6 +70,21 @@ jobs:
           --health-timeout=5s
           --health-retries=3
 
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: TestPass123!
+          MSSQL_PID: Express
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P TestPass123! -C -Q 'SELECT 1'"
+          --health-interval=30s
+          --health-timeout=15s
+          --health-retries=5
+          --health-start-period=60s
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -91,9 +106,12 @@ jobs:
         timeout 60 bash -c 'until python3 -c "import socket; socket.create_connection((\"localhost\", 5432), timeout=1)" 2>/dev/null; do sleep 1; done'
         echo "Waiting for MySQL..."
         timeout 60 bash -c 'until python3 -c "import socket; socket.create_connection((\"localhost\", 3306), timeout=1)" 2>/dev/null; do sleep 1; done'
+        echo "Waiting for SQL Server..."
+        timeout 60 bash -c 'until python3 -c "import socket; socket.create_connection((\"localhost\", 1433), timeout=1)" 2>/dev/null; do sleep 1; done'
     
     - name: Run integration tests
       run: uv run pytest tests/integration/ -v --tb=short -x
       env:
         POSTGRES_URL: postgresql://testuser:testpass@localhost:5432/testdb
         MYSQL_URL: mysql://testuser:testpass@localhost:3306/testdb
+        SQLSERVER_URL: mssql://sa:TestPass123!@localhost:1433/master

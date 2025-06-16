@@ -140,6 +140,7 @@ class SQLAlchemyMixin:
             "postgresql+asyncpg": "postgresql+psycopg2",
             "mysql+aiomysql": "mysql+pymysql",
             "sqlite+aiosqlite": "sqlite",
+            "mssql+pyodbc": "mssql+pyodbc",  # SQL Server uses the same driver for sync/async
         }
 
         if url.drivername in driver_mapping:

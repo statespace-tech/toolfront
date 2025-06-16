@@ -63,6 +63,12 @@ def mysql_url():
 
 
 @pytest.fixture
+def sqlserver_url():
+    """SQL Server connection URL for integration tests."""
+    return os.getenv("SQLSERVER_URL", "mssql://sa:TestPass123!@localhost:1433/master")
+
+
+@pytest.fixture
 def sqlite_url():
     """SQLite connection URL for integration tests."""
     return "sqlite:///:memory:"

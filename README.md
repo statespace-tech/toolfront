@@ -55,7 +55,7 @@ Then, edit the MCP configuration with your database connection URLs and optional
 
 ```json
 {
-  # Rest of config file
+  // Rest of config file
   "toolfront": {
     "command": "uvx",
     "args": [
@@ -76,7 +76,7 @@ Then, edit the MCP configuration with your database connection URLs and optional
 
 ```json
 {
-  # Rest of config file
+  // Rest of config file
   "toolfront": {
     "command": "docker",
     "args": [
@@ -141,6 +141,7 @@ ToolFront supports the following databases:
 | MySQL | `mysql://{user}:{password}@{host}:{port}/{database}` | [MySQL Docs](https://dev.mysql.com/doc/connector-python/en/connector-python-connectargs.html) |
 | PostgreSQL | `postgres://{user}:{password}@{hostname}:{port}/{database-name}` | [PostgreSQL Docs](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING) |
 | Snowflake | `snowflake://{user}:{password}@{account}/{database}` | [Snowflake Docs](https://docs.snowflake.com/en/developer-guide/python-connector/python-connector-api#connection-parameters) |
+| SQL Server | `mssql://{user}:{password}@{server}:{port}/{database}` or `sqlserver://{user}:{password}@{server}:{port}/{database}` | [SQL Server Docs](https://docs.microsoft.com/en-us/sql/connect/python/pyodbc/python-sql-driver-pyodbc) |
 | SQLite | `sqlite://{path-to-database.sqlite}` | [SQLite Docs](https://docs.python.org/3/library/sqlite3.html#sqlite3.connect) |
 
 Don't see your database? [Submit an issue](https://github.com/kruskal-labs/toolfront/issues) or pull request, or let us know in our [Discord](https://discord.gg/rRyM7zkZTf)!

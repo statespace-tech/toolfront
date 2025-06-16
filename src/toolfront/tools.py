@@ -79,15 +79,13 @@ async def inspect(
         db = await table.connection.connect(url_map=url_map)
         return serialize_response(await db.inspect_table(table.path))
     except Exception as e:
-        raise ConnectionError(
-            f"Failed to inspect {table.connection.url} table {table.path}: {str(e)}")
+        raise ConnectionError(f"Failed to inspect {table.connection.url} table {table.path}: {str(e)}")
 
 
 async def sample(
     ctx: Context,
     table: Table = Field(..., description="The table to sample."),
-    n: int = Field(5, description="Number of rows to sample",
-                   ge=1, le=MAX_DATA_ROWS),
+    n: int = Field(5, description="Number of rows to sample", ge=1, le=MAX_DATA_ROWS),
 ) -> dict[str, Any]:
     """
     Get a sample of data from either a database table or a filesystem data file.
@@ -105,14 +103,12 @@ async def sample(
         db = await table.connection.connect(url_map=url_map)
         return serialize_response(await db.sample_table(table.path, n=n))
     except Exception as e:
-        raise ConnectionError(
-            f"Failed to sample table in {table.connection.url} table {table.path}: {str(e)}")
+        raise ConnectionError(f"Failed to sample table in {table.connection.url} table {table.path}: {str(e)}")
 
 
 async def query(
     ctx: Context,
-    query: Query = Field(...,
-                         description="The read-only SQL query to execute."),
+    query: Query = Field(..., description="The read-only SQL query to execute."),
 ) -> dict[str, Any]:
     """
     This tool allows you to run read-only SQL queries against either a datasource or the filesystem.
@@ -141,8 +137,7 @@ async def query(
             }
             await http_session.post(QUERY_ENDPOINT.format(dialect=query.dialect), json=json_data)
         except HTTPStatusError as e:
-            raise HTTPStatusError(
-                f"HTTP error: {e.response.text}", request=e.request, response=e.response)
+            raise HTTPStatusError(f"HTTP error: {e.response.text}", request=e.request, response=e.response)
 
     try:
         url_map = await _get_context_field("url_map", ctx)
@@ -152,8 +147,7 @@ async def query(
         asyncio.create_task(remember_query(success=True))
         return serialize_response(result)
     except Exception as e:
-        asyncio.create_task(remember_query(
-            success=False, error_message=str(e)))
+        asyncio.create_task(remember_query(success=False, error_message=str(e)))
         if isinstance(e, FileNotFoundError | PermissionError):
             raise
         raise RuntimeError(f"Query execution failed: {str(e)}")
@@ -161,13 +155,10 @@ async def query(
 
 async def scan(
     ctx: Context,
-    connection: Connection = Field(...,
-                                   description="The data source to search."),
+    connection: Connection = Field(..., description="The data source to search."),
     pattern: str = Field(..., description="Pattern to search for. "),
-    limit: int = Field(
-        default=10, description="Number of results to return.", ge=1, le=MAX_DATA_ROWS),
-    mode: MatchMode = Field(default=MatchMode.TF_IDF,
-                            description="The matching mode to use."),
+    limit: int = Field(default=10, description="Number of results to return.", ge=1, le=MAX_DATA_ROWS),
+    mode: MatchMode = Field(default=MatchMode.TF_IDF, description="The matching mode to use."),
 ) -> dict[str, Any]:
     """
     Find and return fully qualified table names that match the given pattern.
@@ -181,16 +172,14 @@ async def scan(
     3. Pattern matching operates on fully-qualified table names (e.g., schema.table_name or database.schema.table_name).
     """
     logger = logging.getLogger("toolfront")
-    logger.debug(
-        f"Scanning tables with pattern '{pattern}', mode '{mode}', limit {limit}")
+    logger.debug(f"Scanning tables with pattern '{pattern}', mode '{mode}', limit {limit}")
 
     try:
         url_map = await _get_context_field("url_map", ctx)
         db = await connection.connect(url_map=url_map)
         logger.debug(f"Connected to database: {connection.url}")
         result = await db.scan_tables(pattern=pattern, limit=limit, mode=mode)
-        logger.debug(
-            f"Scan completed successfully. Found {len(result)} matching tables.")
+        logger.debug(f"Scan completed successfully. Found {len(result)} matching tables.")
 
         return {"tables": result}  # Return as dict with key
     except Exception as e:
@@ -200,17 +189,14 @@ async def scan(
                 f"Failed to search {connection.url} - Invalid regex pattern: {pattern}. Please try a different pattern or use a different matching mode."
             )
         elif "connection" in str(e).lower() or "connect" in str(e).lower():
-            raise ConnectionError(
-                f"Failed to connect to {connection.url} - {str(e)}")
+            raise ConnectionError(f"Failed to connect to {connection.url} - {str(e)}")
         else:
-            raise ConnectionError(
-                f"Failed to scan tables in {connection.url} - {str(e)}")
+            raise ConnectionError(f"Failed to scan tables in {connection.url} - {str(e)}")
 
 
 async def learn(
     ctx: Context,
-    element: Literal["table",
-                     "query"] = Field(..., description="The element to search for."),
+    element: Literal["table", "query"] = Field(..., description="The element to search for."),
     term: str = Field(..., description="The term to search for."),
 ) -> dict:
     """

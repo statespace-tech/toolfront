@@ -7,6 +7,7 @@ from .mysql import MySQL
 from .postgresql import PostgreSQL
 from .snowflake import Snowflake
 from .sqlite import SQLite
+from .sqlserver import SQLServer
 
 
 class DatabaseType(str, Enum):
@@ -17,6 +18,17 @@ class DatabaseType(str, Enum):
     POSTGRESQL = "postgresql"
     SNOWFLAKE = "snowflake"
     SQLITE = "sqlite"
+    SQLSERVER = "sqlserver"
 
 
-__all__ = ["BigQuery", "Databricks", "DuckDB", "MySQL", "PostgreSQL", "Snowflake", "SQLite", "DatabaseType"]
+__all__ = [
+    "BigQuery",
+    "Databricks",
+    "DuckDB",
+    "MySQL",
+    "PostgreSQL",
+    "Snowflake",
+    "SQLite",
+    "SQLServer",
+    "DatabaseType",
+]

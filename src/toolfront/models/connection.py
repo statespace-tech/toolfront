@@ -17,6 +17,7 @@ from toolfront.models.databases import (
     PostgreSQL,
     Snowflake,
     SQLite,
+    SQLServer,
 )
 
 
@@ -46,6 +47,8 @@ class Connection(BaseModel):
             return Snowflake(url=url)
         elif url.drivername == "sqlite":
             return SQLite(url=url.set(drivername="sqlite+aiosqlite"))
+        elif url.drivername in ("mssql", "sqlserver"):
+            return SQLServer(url=url.set(drivername="mssql+pyodbc"))
         else:
             raise ValueError(f"Unsupported data source: {self.url}")
 

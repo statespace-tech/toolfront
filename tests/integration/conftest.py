@@ -22,6 +22,12 @@ DATABASE_CONFIGS = {
         "container_name": "test-mysql",
         "health_check_query": "SELECT 1",
     },
+    "sqlserver": {
+        "url": "mssql://sa:TestPass123!@localhost:1433/master",
+        "driver": "mssql+pyodbc",
+        "container_name": "test-sqlserver",
+        "health_check_query": "SELECT 1",
+    },
     "sqlite": {
         "url": "sqlite:///:memory:",
         "driver": "sqlite",
@@ -71,6 +77,15 @@ def mysql_url() -> str | None:
     if wait_for_database(url):
         return url
     pytest.skip("MySQL not available")
+
+
+@pytest.fixture
+def sqlserver_url() -> str | None:
+    """Fixture providing SQL Server connection URL if available."""
+    url = DATABASE_CONFIGS["sqlserver"]["url"]
+    if wait_for_database(url):
+        return url
+    pytest.skip("SQL Server not available")
 
 
 @pytest.fixture

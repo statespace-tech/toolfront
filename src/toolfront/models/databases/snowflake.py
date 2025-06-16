@@ -6,7 +6,6 @@ from toolfront.models.database import Database, DatabaseError, SQLAlchemyMixin
 
 
 class Snowflake(SQLAlchemyMixin, Database):
-
     @alru_cache(maxsize=None, ttl=ALRU_CACHE_TTL)
     async def get_tables(self) -> list[str]:
         """For Snowflake, this method returns both tables and views combined"""
@@ -22,20 +21,19 @@ class Snowflake(SQLAlchemyMixin, Database):
             combined_data = pd.DataFrame()
 
             if tables_data is not None and not tables_data.empty:
-                combined_data = pd.concat(
-                    [combined_data, tables_data], ignore_index=True)
+                combined_data = pd.concat([combined_data, tables_data], ignore_index=True)
 
             if views_data is not None and not views_data.empty:
-                combined_data = pd.concat(
-                    [combined_data, views_data], ignore_index=True)
+                combined_data = pd.concat([combined_data, views_data], ignore_index=True)
 
             if combined_data.empty:
                 return []
 
-            return combined_data.apply(lambda x: f"{x['database_name']}.{x['schema_name']}.{x['name']}", axis=1).tolist()
+            return combined_data.apply(
+                lambda x: f"{x['database_name']}.{x['schema_name']}.{x['name']}", axis=1
+            ).tolist()
         except Exception as e:
-            raise DatabaseError(
-                f"Failed to get tables and views from Snowflake: {e}") from e
+            raise DatabaseError(f"Failed to get tables and views from Snowflake: {e}") from e
 
     async def inspect_table(self, table_path: str) -> pd.DataFrame:
         return await self.query(f"DESCRIBE TABLE {table_path}")
