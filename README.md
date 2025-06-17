@@ -148,8 +148,7 @@ Don't see your database? [Submit an issue](https://github.com/kruskal-labs/toolf
 
 > [!TIP]
 > **SSH tunneling**: For databases behind SSH bastions, add SSH parameters to your URL: `postgresql://user:pass@db:5432/database?ssh_host=bastion&ssh_user=ubuntu&ssh_password=pass` or use `ssh_key_path=/path/to/key.pem` for key authentication.
-
-> [!TIP]
+>
 > **Working with local data files?** Add `duckdb://:memory:` to your config to analyze local Parquet, CSV, Excel, or JSON files.
 
 ## Tools
