@@ -32,10 +32,10 @@ jobs:
       run: uv run pytest tests/unit/ -v --tb=short -x
     
     - name: Run linting
-      run: uv run ruff check src/
+      run: uv run ruff check src/ --no-fix
     
-    # - name: Check formatting
-    #   run: uv run ruff format src/ tests/ --check
+    - name: Check formatting
+      run: uv run ruff format src/ tests/ --check
 
   integration-tests:
     runs-on: blacksmith-4vcpu-ubuntu-2404
