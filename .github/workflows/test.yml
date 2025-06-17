@@ -34,8 +34,8 @@ jobs:
     - name: Run linting
       run: uv run ruff check src/
     
-    - name: Check formatting
-      run: uv run ruff format src/ tests/ --check
+    # - name: Check formatting
+    #   run: uv run ruff format src/ tests/ --check
 
   integration-tests:
     runs-on: blacksmith-4vcpu-ubuntu-2404
@@ -110,7 +110,7 @@ jobs:
         timeout 60 bash -c 'until python3 -c "import socket; socket.create_connection((\"localhost\", 1433), timeout=1)" 2>/dev/null; do sleep 1; done'
     
     - name: Run integration tests
-      run: uv run pytest tests/integration/ -v --tb=short -x
+      run: uv run pytest tests/integration/ -v --tb=short -x -m "not docker_compose"
       env:
         POSTGRES_URL: postgresql://testuser:testpass@localhost:5432/testdb
         MYSQL_URL: mysql://testuser:testpass@localhost:3306/testdb

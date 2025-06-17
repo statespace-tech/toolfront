@@ -1,6 +1,5 @@
 """Unit tests for SQL Server database implementation."""
 
-import pytest
 from sqlalchemy.engine.url import make_url
 
 from toolfront.models.databases.sqlserver import SQLServer
