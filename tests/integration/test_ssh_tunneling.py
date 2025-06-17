@@ -1,7 +1,7 @@
 """
 Integration tests for SSH tunneling functionality.
 
-This test suite simulates Tejas's exact use case:
+This test suite simulates a common production use case:
 - PostgreSQL database in a private network (like RDS in private subnet)
 - SSH bastion server (like EC2 instance in public subnet)
 - toolfront connecting through SSH tunnel from external network
@@ -132,7 +132,7 @@ class TestSSHTunneling:
         """Test SSH parameter extraction from URL."""
         print("🔍 Testing SSH parameter extraction...")
 
-        # Build the SSH tunnel URL (simulating what Tejas would use)
+        # Build the SSH tunnel URL (simulating what a user would use)
         tunnel_url = (
             f"postgresql://{connection_params['postgres_user']}:{connection_params['postgres_password']}"
             f"@{connection_params['postgres_host']}:{connection_params['postgres_port']}/{connection_params['postgres_db']}"
@@ -233,14 +233,13 @@ class TestSSHTunneling:
         print(f"✅ Complex join query executed via SSH tunnel: {len(join_result)} rows")
         assert len(join_result) > 0, "Join query should return results"
 
-
     def test_client_demo_scenario(self, connection_params):
         """Test the exact scenario we'll demo to clients."""
-        print("🎯 DEMO SCENARIO: Tejas's use case simulation")
+        print("🎯 DEMO SCENARIO: Production use case simulation")
         print("=" * 60)
 
-        # This is exactly what Tejas would run
-        tejas_command = (
+        # This is exactly what a user would run
+        user_command = (
             f'toolfront "postgresql://{connection_params["postgres_user"]}:{connection_params["postgres_password"]}'
             f"@{connection_params['postgres_host']}:{connection_params['postgres_port']}/{connection_params['postgres_db']}"
             f"?ssh_host={connection_params['ssh_host']}"
@@ -249,8 +248,8 @@ class TestSSHTunneling:
             f'&ssh_password={connection_params["ssh_password"]}"'
         )
 
-        print("🚀 Tejas would run this command:")
-        print(f"   {tejas_command}")
+        print("🚀 User would run this command:")
+        print(f"   {user_command}")
         print()
         print("🔧 What happens behind the scenes:")
         print("   1. toolfront extracts SSH parameters from URL")
@@ -260,6 +259,6 @@ class TestSSHTunneling:
         print("   5. Automatically cleans up tunnel")
         print()
         print("✅ This integration test proves the complete flow works!")
-        print("✅ No manual SSH setup required for Tejas")
+        print("✅ No manual SSH setup required for users")
         print("✅ No reconfiguration of their AWS security needed")
         print("=" * 60)
