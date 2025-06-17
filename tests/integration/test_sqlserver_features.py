@@ -1,5 +1,7 @@
 """Test SQL Server-specific features and functionality."""
 
+import contextlib
+
 import pytest
 
 from toolfront.models.connection import Connection
@@ -76,10 +78,8 @@ class TestSQLServerFeatures:
 
         finally:
             # Clean up
-            try:
+            with contextlib.suppress(Exception):
                 await database.query("DROP TABLE dbo.test_table")
-            except Exception:
-                pass  # Ignore cleanup errors
 
     @pytest.mark.asyncio
     async def test_sqlserver_data_types(self, sqlserver_url):
@@ -106,7 +106,7 @@ class TestSQLServerFeatures:
             assert len(schema) > 0
 
             # Verify data type mapping
-            data_types = dict(zip(schema["column_name"], schema["data_type"]))
+            data_types = dict(zip(schema["column_name"], schema["data_type"], strict=False))
             assert "int" in data_types["id"].lower()
             assert "nvarchar" in data_types["text_col"].lower()
             assert "decimal" in data_types["decimal_col"].lower()
@@ -116,10 +116,8 @@ class TestSQLServerFeatures:
 
         finally:
             # Clean up
-            try:
+            with contextlib.suppress(Exception):
                 await database.query("DROP TABLE dbo.datatype_test")
-            except Exception:
-                pass
 
     @pytest.mark.asyncio
     async def test_sqlserver_top_syntax(self, sqlserver_url):
@@ -153,10 +151,8 @@ class TestSQLServerFeatures:
 
         finally:
             # Clean up
-            try:
+            with contextlib.suppress(Exception):
                 await database.query("DROP TABLE dbo.top_test")
-            except Exception:
-                pass
 
     @pytest.mark.asyncio
     async def test_sqlserver_multiple_schemas(self, sqlserver_url):
@@ -176,7 +172,6 @@ class TestSQLServerFeatures:
         try:
             # Test table discovery includes both schemas
             tables = await database.get_tables()
-            dbo_tables = [t for t in tables if t.startswith("dbo.")]
             test_schema_tables = [t for t in tables if t.startswith("test_schema.")]
 
             assert len(test_schema_tables) > 0, "Should discover tables in custom schema"
@@ -226,10 +221,8 @@ class TestSQLServerFeatures:
             assert len(sample) == 0  # Empty table
 
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 await database.query("DROP TABLE dbo.identity_test")
-            except Exception:
-                pass
 
     @pytest.mark.asyncio
     async def test_sqlserver_connection_error_handling(self, sqlserver_url):

@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database in "private" network (simulates RDS in private subnet)
+  postgres-private:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: testdb
+    volumes:
+      - ./tests/integration/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - private-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d testdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # SSH bastion server with proper SSH setup
+  ssh-bastion:
+    build:
+      context: tests/integration
+      dockerfile: Dockerfile.ssh-bastion
+    ports:
+      - "2222:22"  # SSH port exposed to host
+    networks:
+      - public-network
+      - private-network  # Bastion can access both networks
+    depends_on:
+      postgres-private:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "pgrep", "sshd"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Test runner container
+  test-runner:
+    build:
+      context: .
+      dockerfile: tests/integration/Dockerfile.test
+    volumes:
+      - .:/app
+    networks:
+      - public-network  # Can only access bastion, not postgres directly
+    depends_on:
+      ssh-bastion:
+        condition: service_healthy
+      postgres-private:
+        condition: service_healthy
+    environment:
+      - SSH_HOST=ssh-bastion
+      - SSH_PORT=22
+      - SSH_USER=bastionuser
+      - SSH_PASSWORD=bastionpass
+      - POSTGRES_HOST=postgres-private
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpass
+      - POSTGRES_DB=testdb
+
+networks:
+  public-network:
+    driver: bridge
+  private-network:
+    driver: bridge
+    internal: true  # No external access - only accessible via bastion
