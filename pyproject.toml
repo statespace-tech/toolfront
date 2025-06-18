@@ -7,9 +7,9 @@ authors = [
     {name = "Esteban Safranchik", email = "esteban@kruskal.ai"},
     {name = "Gavin Chan", email = "gavin@kruskal.ai"}
 ]
-license = {text = "GPL-3.0"}
+license = {text = "MIT"}
 classifiers = [
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",

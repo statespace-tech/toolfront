@@ -233,4 +233,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to To
 
 ## License
 
-ToolFront is released under the [GPL License v3](LICENSE). This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the GPL v3 License. For the full license text, see the [LICENSE](LICENSE) file in the repository.
+ToolFront is released under the [MIT License](LICENSE). This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For the full license text, see the [LICENSE](LICENSE) file in the repository.
