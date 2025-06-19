@@ -56,7 +56,13 @@ class Connection(BaseModel):
         """
         # Get the original URL, considering URL mapping
         original_url = url_map[self.url] if url_map and self.url in url_map else self.url
-        original_url = unquote(original_url) if isinstance(original_url, str) else str(original_url)
+
+        # Handle URL parsing correctly without losing password info
+        if isinstance(original_url, str):
+            original_url = unquote(original_url)
+        else:
+            # If it's already a URL object, use render to preserve credentials
+            original_url = original_url.render_as_string(hide_password=False)
 
         # Extract SSH parameters if present
         clean_url, ssh_config = extract_ssh_params(original_url)
