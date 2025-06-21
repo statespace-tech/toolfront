@@ -9,8 +9,7 @@
 <br>
 
 > AI agents lack context about your databases, while teams keep rewriting the same queries because past work often gets lost. 
-> ToolFront connects agents to your databases and feeds them your team's proven query patterns, so both agents and teammates can learn from each other and ship faster.
-
+> ToolFront connects coding agents to your databases so they can explore and query your data, write schema-aware code, and build a shared knowledge base from your team's work.
 
 ## Features
 
