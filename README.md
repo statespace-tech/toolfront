@@ -22,7 +22,7 @@
 
 <br>
 <div align="center">
-<img alt="databases" src="https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/graph.png" width="100%">
+<img alt="diagram" src="https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/graph.png" width="100%">
 </div>
 
 ## Quickstart
@@ -121,6 +121,14 @@ Data teams keep rewriting the same queries because past work often gets siloed, 
 - Reason about historical query patterns
 - Remember relevant tables and schemas
 - Reference your and your teammates' work
+
+```
+User A — Agent A ──┐
+                   ├── shared database context ← ToolFront
+User B — Agent B ──┤
+                   │
+User C — Agent C ──┘
+```
 
 > [!NOTE]
 > In-context learning is currently in open beta. To request an API key, please email Esteban at [esteban@kruskal.ai](mailto:esteban@kruskal.ai) or hop into our [Discord server](https://discord.gg/rRyM7zkZTf).
