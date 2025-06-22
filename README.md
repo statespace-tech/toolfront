@@ -22,7 +22,7 @@
 
 <br>
 <div align="center">
-<img alt="databases" src="https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/databases.png" width="61.8%">
+<img alt="databases" src="https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/graph.png" width="100%">
 </div>
 
 ## Quickstart
@@ -62,7 +62,7 @@ Then, edit the MCP configuration with your database connection URLs and optional
       "toolfront",
       "snowflake://user:pass@org",
       "postgresql://user:pass@host:port/db",
-      "--api-key", "YOUR-API-KEY"
+      "--api-key", "YOUR-API-KEY" // Optional
     ]
   }
 }
@@ -83,7 +83,7 @@ Then, edit the MCP configuration with your database connection URLs and optional
       "antidmg/toolfront",
       "snowflake://user:pass@org",
       "postgresql://user:pass@host:port/db",
-      "--api-key", "YOUR-API-KEY"
+      "--api-key", "YOUR-API-KEY" // Optional
     ]
   }
 }
@@ -92,7 +92,7 @@ Then, edit the MCP configuration with your database connection URLs and optional
 </details>
 <br>
 
-You're all set! You can now ask your coding assistant about your databases.
+You're all set! You can now ask your AI agent about your databases.
 
 
 > [!TIP]
