@@ -53,15 +53,13 @@ Then, edit the MCP configuration with your database connection URLs and optional
 
 ```json
 {
-  // Rest of config file
   "toolfront": {
     "command": "uvx",
     "args": [
       "toolfront",
       "snowflake://user:pass@org",
       "postgresql://user:pass@host:port/db",
-      # Add other database URLs here
-      "--api-key", "YOUR-API-KEY"  // Optional
+      "--api-key", "YOUR-API-KEY"
     ]
   }
 }
@@ -74,7 +72,6 @@ Then, edit the MCP configuration with your database connection URLs and optional
 
 ```json
 {
-  // Rest of config file
   "toolfront": {
     "command": "docker",
     "args": [
@@ -83,8 +80,7 @@ Then, edit the MCP configuration with your database connection URLs and optional
       "antidmg/toolfront",
       "snowflake://user:pass@org",
       "postgresql://user:pass@host:port/db",
-      # Add other database URLs here
-      "--api-key", "YOUR-API-KEY"  // Optional
+      "--api-key", "YOUR-API-KEY"
     ]
   }
 }
@@ -145,8 +141,6 @@ ToolFront supports the following databases:
 Don't see your database? [Submit an issue](https://github.com/kruskal-labs/toolfront/issues) or pull request, or let us know in our [Discord](https://discord.gg/rRyM7zkZTf)!
 
 > [!TIP]
-> **SSH tunneling**: For databases behind SSH bastions, add SSH parameters to your URL: `postgresql://user:pass@db:5432/database?ssh_host=bastion&ssh_user=ubuntu&ssh_password=pass` or use `ssh_key_path=/path/to/key.pem` for key authentication.
->
 > **Working with local data files?** Add `duckdb://:memory:` to your config to analyze local Parquet, CSV, Excel, or JSON files.
 
 ## Tools
