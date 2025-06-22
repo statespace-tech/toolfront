@@ -46,7 +46,7 @@ dependencies = [
     "sqlalchemy-bigquery>=1.14.1",
     "sqlalchemy-utils>=0.41.2",
     "databricks-sql-connector>=2.7.0",
-    "sshtunnel>=0.4.0",
+    
 ]
 
 [project.scripts]

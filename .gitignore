@@ -202,5 +202,9 @@ pyrightconfig.json
 # Editor configuration files
 .dir-locals.el
 
+# Local development docs
+deployment/
+debug_*.py
+
 AGENT.md
 CLAUDE.md
