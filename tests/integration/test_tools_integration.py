@@ -71,12 +71,12 @@ class TestDatabaseIntegration:
             assert result.iloc[0]["test_value"] == 1
 
     @pytest.mark.asyncio
-    async def test_table_scanning_pattern_matching(self, postgres_url):
-        """Test table scanning for pattern matching."""
+    async def test_table_searchning_pattern_matching(self, postgres_url):
+        """Test table searchning for pattern matching."""
         # Test with a common pattern
         connection = Connection(url=postgres_url)
         db = await connection.connect()
-        result = await db.scan_tables("information", mode=MatchMode.REGEX, limit=10)
+        result = await db.search_tables("information", mode=MatchMode.REGEX, limit=10)
 
         assert isinstance(result, list)
         # Should return matching tables or empty results (both are valid)

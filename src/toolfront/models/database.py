@@ -14,8 +14,7 @@ import pandas as pd
 from async_lru import _LRUCacheWrapper
 from jellyfish import jaro_winkler_similarity
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+from rank_bm25 import BM25Okapi
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.exc import InvalidRequestError, StatementError
@@ -50,7 +49,7 @@ class DatabaseError(Exception):
 
 class MatchMode(str, Enum):
     REGEX = "regex"
-    TF_IDF = "tf_idf"
+    BM25 = "bm25"
     JARO_WINKLER = "jaro_winkler"
 
 
@@ -205,31 +204,31 @@ class Database(BaseModel, ABC):
         """Execute a SQL query and return results as a DataFrame."""
         raise NotImplementedError("Subclasses must implement query")
 
-    async def scan_tables(self, pattern: str, mode: MatchMode = MatchMode.REGEX, limit: int = 10) -> list[str]:
-        """Match table names using different algorithms."""
+    async def search_tables(self, pattern: str, mode: MatchMode = MatchMode.REGEX, limit: int = 10) -> list[str]:
+        """Search for table names using different algorithms."""
         table_names = await self.get_tables()
         if not table_names:
             return []
 
         try:
             if mode == MatchMode.REGEX:
-                return self._scan_tables_regex(table_names, pattern, limit)
+                return self._search_tables_regex(table_names, pattern, limit)
             elif mode == MatchMode.JARO_WINKLER:
-                return self._scan_tables_jaro_winkler(table_names, pattern, limit)
-            elif mode == MatchMode.TF_IDF:
-                return self._scan_tables_tf_idf(table_names, pattern, limit)
+                return self._search_tables_jaro_winkler(table_names, pattern, limit)
+            elif mode == MatchMode.BM25:
+                return self._search_tables_bm25(table_names, pattern, limit)
         except re.error as e:
             raise DatabaseError(f"Invalid regex pattern '{pattern}': {e}")
         except Exception as e:
             logger.error(f"Table search failed: {e}")
             raise DatabaseError(f"Table search failed: {e}") from e
 
-    def _scan_tables_regex(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
+    def _search_tables_regex(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
         """Match tables using regex pattern."""
         regex = re.compile(pattern, re.IGNORECASE)
         return [name for name in table_names if regex.search(name)][:limit]
 
-    def _scan_tables_jaro_winkler(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
+    def _search_tables_jaro_winkler(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
         """Match tables using Jaro-Winkler similarity."""
         tokenized_pattern = " ".join(tokenize(pattern))
         similarities = [
@@ -237,8 +236,8 @@ class Database(BaseModel, ABC):
         ]
         return [name for name, _ in sorted(similarities, key=lambda x: x[1], reverse=True)][:limit]
 
-    def _scan_tables_tf_idf(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
-        """Match tables using TF-IDF similarity."""
+    def _search_tables_bm25(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
+        """Match tables using BM25 ranking algorithm."""
         query_tokens = tokenize(pattern)
         if not query_tokens:
             return []
@@ -248,11 +247,14 @@ class Database(BaseModel, ABC):
         if not valid_tables:
             return []
 
-        corpus = [" ".join(tokens) for _, tokens in valid_tables]
-        vectorizer = TfidfVectorizer()
-        corpus_vectors = vectorizer.fit_transform(corpus)
-        query_vector = vectorizer.transform([" ".join(query_tokens)])
-        scores = cosine_similarity(query_vector, corpus_vectors)[0]
+        # Create corpus of tokenized table names
+        corpus = [tokens for _, tokens in valid_tables]
+
+        # Initialize BM25 with the corpus
+        bm25 = BM25Okapi(corpus)
+
+        # Get BM25 scores for the query
+        scores = bm25.get_scores(query_tokens)
 
         return [
             name

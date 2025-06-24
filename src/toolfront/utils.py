@@ -13,7 +13,7 @@ from toolfront.config import MAX_DATA_ROWS
 
 def tokenize(text: str) -> list[str]:
     """Tokenize text by splitting on common separators and filtering empty tokens."""
-    return [token.lower() for token in re.split(r"[/._-]+", text) if token]
+    return [token.lower() for token in re.split(r"[/._\s-]+", text) if token]
 
 
 def serialize_response(response: Any) -> dict[str, Any]:
