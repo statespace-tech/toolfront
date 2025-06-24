@@ -1,5 +1,6 @@
 import asyncio
-from typing import Any, Literal
+import logging
+from typing import Any
 
 from httpx import HTTPStatusError
 from mcp.server.fastmcp import Context
@@ -7,21 +8,18 @@ from pydantic import Field
 
 from toolfront.config import MAX_DATA_ROWS
 from toolfront.models.connection import Connection
-from toolfront.models.database import MatchMode
+from toolfront.models.database import SearchMode
 from toolfront.models.query import Query
 from toolfront.models.table import Table
 from toolfront.utils import serialize_response
 
-QUERY_ENDPOINT = "query/{dialect}"
-SEARCH_ENDPOINT = "search/{element}/{term}"
-
 __all__ = [
     "discover",
     "inspect",
-    "sample",
     "query",
-    "search",
-    "learn",
+    "sample",
+    "search_tables",
+    "search_queries",
     "test",
 ]
 
@@ -133,7 +131,7 @@ async def query(
                 "success": success,
                 "error_message": error_message,
             }
-            await http_session.post(QUERY_ENDPOINT.format(dialect=query.dialect), json=json_data)
+            await http_session.post(f"query/{query.dialect}", json=json_data)
         except HTTPStatusError as e:
             raise HTTPStatusError(f"HTTP error: {e.response.text}", request=e.request, response=e.response)
 
@@ -151,24 +149,38 @@ async def query(
         raise RuntimeError(f"Query execution failed: {str(e)}")
 
 
-async def search(
+async def search_tables(
     ctx: Context,
     connection: Connection = Field(..., description="The data source to search."),
     pattern: str = Field(..., description="Pattern to search for. "),
     limit: int = Field(default=10, description="Number of results to return.", ge=1, le=MAX_DATA_ROWS),
-    mode: MatchMode = Field(default=MatchMode.BM25, description="The matching mode to use."),
+    mode: SearchMode = Field(default=SearchMode.BM25, description="The search mode to use."),
 ) -> dict[str, Any]:
     """
     Find and return fully qualified table names that match the given pattern.
 
     Search Instructions:
-    1. Choose from three search modes:
-        - regex: Returns tables matching a regular expression pattern (case-sensitive). Pattern must be a valid regex expression.
-        - bm25: Returns tables using BM25 (Best Match 25) ranking algorithm (case-insensitive). Pattern must be a sentence, phrase, or space-separated words.
-        - jaro_winkler: Returns tables using Jaro-Winkler similarity algorithm (case-insensitive). Pattern must be a sentence, phrase, or space-separated words.
+    1. Determine the best search mode to use:
+        - regex:
+            * Returns tables matching a regular expression pattern
+            * Pattern must be a valid regex expression
+            * Case-sensitive
+            * Use when you need precise table name matching
+        - bm25:
+            * Returns tables using BM25 (Best Match 25) ranking algorithm
+            * Pattern must be a sentence, phrase, or space-separated words
+            * Case-insensitive
+            * Use when searching tables names with descriptive keywords
+        - jaro_winkler:
+            * Returns tables using Jaro-Winkler similarity algorithm
+            * Pattern must be an existing table name.
+            * Case-insensitive
+            * Use to search for similar table names.
     2. Search operates on fully-qualified table names (e.g., schema.table_name or database.schema.table_name).
     3. When search returns unexpected results, examine the returned tables and retry with a different pattern and/or search mode.
     """
+    logger = logging.getLogger("toolfront")
+    logger.debug(f"Searching tables with pattern '{pattern}', mode '{mode}', limit {limit}")
 
     try:
         url_map = await _get_context_field("url_map", ctx)
@@ -177,9 +189,10 @@ async def search(
 
         return {"tables": result}  # Return as dict with key
     except Exception as e:
-        if "pattern" in str(e).lower() and mode == MatchMode.REGEX:
+        logger.error(f"Failed to search tables: {e}", exc_info=True)
+        if "pattern" in str(e).lower() and mode == SearchMode.REGEX:
             raise ConnectionError(
-                f"Failed to search {connection.url} - Invalid regex pattern: {pattern}. Please try a different pattern or use a different matching mode."
+                f"Failed to search {connection.url} - Invalid regex pattern: {pattern}. Please try a different pattern or use a different search mode."
             )
         elif "connection" in str(e).lower() or "connect" in str(e).lower():
             raise ConnectionError(f"Failed to connect to {connection.url} - {str(e)}")
@@ -187,9 +200,8 @@ async def search(
             raise ConnectionError(f"Failed to search tables in {connection.url} - {str(e)}")
 
 
-async def learn(
+async def search_queries(
     ctx: Context,
-    element: Literal["table", "query"] = Field(..., description="The element to search for."),
     term: str = Field(..., description="The term to search for."),
 ) -> dict:
     """
@@ -215,13 +227,13 @@ async def learn(
         raise RuntimeError("No HTTP session available for semantic search")
 
     try:
-        response = await http_session.get(SEARCH_ENDPOINT.format(element=element, term=term))
+        response = await http_session.get(f"query/{term}")
         data = response.json()
         return serialize_response(data)
 
     except Exception as e:
         if isinstance(e, HTTPStatusError):
             raise HTTPStatusError(
-                f"Failed to search {element}: {e.response.text}", request=e.request, response=e.response
+                f"Failed to search queries: {e.response.text}", request=e.request, response=e.response
             )
-        raise RuntimeError(f"Failed to search {element}: {str(e)}")
+        raise RuntimeError(f"Failed to search queries: {str(e)}")

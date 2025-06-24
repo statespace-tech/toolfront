@@ -47,7 +47,9 @@ class DatabaseError(Exception):
     pass
 
 
-class MatchMode(str, Enum):
+class SearchMode(str, Enum):
+    """Search mode for table search."""
+
     REGEX = "regex"
     BM25 = "bm25"
     JARO_WINKLER = "jaro_winkler"
@@ -204,18 +206,18 @@ class Database(BaseModel, ABC):
         """Execute a SQL query and return results as a DataFrame."""
         raise NotImplementedError("Subclasses must implement query")
 
-    async def search_tables(self, pattern: str, mode: MatchMode = MatchMode.REGEX, limit: int = 10) -> list[str]:
+    async def search_tables(self, pattern: str, mode: SearchMode = SearchMode.REGEX, limit: int = 10) -> list[str]:
         """Search for table names using different algorithms."""
         table_names = await self.get_tables()
         if not table_names:
             return []
 
         try:
-            if mode == MatchMode.REGEX:
+            if mode == SearchMode.REGEX:
                 return self._search_tables_regex(table_names, pattern, limit)
-            elif mode == MatchMode.JARO_WINKLER:
+            elif mode == SearchMode.JARO_WINKLER:
                 return self._search_tables_jaro_winkler(table_names, pattern, limit)
-            elif mode == MatchMode.BM25:
+            elif mode == SearchMode.BM25:
                 return self._search_tables_bm25(table_names, pattern, limit)
         except re.error as e:
             raise DatabaseError(f"Invalid regex pattern '{pattern}': {e}")
@@ -224,12 +226,12 @@ class Database(BaseModel, ABC):
             raise DatabaseError(f"Table search failed: {e}") from e
 
     def _search_tables_regex(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
-        """Match tables using regex pattern."""
+        """Search tables using regex pattern."""
         regex = re.compile(pattern, re.IGNORECASE)
         return [name for name in table_names if regex.search(name)][:limit]
 
     def _search_tables_jaro_winkler(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
-        """Match tables using Jaro-Winkler similarity."""
+        """Search tables using Jaro-Winkler similarity."""
         tokenized_pattern = " ".join(tokenize(pattern))
         similarities = [
             (name, jaro_winkler_similarity(" ".join(tokenize(name)), tokenized_pattern)) for name in table_names
@@ -237,7 +239,7 @@ class Database(BaseModel, ABC):
         return [name for name, _ in sorted(similarities, key=lambda x: x[1], reverse=True)][:limit]
 
     def _search_tables_bm25(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
-        """Match tables using BM25 ranking algorithm."""
+        """Search tables using BM25 ranking algorithm."""
         query_tokens = tokenize(pattern)
         if not query_tokens:
             return []
