@@ -13,7 +13,7 @@ from sqlalchemy.engine.url import make_url
 
 from toolfront.config import API_KEY_HEADER, BACKEND_URL
 from toolfront.models.connection import Connection
-from toolfront.tools import discover, inspect, learn, query, sample, search, test
+from toolfront.tools import discover, inspect, query, sample, search_queries, search_tables, test
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("toolfront")
@@ -65,11 +65,11 @@ def get_mcp(urls: tuple[str, ...], api_key: str | None = None) -> FastMCP:
     mcp.add_tool(inspect)
     mcp.add_tool(sample)
     mcp.add_tool(query)
-    mcp.add_tool(search)
+    mcp.add_tool(search_tables)
     mcp.add_tool(test)
 
     if api_key:
-        mcp.add_tool(learn)
+        mcp.add_tool(search_queries)
 
     return mcp
 

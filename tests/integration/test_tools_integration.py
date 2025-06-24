@@ -3,7 +3,7 @@
 import pytest
 
 from toolfront.models.connection import Connection
-from toolfront.models.database import MatchMode
+from toolfront.models.database import SearchMode
 
 
 class TestDatabaseIntegration:
@@ -76,7 +76,7 @@ class TestDatabaseIntegration:
         # Test with a common pattern
         connection = Connection(url=postgres_url)
         db = await connection.connect()
-        result = await db.search_tables("information", mode=MatchMode.REGEX, limit=10)
+        result = await db.search_tables("information", mode=SearchMode.REGEX, limit=10)
 
         assert isinstance(result, list)
         # Should return matching tables or empty results (both are valid)

@@ -6,7 +6,7 @@ import pandas as pd
 from async_lru import alru_cache
 
 from toolfront.config import ALRU_CACHE_TTL
-from toolfront.models.database import ConnectionResult, Database, DatabaseError, MatchMode
+from toolfront.models.database import ConnectionResult, Database, DatabaseError
 
 logger = logging.getLogger("toolfront")
 
@@ -112,29 +112,6 @@ class Databricks(Database):
             except Exception as second_error:
                 logger.error(f"Both table listing methods failed: {first_error}, {second_error}")
                 raise DatabaseError(f"Failed to get tables from Databricks: {second_error}") from second_error
-
-    async def scan_tables(self, pattern: str, mode: MatchMode = MatchMode.REGEX, limit: int = 10) -> list[str]:
-        """Match table names using different algorithms."""
-        try:
-            table_names = await self.get_tables()
-            if not table_names:
-                return []
-
-            scan_methods = {
-                MatchMode.REGEX: self._scan_tables_regex,
-                MatchMode.JARO_WINKLER: self._scan_tables_jaro_winkler,
-                MatchMode.TF_IDF: self._scan_tables_tf_idf,
-            }
-
-            scan_method = scan_methods.get(mode, self._scan_tables_regex)
-            if mode not in scan_methods:
-                logger.warning(f"Unknown match mode: {mode}, falling back to regex")
-
-            return scan_method(table_names, pattern, limit)
-
-        except Exception as e:
-            logger.error(f"Table scan failed for Databricks: {e}")
-            raise DatabaseError(f"Failed to scan tables in Databricks: {e}") from e
 
     def _get_detailed_table_info(self, catalog: str, schema: str, table: str) -> str:
         """Build information_schema query for table inspection."""

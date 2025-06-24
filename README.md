@@ -163,11 +163,11 @@ MCP tools are functions that AI agents can call to interact with external system
 |------|-------------|------------------|
 | `test` | Tests whether a data source connection is working | ✗ |
 | `discover` | Discovers and lists all configured databases and file sources | ✗ |
-| `scan` | Searches for tables using regex, fuzzy matching, or TF-IDF similarity | ✗ |
 | `inspect` | Inspects table schemas, showing column names, data types, and constraints | ✗ |
 | `sample` | Retrieves sample rows from tables to understand data content and format | ✗ |
 | `query` | Executes read-only SQL queries against databases with error handling | ✗ |
-| `learn` | Retrieves relevant queries or tables for in-context learning | ✓ |
+| `search_tables` | Searches for tables using regex, BM25, or Jaro-winkler similarity | ✗ |
+| `search_queries` | Searches for relevant queries or tables for in-context learning | ✓ |
 
 ## FAQ
 
