@@ -1,6 +1,6 @@
 """Unit tests for Connection class URL parsing and driver selection."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy.engine.url import make_url
@@ -82,62 +82,77 @@ class TestConnectionUrlHandling:
 
         assert connection.url == url_with_special
 
-    def test_url_map_usage(self):
+    @patch("importlib.util.find_spec", return_value=True)
+    @patch("importlib.import_module")
+    def test_url_map_usage(self, mock_import_module, mock_find_spec):
         """Test that url_map is used when provided."""
+        mock_db_class = MagicMock()
+        mock_import_module.return_value = MagicMock(PostgreSQL=mock_db_class)
+
         obfuscated_url = "postgresql://user:***@localhost:5432/mydb"
         real_url = make_url("postgresql://user:realpass@localhost:5432/mydb")
 
         connection = Connection(url=obfuscated_url)
         url_map = {obfuscated_url: real_url}
 
-        # Mock the database creation to avoid actual connection
-        with patch("toolfront.models.connection.PostgreSQL") as mock_postgres:
-            import asyncio
+        import asyncio
 
-            asyncio.run(connection.connect(url_map=url_map))
+        asyncio.run(connection.connect(url_map=url_map))
 
-            # Should use the real URL from url_map
-            mock_postgres.assert_called_once()
-            called_url = mock_postgres.call_args[1]["url"]
-            assert str(called_url).replace("+asyncpg", "") == str(real_url)
+        # Should use the real URL from url_map
+        mock_db_class.assert_called_once()
+        called_url = mock_db_class.call_args[1]["url"]
+        assert str(called_url).replace("+asyncpg", "") == str(real_url)
 
-    def test_url_map_fallback_to_direct_parsing(self):
+    @patch("importlib.util.find_spec", return_value=True)
+    @patch("importlib.import_module")
+    def test_url_map_fallback_to_direct_parsing(self, mock_import_module, mock_find_spec):
         """Test fallback to direct URL parsing when not in url_map."""
+        mock_db_class = MagicMock()
+        mock_import_module.return_value = MagicMock(PostgreSQL=mock_db_class)
+
         connection = Connection(url="postgresql://user:pass@localhost:5432/mydb")
         url_map = {"other://url": make_url("other://url")}
 
-        with patch("toolfront.models.connection.PostgreSQL") as mock_postgres:
-            import asyncio
+        import asyncio
 
-            asyncio.run(connection.connect(url_map=url_map))
+        asyncio.run(connection.connect(url_map=url_map))
 
-            # Should parse the URL directly since it's not in url_map
-            mock_postgres.assert_called_once()
+        # Should parse the URL directly since it's not in url_map
+        mock_db_class.assert_called_once()
 
-    def test_no_url_map_provided(self):
+    @patch("importlib.util.find_spec", return_value=True)
+    @patch("importlib.import_module")
+    def test_no_url_map_provided(self, mock_import_module, mock_find_spec):
         """Test behavior when no url_map is provided."""
+        mock_db_class = MagicMock()
+        mock_import_module.return_value = MagicMock(PostgreSQL=mock_db_class)
+
         connection = Connection(url="postgresql://user:pass@localhost:5432/mydb")
 
-        with patch("toolfront.models.connection.PostgreSQL") as mock_postgres:
-            import asyncio
+        import asyncio
 
-            asyncio.run(connection.connect())
+        asyncio.run(connection.connect())
 
-            # Should work without url_map
-            mock_postgres.assert_called_once()
+        # Should work without url_map
+        mock_db_class.assert_called_once()
 
-    def test_url_unquoting(self):
+    @patch("importlib.util.find_spec", return_value=True)
+    @patch("importlib.import_module")
+    def test_url_unquoting(self, mock_import_module, mock_find_spec):
         """Test that URLs are properly unquoted."""
+        mock_db_class = MagicMock()
+        mock_import_module.return_value = MagicMock(PostgreSQL=mock_db_class)
+
         quoted_url = "postgresql://user:pass%40word@localhost:5432/mydb"
         connection = Connection(url=quoted_url)
 
-        with patch("toolfront.models.connection.PostgreSQL") as mock_postgres:
-            import asyncio
+        import asyncio
 
-            asyncio.run(connection.connect())
+        asyncio.run(connection.connect())
 
-            # URL should be unquoted before processing
-            mock_postgres.assert_called_once()
+        # URL should be unquoted before processing
+        mock_db_class.assert_called_once()
 
 
 class TestUrlValidation:

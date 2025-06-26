@@ -21,12 +21,15 @@ jobs:
       uses: useblacksmith/setup-uv@v4
       with:
         version: "latest"
+        
+    - name: Create virtual environment
+      run: uv venv
     
     - name: Set up Python ${{ matrix.python-version }}
       run: uv python install ${{ matrix.python-version }}
     
     - name: Install dependencies
-      run: uv sync
+      run: uv pip install -e ".[all]"
     
     - name: Run unit tests
       run: uv run pytest tests/unit/ -v --tb=short -x
@@ -96,10 +99,13 @@ jobs:
     
     - name: Set up Python
       run: uv python install 3.12
+
+    - name: Create virtual environment
+      run: uv venv
     
     - name: Install dependencies
-      run: uv sync
-    
+      run: uv pip install -e ".[all]"
+
     - name: Wait for databases
       run: |
         echo "Waiting for PostgreSQL..."

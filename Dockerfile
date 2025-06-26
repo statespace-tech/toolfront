@@ -31,7 +31,7 @@ COPY --chown=appuser:appgroup README.md ./
 USER appuser
 
 # Install Python dependencies using uv in the virtual environment
-RUN uv pip install --no-cache .
+RUN uv pip install --no-cache .[all]
 
 # Entrypoint script
 COPY --chmod=755 --chown=appuser:appgroup <<'EOF' /app/entrypoint.sh

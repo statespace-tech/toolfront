@@ -22,7 +22,7 @@ NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
 echo "Bumping version to: $NEW_VERSION"
 
 # Update version in pyproject.toml
-sed -i "s/version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
+sed -i "" "s/version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
 
 # Commit version bump
 git add pyproject.toml
