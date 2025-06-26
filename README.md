@@ -37,34 +37,46 @@ ToolFront runs on your computer through an [MCP](https://modelcontextprotocol.io
 - **Database connection URLs** of your databases - [see below](#databases)
 - **API key** (optional) to activate collaborative learning - [see below](#collaborative-in-context-learning)
 
-### Installation
+### Setup Options
 
-ToolFront has a lightweight core, so you only install the drivers for the databases you actually use. This keeps the installation small and fast.
+ToolFront has a lightweight core and only loads the database drivers you need. You have two setup options:
 
-To install, use `uv` (or `pip`) and add the databases you need as "extras". For example, to use PostgreSQL and Snowflake, you would run:
+#### Option 1: Run directly with uvx (Recommended for MCP)
+No installation needed! The `uvx` command runs ToolFront in an isolated environment with the database drivers you specify:
+
+```bash
+# Run with PostgreSQL and Snowflake support
+uvx --from 'toolfront[postgresql,snowflake]' toolfront <database-urls>
+```
+
+#### Option 2: Install in your environment
+For standalone use or integration into your workflow:
 
 ```bash
 # Using uv
 uv pip install 'toolfront[postgresql,snowflake]'
 
-# Using pip
+# Using pip  
 pip install 'toolfront[postgresql,snowflake]'
 ```
 
-If you add a new database later, just run the command again with the new extra. See the [Databases](#databases) section for a full list of supported extras.
+See the [Databases](#databases) section for a full list of supported database extras.
 
 ### Run ToolFront in your IDE
 
-[![Add to Cursor with UV](https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/buttons/button_cursor_uv.png)](https://cursor.com/install-mcp?name=toolfront&config=eyJjb21tYW5kIjoidXYgcnVuIHRvb2xmcm9udCBEQVRBQkFTRS1VUkwtMSBEQVRBQkFTRS1VUkwtMiAtLWFwaS1rZXkgWU9VUi1BUEktS0VZIn0%3D) [![Add to GitHub Copilot with UV](https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/buttons/button_copilot_uv.png)](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22uv%22%2C%22args%22%3A%5B%22run%22%2C%22toolfront%22%2C%22DATABASE-URL-1%22%2C%22DATABASE-URL-2%22%2C%22--API-KEY%22%2C%22YOUR_API_KEY%22%5D%7D) [![Add to Cursor with Docker](https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/buttons/button_cursor_docker.png)](https://cursor.com/install-mcp?name=toolfront&config=eyJjb21tYW5kIjoiZG9ja2VyIiwiYXJncyI6WyJydW4iLCItaSIsImFudGlkbWcvdG9vbGZyb250IiwiREFUQUJBU0UtVVJMLTEiLCJEQVRBQkFTRS1VUkwtMiIsIi0tYXBpLWtleSIsIllPVVItQVBJLUtFWSJdfQo=) [![Add to GitHub Copilot with Docker](https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/buttons/button_copilot_docker.png)](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22antidmg%2Ftoolfront%22%2C%22DATABASE-URL-1%22%2C%22DATABASE-URL-2%22%2C%22--api-key%22%2C%22YOUR-API-KEY%22%5D%7D)
+[![Add to Cursor with UV](https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/buttons/button_cursor_uv.png)](https://cursor.com/install-mcp?name=toolfront&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJ0b29sZnJvbnRbeW91ci1kYXRhYmFzZXNdIiwidG9vbGZyb250IiwiREFUQUJBU0UtVVJMLTEiLCJEQVRBQkFTRS1VUkwtMiIsIi0tYXBpLWtleSIsIllPVVItQVBJLUtFWSJdfQo%3D) [![Add to GitHub Copilot with UV](https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/buttons/button_copilot_uv.png)](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22--from%22%2C%22toolfront%5Byour-databases%5D%22%2C%22toolfront%22%2C%22DATABASE-URL-1%22%2C%22DATABASE-URL-2%22%2C%22--api-key%22%2C%22YOUR-API-KEY%22%5D%7D) [![Add to Cursor with Docker](https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/buttons/button_cursor_docker.png)](https://cursor.com/install-mcp?name=toolfront&config=eyJjb21tYW5kIjoiZG9ja2VyIiwiYXJncyI6WyJydW4iLCItaSIsImFudGlkbWcvdG9vbGZyb250IiwiREFUQUJBU0UtVVJMLTEiLCJEQVRBQkFTRS1VUkwtMiIsIi0tYXBpLWtleSIsIllPVVItQVBJLUtFWSJdfQo=) [![Add to GitHub Copilot with Docker](https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/buttons/button_copilot_docker.png)](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22antidmg%2Ftoolfront%22%2C%22DATABASE-URL-1%22%2C%22DATABASE-URL-2%22%2C%22--api-key%22%2C%22YOUR-API-KEY%22%5D%7D)
 
 First, create an MCP config by clicking a setup button above or navigating to the MCP settings for your IDE:
+
+> [!IMPORTANT]
+> After clicking a button, replace `[your-databases]` in the configuration with the database extras you need (e.g., `[postgresql,mysql]` or `[snowflake,bigquery]`).
 
 | IDE | Setup Instructions | Documentation |
 |-----|-------------------|---------------|
 | **Cursor** | Settings → Cursor Settings → MCP Tools (or create `.cursor/mcp.json` file) | [Cursor Documentation](https://docs.cursor.com/context/model-context-protocol#manual-configuration) |
 | **GitHub Copilot (VSCode)** | Copilot icon → Edit preferences → Copilot Chat → MCP | [GitHub Copilot Documentation](https://docs.github.com/en/copilot/customizing-copilot/using-model-context-protocol/extending-copilot-chat-with-mcp) |
 | **Windsurf** | Plugins icon → Plugin Store → Add manually (or edit `~/.codeium/windsurf/mcp_config.json`) | [Windsurf Documentation](https://docs.windsurf.com/windsurf/cascade/mcp) |
-| **Claude Code** | Run `claude mcp add toolfront uv run toolfront [database-urls] --api-key YOUR-API-KEY` | [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code/mcp#configure-mcp-servers) |
+| **Claude Code** | Run `claude mcp add toolfront uvx --from 'toolfront[your-databases]' toolfront [database-urls] --api-key YOUR-API-KEY` | [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code/mcp#configure-mcp-servers) |
 
 Then, edit the MCP configuration with your database connection URLs and optional API key:
 
@@ -74,9 +86,9 @@ Then, edit the MCP configuration with your database connection URLs and optional
 ```json
 {
   "toolfront": {
-    "command": "uv",
+    "command": "uvx",
     "args": [
-      "run",
+      "--from", "toolfront[snowflake,postgresql]",
       "toolfront",
       "snowflake://user:pass@org",
       "postgresql://user:pass@host:port/db",
@@ -85,6 +97,8 @@ Then, edit the MCP configuration with your database connection URLs and optional
   }
 }
 ```
+
+Note: Replace `[snowflake,postgresql]` with the database extras you need (e.g., `[mysql,bigquery]`).
 
 </details>
 
@@ -122,11 +136,17 @@ You're all set! You can now ask your AI agent about your databases.
 To use ToolFront outside your IDE, run it directly from your terminal with your database URLs and optional API key:
 
 ```bash
-# Using UV
-uv run toolfront "snowflake://user:pass@org" "postgresql://user:pass@host:port/db" --api-key "YOUR-API-KEY"
+# Using uvx (no installation needed)
+uvx --from 'toolfront[snowflake,postgresql]' toolfront "snowflake://user:pass@org" "postgresql://user:pass@host:port/db" --api-key "YOUR-API-KEY"
+
+# Using uvx with local development version
+uvx --from '/path/to/toolfront[snowflake,postgresql]' toolfront "snowflake://user:pass@org" "postgresql://user:pass@host:port/db" --api-key "YOUR-API-KEY"
 
 # Using Docker  
 docker run -i antidmg/toolfront "snowflake://user:pass@org" "postgresql://user:pass@host:port/db" --api-key "YOUR-API-KEY"
+
+# If you installed ToolFront in your environment
+toolfront "snowflake://user:pass@org" "postgresql://user:pass@host:port/db" --api-key "YOUR-API-KEY"
 ```
 
 > [!TIP]
