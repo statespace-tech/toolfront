@@ -49,7 +49,7 @@ first, create an MCP config by following the instructions for your chosen framew
 
 Then, edit the MCP configuration with your database connection URLs and optional API key:
 
-<details>
+<details open>
 <summary><strong>Edit UV Config</strong></summary>
 
 ```json
