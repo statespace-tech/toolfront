@@ -1,6 +1,6 @@
 [project]
 name = "toolfront"
-version = "0.1.3"
+version = "0.1.5"
 description = "A lightweight MCP server for databases."
 readme = "README.md"
 authors = [
@@ -18,34 +18,22 @@ classifiers = [
 requires-python = ">=3.11"
 dependencies = [
     "aiohttp>=3.11.18",
-    "aiomysql>=0.2.0",
-    "aiosqlite>=0.21.0",
     "alembic>=1.16.0",
     "async-lru>=2.0.5",
-    "asyncpg>=0.30.0",
     "click>=8.1.8",
     "db-dtypes>=1.4.3",
-    "duckdb>=1.2.2",
-    "duckdb-engine>=0.17.0",
-    "google-cloud-bigquery>=3.32.0",
-    "google-cloud-bigquery-storage>=2.32.0",
     "greenlet>=3.2.2",
     "httpx>=0.28.1",
     "jellyfish>=1.2.0",
     "mcp[cli]>=1.9.0",
     "numpy>=1.24.0",
     "pandas>=2.2.3",
-    "psycopg2>=2.9.10",
     "pyarrow<19.0.0",
-    "pyodbc>=5.0.0",
     "pydantic>=2.11.4",
     "pytest>=8.3.5",
     "python-decouple>=3.8",
     "scikit-learn>=1.6.1",
-    "snowflake-sqlalchemy>=1.7.3",
-    "sqlalchemy-bigquery>=1.14.1",
     "sqlalchemy-utils>=0.41.2",
-    "databricks-sql-connector>=2.7.0",
     "rank-bm25>=0.2.2",
 ]
 
@@ -66,6 +54,44 @@ test = [
 dev = [
     "pre-commit>=3.0.0",
     "ruff>=0.1.0",
+]
+bigquery = [
+    "google-cloud-bigquery>=3.32.0",
+    "google-cloud-bigquery-storage>=2.32.0",
+    "sqlalchemy-bigquery>=1.14.1",
+]
+databricks = [
+    "databricks-sql-connector>=2.7.0",
+]
+duckdb = [
+    "duckdb>=1.2.2",
+    "duckdb-engine>=0.17.0",
+]
+mysql = [
+    "aiomysql>=0.2.0",
+]
+postgresql = [
+    "asyncpg>=0.30.0",
+    "psycopg2-binary>=2.9.9",
+]
+snowflake = [
+    "snowflake-sqlalchemy>=1.7.3",
+]
+sqlite = [
+    "aiosqlite>=0.21.0",
+]
+sqlserver = [
+    "pyodbc>=5.0.0",
+]
+all = [
+    "toolfront[bigquery]",
+    "toolfront[databricks]",
+    "toolfront[duckdb]",
+    "toolfront[mysql]",
+    "toolfront[postgresql]",
+    "toolfront[snowflake]",
+    "toolfront[sqlite]",
+    "toolfront[sqlserver]",
 ]
 
 [build-system]

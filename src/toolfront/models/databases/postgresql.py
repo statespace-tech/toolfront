@@ -44,7 +44,8 @@ class PostgreSQL(SQLAlchemyMixin, Database):
                 FROM information_schema.columns
                 WHERE table_schema = '{table_schema}' 
                 AND table_name = '{table_name}'
-                ORDER BY ordinal_position;"""
+                ORDER BY ordinal_position;
+        """
 
         return await self.query(code)
 
