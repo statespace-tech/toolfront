@@ -18,7 +18,6 @@ classifiers = [
 requires-python = ">=3.11"
 dependencies = [
     "aiohttp>=3.11.18",
-    "alembic>=1.16.0",
     "async-lru>=2.0.5",
     "click>=8.1.8",
     "db-dtypes>=1.4.3",
@@ -71,6 +70,14 @@ mysql = [
     "aiomysql>=0.2.0",
 ]
 postgresql = [
+    "asyncpg>=0.30.0",
+    "psycopg2-binary>=2.9.9",
+]
+postgres = [
+    "asyncpg>=0.30.0",
+    "psycopg2-binary>=2.9.9",
+]
+psql = [
     "asyncpg>=0.30.0",
     "psycopg2-binary>=2.9.9",
 ]
