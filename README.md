@@ -47,6 +47,9 @@ No installation needed! The `uvx` command runs ToolFront in an isolated environm
 ```bash
 # Run with PostgreSQL and Snowflake support
 uvx "toolfront[postgresql,snowflake]" <database-urls>
+
+# Run with all database drivers (if you're not sure which you need)
+uvx "toolfront[all]" <database-urls>
 ```
 
 #### Option 2: Install in your environment
@@ -173,10 +176,12 @@ User C — Agent C ──┘
 
 ## Databases
 
-ToolFront supports the following databases. The table below lists the required extra name for installation (e.g., `uv pip install 'toolfront[extra-name]'`) and the corresponding connection URL format.
+ToolFront supports the following databases. The table below lists the required extra name for installation (e.g., `uvx "toolfront[extra-name]"`) and the corresponding connection URL format.
 
-> [!NOTE]
-> The extra name may differ from the URL protocol. For example, SQL Server uses the `sqlserver` extra, but its protocol is `mssql`.
+> [!TIP]
+> - Use `[all]` to install all database drivers: `uvx "toolfront[all]"`
+> - PostgreSQL supports multiple aliases: `postgresql`, `postgres`, or `psql`
+> - The extra name may differ from the URL protocol (e.g., SQL Server uses `sqlserver` but URL uses `mssql`)
 
 | Database | Extra Name | URL Format |
 |----------|------------|------------|
@@ -184,7 +189,7 @@ ToolFront supports the following databases. The table below lists the required e
 | Databricks | `databricks` | `databricks://token:{token}@{workspace}.cloud.databricks.com/{catalog}?http_path={warehouse-path}` |
 | DuckDB | `duckdb` | `duckdb://{path-to-database.duckdb}` |
 | MySQL | `mysql` | `mysql://{user}:{password}@{host}:{port}/{database}` |
-| PostgreSQL | `postgresql` | `postgres://{user}:{password}@{hostname}:{port}/{database-name}` |
+| PostgreSQL | `postgresql`, `postgres`, `psql` | `postgres://{user}:{password}@{hostname}:{port}/{database-name}` |
 | Snowflake | `snowflake` | `snowflake://{user}:{password}@{account}/{database}` |
 | SQL Server | `sqlserver` | `mssql://{user}:{password}@{server}:{port}/{database}` or `sqlserver://{user}:{password}@{server}:{port}/{database}` |
 | SQLite | `sqlite` | `sqlite://{path-to-database.sqlite}` |
