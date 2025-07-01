@@ -126,8 +126,9 @@ async def query_database(
 
     Query Database Instructions:
         1. Only query tables that have been explicitly discovered, searched for, or referenced in the conversation.
-        2. Before writing queries, inspect and/or sample the underlying tables to understand their structure and prevent errors.
-        3. When a query fails or returns unexpected results, examine the underlying tables to diagnose the issue and then retry.
+        2. Always use the correct dialect for the database.
+        3. Before writing queries, inspect and/or sample the underlying tables to understand their structure and prevent errors.
+        4. When a query fails or returns unexpected results, examine the underlying tables to diagnose the issue and then retry.
     """
     http_session = await _get_context_field("http_session", ctx)
 
