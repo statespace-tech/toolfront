@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from sqlalchemy.engine.url import make_url
 
-from toolfront.models.connection import Connection
+from toolfront.models.connection import DatabaseConnection
 
 
 class TestConnectionDriverSelection:
@@ -23,12 +23,12 @@ class TestConnectionDriverSelection:
         ]
 
         for url in test_urls:
-            connection = Connection(url=url)
-            assert connection.url == url
+            connection = DatabaseConnection(url=url)
+            assert connection.url.get_secret_value() == url
 
     def test_unsupported_driver_error(self):
         """Test that unsupported drivers raise ValueError during connect."""
-        connection = Connection(url="unsupported://localhost/db")
+        connection = DatabaseConnection(url="unsupported://localhost/db")
 
         # Test the driver selection logic directly by trying to connect
         with pytest.raises(ValueError, match="Unsupported data source"):
@@ -70,17 +70,17 @@ class TestConnectionUrlHandling:
 
     def test_url_parsing_basic(self):
         """Test basic URL parsing."""
-        connection = Connection(url="postgresql://user:pass@localhost:5432/mydb")
+        connection = DatabaseConnection(url="postgresql://user:pass@localhost:5432/mydb")
 
         # Should not raise an error during creation
-        assert connection.url == "postgresql://user:pass@localhost:5432/mydb"
+        assert connection.url.get_secret_value() == "postgresql://user:pass@localhost:5432/mydb"
 
     def test_url_parsing_with_special_characters(self):
         """Test URL parsing with special characters in password."""
         url_with_special = "postgresql://user:p%40ss@localhost:5432/mydb"
-        connection = Connection(url=url_with_special)
+        connection = DatabaseConnection(url=url_with_special)
 
-        assert connection.url == url_with_special
+        assert connection.url.get_secret_value() == url_with_special
 
     @patch("importlib.util.find_spec", return_value=True)
     @patch("importlib.import_module")
@@ -92,7 +92,7 @@ class TestConnectionUrlHandling:
         obfuscated_url = "postgresql://user:***@localhost:5432/mydb"
         real_url = make_url("postgresql://user:realpass@localhost:5432/mydb")
 
-        connection = Connection(url=obfuscated_url)
+        connection = DatabaseConnection(url=obfuscated_url)
         url_map = {obfuscated_url: real_url}
 
         import asyncio
@@ -111,7 +111,7 @@ class TestConnectionUrlHandling:
         mock_db_class = MagicMock()
         mock_import_module.return_value = MagicMock(PostgreSQL=mock_db_class)
 
-        connection = Connection(url="postgresql://user:pass@localhost:5432/mydb")
+        connection = DatabaseConnection(url="postgresql://user:pass@localhost:5432/mydb")
         url_map = {"other://url": make_url("other://url")}
 
         import asyncio
@@ -128,7 +128,7 @@ class TestConnectionUrlHandling:
         mock_db_class = MagicMock()
         mock_import_module.return_value = MagicMock(PostgreSQL=mock_db_class)
 
-        connection = Connection(url="postgresql://user:pass@localhost:5432/mydb")
+        connection = DatabaseConnection(url="postgresql://user:pass@localhost:5432/mydb")
 
         import asyncio
 
@@ -145,7 +145,7 @@ class TestConnectionUrlHandling:
         mock_import_module.return_value = MagicMock(PostgreSQL=mock_db_class)
 
         quoted_url = "postgresql://user:pass%40word@localhost:5432/mydb"
-        connection = Connection(url=quoted_url)
+        connection = DatabaseConnection(url=quoted_url)
 
         import asyncio
 
@@ -161,9 +161,9 @@ class TestUrlValidation:
     def test_url_with_query_parameters(self):
         """Test URLs with query parameters."""
         url_with_params = "postgresql://user:pass@localhost:5432/db?sslmode=require"
-        connection = Connection(url=url_with_params)
+        connection = DatabaseConnection(url=url_with_params)
 
-        assert connection.url == url_with_params
+        assert connection.url.get_secret_value() == url_with_params
 
     def test_file_based_database_urls(self):
         """Test file-based database URLs."""
@@ -173,12 +173,12 @@ class TestUrlValidation:
         ]
 
         for url in file_urls:
-            connection = Connection(url=url)
-            assert connection.url == url
+            connection = DatabaseConnection(url=url)
+            assert connection.url.get_secret_value() == url
 
     def test_special_characters_in_password(self):
         """Test URLs with special characters in password."""
         url_with_special = "postgresql://user:p%40ss@localhost:5432/mydb"
-        connection = Connection(url=url_with_special)
+        connection = DatabaseConnection(url=url_with_special)
 
-        assert connection.url == url_with_special
+        assert connection.url.get_secret_value() == url_with_special

@@ -1,16 +1,12 @@
-"""
-Data source abstraction layer for ToolFront.
-"""
-
 import importlib
 import importlib.util
 import logging
 from typing import Any
-from urllib.parse import unquote
 
-from pydantic import BaseModel, Field
-from sqlalchemy.engine.url import make_url
+from pydantic import BaseModel, Field, SecretStr
+from sqlalchemy.engine.url import URL, make_url
 
+from toolfront.models.api import API
 from toolfront.models.database import ConnectionResult, Database
 from toolfront.models.databases import DatabaseType
 
@@ -18,32 +14,58 @@ logger = logging.getLogger("toolfront.connection")
 
 
 class Connection(BaseModel):
+    """Connection to a data source."""
+
+    async def connect(self, url_map: dict[str, Any]) -> Database | API:
+        """Connect to the data source."""
+        raise NotImplementedError("Subclasses must implement connect")
+
+    async def test_connection(self, url_map: dict[str, Any]) -> ConnectionResult:
+        """Test the connection to the data source."""
+        raise NotImplementedError("Subclasses must implement test_connection")
+
+    @classmethod
+    def from_url(cls, url: str) -> "Connection":
+        """Create a connection from a URL."""
+        if url.startswith("http"):
+            return APIConnection(url=url)
+        else:
+            return DatabaseConnection(url=url)
+
+
+class APIConnection(Connection):
+    """API connection."""
+
+    url: str = Field(..., description="Full URL of the API.")
+
+    async def connect(self, url_map: dict[str, Any]) -> API:
+        """Connect to the API."""
+        # Get the OpenAPI spec from the URL map
+        extra = url_map.get(self.url, {}).get("extra", {})
+        return API(url=self.url, **extra)
+
+    async def test_connection(self, url_map: dict[str, Any]) -> ConnectionResult:
+        """Test database connection"""
+        try:
+            api = await self.connect(url_map=url_map)
+            return await api.test_connection()
+        except ImportError as e:
+            return ConnectionResult(connected=False, message=str(e))
+
+
+class DatabaseConnection(Connection):
     """Enhanced data source with smart path resolution."""
 
-    url: str = Field(..., description="URL of the data source with protocol.")
+    url: SecretStr = Field(..., description="Full URL of the database.")
 
     async def connect(self, url_map: dict[str, Any] | None = None) -> Database:
-        """Get the appropriate connector for this data source
-        Args:
-            url_map: A dictionary mapping obfuscated URL strings to original URLs
-        """
-        # Get the original URL, considering URL mapping
-        original_url = url_map[self.url] if url_map and self.url in url_map else self.url
-
-        # Handle URL parsing correctly without losing password info
-        if isinstance(original_url, str):
-            original_url = unquote(original_url)
-        else:
-            # If it's already a URL object, use render to preserve credentials
-            original_url = original_url.render_as_string(hide_password=False)
-
-        # Parse the URL
-        url = make_url(original_url)
-
-        # Standard connection
+        """Get the appropriate connector for this data source"""
+        # Get the actual secret value for connection
+        actual_url = self.url.get_secret_value()
+        url = make_url(actual_url)
         return self._create_database(url)
 
-    def _create_database(self, url) -> Database:
+    def _create_database(self, url: URL) -> Database:
         """Create a database instance without SSH tunnel."""
         db_map = {
             "bigquery": (DatabaseType.BIGQUERY, "BigQuery"),
@@ -91,10 +113,10 @@ class Connection(BaseModel):
 
         return db_class(url=url)
 
-    async def test_connection(self) -> ConnectionResult:
+    async def test_connection(self, url_map: dict[str, Any]) -> ConnectionResult:
         """Test database connection"""
         try:
-            db = await self.connect()
+            db = await self.connect(url_map=url_map)
             return await db.test_connection()
         except ImportError as e:
             return ConnectionResult(connected=False, message=str(e))

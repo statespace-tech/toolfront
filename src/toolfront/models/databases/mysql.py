@@ -15,14 +15,14 @@ class MySQL(SQLAlchemyMixin, Database):
 
     @alru_cache(maxsize=None, ttl=ALRU_CACHE_TTL)
     async def get_tables(self) -> list[str]:
-        query = """
+        code = """
             SELECT table_schema, table_name 
             FROM information_schema.tables
             WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'sys')
             AND table_type = 'BASE TABLE'
             ORDER BY table_schema, table_name;
         """
-        data = await self.query(query)
+        data = await self.query(code)
         # Use positional access instead of column names to avoid driver-specific naming inconsistencies.
         # x.iloc[0] = table_schema (first column), x.iloc[1] = table_name (second column)
         # Different MySQL drivers (aiomysql vs pymysql) may handle column naming differently.

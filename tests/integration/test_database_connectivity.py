@@ -2,7 +2,7 @@
 
 import pytest
 
-from toolfront.models.connection import Connection
+from toolfront.models.connection import DatabaseConnection
 
 
 class TestDatabaseConnectivity:
@@ -11,7 +11,7 @@ class TestDatabaseConnectivity:
     @pytest.mark.asyncio
     async def test_postgresql_connection(self, postgres_url):
         """Test PostgreSQL connection and basic operations."""
-        connection = Connection(url=postgres_url)
+        connection = DatabaseConnection(url=postgres_url)
         database = await connection.connect()
 
         # Test connection
@@ -26,7 +26,7 @@ class TestDatabaseConnectivity:
     @pytest.mark.asyncio
     async def test_mysql_connection(self, mysql_url):
         """Test MySQL connection and basic operations."""
-        connection = Connection(url=mysql_url)
+        connection = DatabaseConnection(url=mysql_url)
         database = await connection.connect()
 
         # Test connection
@@ -41,7 +41,7 @@ class TestDatabaseConnectivity:
     @pytest.mark.asyncio
     async def test_sqlite_connection(self, sqlite_url):
         """Test SQLite connection and basic operations."""
-        connection = Connection(url=sqlite_url)
+        connection = DatabaseConnection(url=sqlite_url)
         database = await connection.connect()
 
         # Test connection
@@ -56,7 +56,7 @@ class TestDatabaseConnectivity:
     @pytest.mark.asyncio
     async def test_duckdb_connection(self, duckdb_url):
         """Test DuckDB connection and basic operations."""
-        connection = Connection(url=duckdb_url)
+        connection = DatabaseConnection(url=duckdb_url)
         database = await connection.connect()
 
         # Test connection
@@ -71,7 +71,7 @@ class TestDatabaseConnectivity:
     @pytest.mark.asyncio
     async def test_sqlserver_connection(self, sqlserver_url):
         """Test SQL Server connection and basic operations."""
-        connection = Connection(url=sqlserver_url)
+        connection = DatabaseConnection(url=sqlserver_url)
         database = await connection.connect()
 
         # Test connection
@@ -93,7 +93,7 @@ class TestDatabaseConnectivity:
         """Test that connection retry logic works correctly."""
         # Test with invalid URL first
         invalid_url = postgres_url.replace("5432", "9999")  # Wrong port
-        connection = Connection(url=invalid_url)
+        connection = DatabaseConnection(url=invalid_url)
         database = await connection.connect()
 
         # Should fail gracefully
@@ -101,7 +101,7 @@ class TestDatabaseConnectivity:
         assert not result.connected, "Should not connect with invalid URL"
 
         # Test with valid URL should work
-        valid_connection = Connection(url=postgres_url)
+        valid_connection = DatabaseConnection(url=postgres_url)
         valid_database = await valid_connection.connect()
         valid_result = await valid_database.test_connection()
         assert valid_result.connected, "Should connect with valid URL"
@@ -113,7 +113,7 @@ class TestConnectionFallback:
     @pytest.mark.asyncio
     async def test_async_execution_postgresql(self, postgres_url):
         """Test async query execution with PostgreSQL."""
-        connection = Connection(url=postgres_url)
+        connection = DatabaseConnection(url=postgres_url)
         database = await connection.connect()
 
         # Test async execution
@@ -125,7 +125,7 @@ class TestConnectionFallback:
     @pytest.mark.asyncio
     async def test_async_execution_mysql(self, mysql_url):
         """Test async query execution with MySQL."""
-        connection = Connection(url=mysql_url)
+        connection = DatabaseConnection(url=mysql_url)
         database = await connection.connect()
 
         # Test async execution
@@ -137,7 +137,7 @@ class TestConnectionFallback:
     @pytest.mark.asyncio
     async def test_async_execution_sqlserver(self, sqlserver_url):
         """Test async query execution with SQL Server."""
-        connection = Connection(url=sqlserver_url)
+        connection = DatabaseConnection(url=sqlserver_url)
         database = await connection.connect()
 
         # Test async execution with SQL Server syntax
@@ -150,7 +150,7 @@ class TestConnectionFallback:
     async def test_sync_fallback_in_memory_databases(self, sqlite_url, duckdb_url):
         """Test that in-memory databases work with sync fallback."""
         for url in [sqlite_url, duckdb_url]:
-            connection = Connection(url=url)
+            connection = DatabaseConnection(url=url)
             database = await connection.connect()
 
             # These should work even if async fails

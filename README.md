@@ -1,45 +1,58 @@
+<p align="center">
+  <a>
+    <img src="https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/logo.png" width="150" alt="ToolFront Logo">
+  </a>
+</p>
+
+<div align="center">
+
+# ToolFront
+
 [![Test Suite](https://github.com/kruskal-labs/toolfront/actions/workflows/test.yml/badge.svg)](https://github.com/kruskal-labs/toolfront/actions/workflows/test.yml)
 [![Discord](https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/rRyM7zkZTf)
 [![X](https://img.shields.io/badge/ToolFront-black?style=flat-square&logo=x&logoColor=white)](https://x.com/toolfront)
 
-<br>
-<div align="center"> 
-<img alt="toolfront" src="https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/logo.png" width="61.8%">
 </div>
-<br>
+
+<div align="center">
 
 <br>
 
-> Without context, It's hard for AI to answer questions about your databases. 
-> However, teaching them your table schemas and relationships is a slow, manual, and expensive process. ToolFront connects AI agents to your databases, so they can learn your query patterns as they navigate your databases.
+## The missing link between AI and big data
 
-## Features
+</div>
 
-- **🚀 One-step setup**: Connect AI agents like Cursor, Copilot, and Claude to all your databases with a single command.
-- **🤖 Agents for your data:** Build smart agents that understand your databases and know how to navigate them.
-- **⚡ AI-powered DataOps:** Use ToolFront to explore your databases, iterate on queries, and write schema-aware code.
-- **🔒 Privacy-first**: Your data stays local, and is only shared between your AI agent and databases through a secure MCP server.
-- **🧠 Collaborative learning**: The more your agents use ToolFront, the better they remember your data. Requires API key.
+> It's hard to ask AI about your data. Out-of-the-box models struggle to understand large databases and APIs, while fine-tuning models is costly and time-consuming. ToolFront solves this by helping AI models discover and learn about your data on the fly, so they can quickly answer your questions.
 
 <br>
 <div align="center">
-<img alt="diagram" src="https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/graph.png" width="100%">
+<img alt="ToolFront diagram" src="https://raw.githubusercontent.com/kruskal-labs/toolfront/main/img/diagram.png" width="500">
 </div>
+
+
+## Features
+
+- **🌊 Seamless**: Bring AI to all your databases, warehouses, and APIs.
+- **⚡ Instant**: Get up and running in seconds with a single command.
+- **🧩 Pluggable**: Works with any LLM, agent library, and IDE that supports MCP.
+- **🧠 Self-improving**: Your AI learns from experience, becoming smarter and faster over time.
+- **🔒 Secure**: Your data stays local, private, and under your control.
+
 
 ## Quickstart
 
-ToolFront runs on your computer through an [MCP](https://modelcontextprotocol.io/) server, a secure protocol that lets apps provide context to LLM models.
+ToolFront runs on your computer through an **[MCP server](https://modelcontextprotocol.io/)**, a secure protocol that lets apps provide context to LLM models.
 
 ### Prerequisites
 
 - **[uv](https://docs.astral.sh/uv/)** or **[Docker](https://www.docker.com/)** to run the MCP server (we recommend **uv**)
-- **URLs** for your databases - [see below](#databases)
-- **API key** (optional) for collaborative learning - [see below](#collaborative-in-context-learning)
+- **URLs** of your databases and APIs - [see below](#data-sources)
+- **API key** (optional) enables self-improving AI with the teacher API
 
 
-### Run ToolFront in your AI Framework or IDE
+### Run ToolFront with your AI Framework or IDE
 
-first, create an MCP config by following the instructions for your chosen framework or IDE. 
+First, create an MCP config by following the instructions for your chosen framework or IDE. 
 
 | IDE | Setup Instructions | Install with UV | Install with Docker |
 |-----|-------------------|-----------------|-------------------|
@@ -47,7 +60,7 @@ first, create an MCP config by following the instructions for your chosen framew
 | [**GitHub Copilot (VSCode)**](https://docs.github.com/en/copilot/customizing-copilot/using-model-context-protocol/extending-copilot-chat-with-mcp) | Copilot icon → Edit preferences → Copilot Chat → MCP | [🔗 Quick Install](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22toolfront[all]%22%2C%22DATABASE-URL-1%22%2C%22DATABASE-URL-2%22%2C%22--api-key%22%2C%22YOUR-API-KEY%22%5D%7D) | [🔗 Quick Install](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22antidmg%2Ftoolfront%22%2C%22DATABASE-URL-1%22%2C%22DATABASE-URL-2%22%2C%22--api-key%22%2C%22YOUR-API-KEY%22%5D%7D) |
 
 
-Then, edit the MCP configuration with your database connection URLs and optional API key:
+Then, add your databse and API urls to the MCP configuration:
 
 <details open>
 <summary><strong>Edit UV Config</strong></summary>
@@ -58,9 +71,9 @@ Then, edit the MCP configuration with your database connection URLs and optional
     "command": "uvx",
     "args": [
       "toolfront[all]",
-      "snowflake://user:pass@org",
       "postgresql://user:pass@host:port/db",
-      "--api-key", "YOUR-API-KEY" // Optional
+      "https://api.com/openapi.json?api_key=key",
+      "--api-key", "YOUR-API-KEY" // Optional: learning API
     ]
   }
 }
@@ -79,9 +92,9 @@ Then, edit the MCP configuration with your database connection URLs and optional
       "run",
       "-i",
       "antidmg/toolfront",
-      "snowflake://user:pass@org",
       "postgresql://user:pass@host:port/db",
-      "--api-key", "YOUR-API-KEY" // Optional
+      "https://api.com/openapi.json?secret=my_secret",
+      "--api-key", "YOUR-API-KEY" // Optional: learning API
     ]
   }
 }
@@ -95,106 +108,112 @@ You're all set! You can now ask your AI agent about your databases.
 > [!TIP]
 > By default, `uvx toolfront[all]` installs all database drivers. To keep things lighter, you can install only the ones you need e.g. `uvx toolfront[postgres,mysql]`. See [Databases](#databases) for the full list of drivers.
 
-### Run ToolFront in your Terminal
+### Running ToolFront's MCP
 
-You can also run ToolFront directly with SSE from your terminal by using one of the following commands. Remember to replace the placeholder database URLs and API key with your own:
+You can also spin up the the ToolFront MCP server with SSE or stdio using the the `--transport` flag.
 
 ```bash
-# Using uvx
-uvx "toolfront[snowflake,postgres]" "snowflake://user:pass@org" "postgres://user:pass@host:port/db" --api-key "YOUR-API-KEY"
+# Using uvx and SSE
+uvx "toolfront[postgres]" "postgres://user:pass@host:port/db" "https://api.com/spec.json?secret=my_secret" --transport sse
 
-# Using Docker  
-docker run -i antidmg/toolfront "snowflake://user:pass@org" "postgres://user:pass@host:port/db" --api-key "YOUR-API-KEY"
+# Using Docker and stdio
+docker run -i antidmg/toolfront "postgres://user:pass@host:port/db" "https://api.com/spec.json?secret=my_secret" --transport stdio
 ```
+
+You can also enable self-improving AI by passing your API key with the `--api-key "YOUR-API-KEY"` flag.
 
 > [!TIP]
-> **Version control**: You can pin to specific versions for consistency. Use `toolfront==0.1.x` for UV or `antidmg/toolfront:0.1.x` for Docker.
+> **Version control**: You can pin specific versions of ToolFront for consistency. Use `"toolfront[all]==0.1.x"` for UV or `antidmg/toolfront:0.1.x` for Docker.
 
 
-## Collaborative In-context Learning
+## Learning API
 
-Data teams keep rewriting the same queries because past work often gets siloed, scattered, or lost. ToolFront teaches AI agents how your team works with your databases through [in-context learning](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html#in-context-learning-key-concept). With ToolFront, your agents can:
+> AI agents can be frustrating. Every interaction feels like starting from scratch, while models constantly relearn what they already knew. ToolFront fixes this with a learning API for your AI, surfacing the right knowledge exactly when it’s needed so your AI can learn instantly.
 
-- Reason about historical query patterns
-- Remember relevant tables and schemas
-- Reference your and your teammates' work
+The learning API uses [in-context learning](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html#in-context-learning-key-concept), a novel training-free learning framework pioneered by OpenAI. By augmenting your LLM's context with ever-growing query samples, your agents can reason by analogy over your databases and APIs to quickly arrive at the correct answer.
 
-```
-User A — Agent A ──┐
-                   ├── shared database context ← ToolFront
-User B — Agent B ──┤
-                   │
-User C — Agent C ──┘
-```
+## Data Sources
 
-> [!NOTE]
-> In-context learning is currently in open beta. To request an API key, please email Esteban at [esteban@kruskal.ai](mailto:esteban@kruskal.ai) or hop into our [Discord server](https://discord.gg/rRyM7zkZTf).
+### Databases
 
-## Databases
+See the table below for the list of supported databases, drivers (e.g., `uvx "toolfront[snowflake,databricks]"`) and connection URL formats.
 
-ToolFront supports the following databases. The table below lists the driver names for installation (e.g., `uvx "toolfront[snowflake,databricks]"`) and the corresponding connection URL formats.
-
-| Database | Driver Name | URL Format |
+| Database | Driver | URL Format |
 |----------|------------|------------|
 | BigQuery | `bigquery` | `bigquery://{project-id}?credentials_path={path-to-account-credentials.json}` |
 | Databricks | `databricks` | `databricks://token:{token}@{workspace}.cloud.databricks.com/{catalog}?http_path={warehouse-path}` |
 | DuckDB | `duckdb` | `duckdb://{path-to-database.duckdb}` |
 | MySQL | `mysql` | `mysql://{user}:{password}@{host}:{port}/{database}` |
-| PostgreSQL | `postgresql`, `postgres`, `psql` | `postgres://{user}:{password}@{hostname}:{port}/{database-name}` |
+| PostgreSQL | `postgresql`, `postgres` | `postgres://{user}:{password}@{hostname}:{port}/{database-name}` |
 | Snowflake | `snowflake` | `snowflake://{user}:{password}@{account}/{database}` |
-| SQL Server | `sqlserver` | `mssql://{user}:{password}@{server}:{port}/{database}` or `sqlserver://{user}:{password}@{server}:{port}/{database}` |
+| SQL Server | `mssql`, `sqlserver` | `mssql://{user}:{password}@{server}:{port}/{database}` |
 | SQLite | `sqlite` | `sqlite://{path-to-database.sqlite}` |
 
 Don't see your database? [Submit an issue](https://github.com/kruskal-labs/toolfront/issues) or pull request, or let us know in our [Discord](https://discord.gg/rRyM7zkZTf)!
 
 > [!TIP]
-> **Working with local data files?** Add `duckdb://:memory:` to your config to analyze local Parquet, CSV, Excel, or JSON files.
+> **Working with local data files?** Add `duckdb://:memory:` to your config to analyze local Parquet, CSV, Excel, and JSON files.
+
+
+### APIs
+
+ToolFronts supports virtually **all** APIs that have an [OpenAPI](https://www.openapis.org/) or [Swagger](https://swagger.io/) specification. See the table below for a list of common APIs and their specification URLs.
+
+| API | Specification URL |
+|-----|------------------|
+| GitHub | `https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json` |
+| Stripe | `https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.json` |
+| Slack | `https://raw.githubusercontent.com/slackapi/slack-api-specs/master/web-api/slack_web_openapi_v2.json` |
+| Discord | `https://raw.githubusercontent.com/discord/discord-api-spec/main/specs/openapi.json` |
+| Twilio | `https://raw.githubusercontent.com/twilio/twilio-oai/main/spec/json/twilio_api_v2010.json` |
+| Polygon.io | `https://api.polygon.io/openapi` |
+| SendGrid | `https://api.sendgrid.com/v3/api_schema.json` |
+| Jira | `https://developer.atlassian.com/cloud/jira/platform/swagger-v3.v3.json` |
+| DocuSign | `https://raw.githubusercontent.com/docusign/OpenAPI-Specifications/master/esignature.rest.swagger-v2.1.json` |
+| Zoom | `https://marketplace.zoom.us/docs/api-reference/zoom-api/openapi.json` |
+
+> [!NOTE]
+> **Authentication**: For APIs that require authentication, append your API key and any additional parameters to the specification URL e.g., `https://api.polygon.io/openapi?apiKey=YOUR-API-KEY`.
 
 ## Tools
 
-MCP tools are functions that AI agents can call to interact with external systems. ToolFront comes with seven database tools:
+MCP tools are functions that AI agents can call to interact with external systems. ToolFront comes with ten database tools:
 
-| Tool | Description | Requires API Key |
-|------|-------------|------------------|
-| `test` | Tests whether a data source connection is working | ✗ |
-| `discover` | Discovers and lists all configured databases and file sources | ✗ |
-| `inspect` | Inspects table schemas, showing column names, data types, and constraints | ✗ |
-| `sample` | Retrieves sample rows from tables to understand data content and format | ✗ |
-| `query` | Executes read-only SQL queries against databases with error handling | ✗ |
-| `search_tables` | Searches for tables using regex, BM25, or Jaro-winkler similarity | ✗ |
-| `search_queries` | Searches for relevant queries or tables for in-context learning | ✓ |
+| Tool                | Description                                                      | Requires API Key |
+|---------------------|------------------------------------------------------------------|------------------|
+| `test`              | Test connection to a database or API                             | ✗                |
+| `discover`          | List all configured databases and APIs                           | ✗                |
+| `inspect_table`     | Show structure and columns of a database table                   | ✗                |
+| `inspect_endpoint`  | Show structure and parameters of an API endpoint                 | ✗                |
+| `sample`            | Get sample rows from a database table                            | ✗                |
+| `query`             | Run read-only SQL queries against databases                      | ✗                |
+| `request`           | Make requests to API endpoints                                   | ✗                |
+| `search_endpoints`  | Search API endpoints by pattern or similarity                    | ✗                |
+| `search_tables`     | Search database tables by pattern or similarity                  | ✗                |
+| `search_requests`   | Retrieve and learn from relevant historical requests             | ✓                |
+| `search_queries`    | Retrieve and learn from relevant historical queries              | ✓                |
 
 ## FAQ
 
 <details>
-<summary><strong>How is ToolFront different from other database MCPs?</strong></summary>
+<summary><strong>How is ToolFront different from other MCPs?</strong></summary>
 <br>
 
-ToolFront has three key advantages: **multi-database support**, **privacy-first architecture**, and **collaborative learning**.
+ToolFront stands out with *multi-database* support, *self-improving* AI, and a *local-first* architecture.
 
-**Multi-database support**: While some general-purpose MCP servers happen to support multiple databases, most database MCPs only work with one database at a time, forcing you to manage separate MCP servers for each connection. ToolFront connects to all your databases in one place.
+**Multi-database**: Instead of being limited to a single database, ToolFront connects all your databases and APIs in one place.
 
-**Privacy-first architecture**: Other multi-database solutions route your data through the cloud, which racks up egress fees and creates serious privacy, security, and access control issues. ToolFront keeps everything local.
+**Self-improving**: ToolFront learning API helps your AI agents get smarter and faster over time.
 
-**Collaborative learning**: Database MCPs just expose raw database operations. ToolFront goes further by teaching your AI agents successful query patterns from your team's work, helping them learn your specific schemas and data relationships to improve over time.
+**Local-first**: Cloud solutions compromise your data and rack up egress fees. ToolFront keeps everything local.
 
 </details>
 
 <details>
-<summary><strong>How is collaborative learning different from agent memory?</strong></summary>
+<summary><strong>How does ToolFront's learning API work?</strong></summary>
 <br>
 
-Agent memory stores conversation histories for individuals, whereas ToolFront's collaborative learning remembers relational query patterns across your team and databases.
-
-When one teammate queries a database, that knowledge becomes available to other team members using ToolFront. The system gets smarter over time by learning from your team's collective database interactions.
-
-</details>
-
-<details>
-<summary><strong>What data is collected during collaborative learning?</strong></summary>
-<br>
-
-With an API key, ToolFront only logs the query syntax and their descriptions generated by your AI agents. It never collects your actual database content or personal information. For details, see the `query` and `learn` functions in [tools.py](src/toolfront/tools.py).
+ToolFront's learning API uses (in-context learning)[https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html#in-context-learning-key-concept], a novel training-free learning framework pioneered by OpenAI. By augmenting your LLM's context with ever-growing query samples, your agents can reason by analogy over your databases and APIs and arrive at the answer queicker.
 
 </details>
 
@@ -202,11 +221,11 @@ With an API key, ToolFront only logs the query syntax and their descriptions gen
 <summary><strong>How does ToolFront keep my data safe?</strong></summary>
 <br>
 
-- **Local execution**: All database connections and queries run on your machine
-- **No secrets exposure**: Database credentials are never shared with AI agents
-- **Read-only operations**: Only safe, read-only database queries are allowed
-- **No data transmission**: Your database content never leaves your environment
-- **Secure MCP protocol**: Direct communication between agents and databases with no third-party storage
+- **Local execution**: All database connections and queries run on your machine.
+- **No secrets exposure**: Database secrets are never shared with LLMs.
+- **Read-only operations**: Only safe, read-only database queries are allowed.
+- **No data transmission**: Your database content never leaves your environment.
+- **Secure MCP protocol**: Direct communication between agents and databases with no third-party storage.
 
 </details>
 
@@ -214,9 +233,9 @@ With an API key, ToolFront only logs the query syntax and their descriptions gen
 <summary><strong>How do I troubleshoot connection issues?</strong></summary>
 <br>
 
-Run the `uv run toolfront` or `docker run` commands with your database URLs directly from the command line. ToolFront automatically tests all connections before starting and shows detailed error messages if any connection fails.
+Run the `uv run toolfront[all]` or `docker run` commands with your database URLs directly from the command line. ToolFront automatically tests all connections before starting and shows detailed error messages if any connection fails.
 
-If you're still having trouble, double-check your database URLs using the examples in the [Databases section](#databases) above.
+If you're still having trouble, double-check your database URLs using the examples in the [Databases section](#data-sources) above.
 
 </details>
 

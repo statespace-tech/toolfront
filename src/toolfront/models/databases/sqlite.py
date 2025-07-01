@@ -10,8 +10,9 @@ class SQLite(SQLAlchemyMixin, FileMixin, Database):
         return "PRAGMA query_only = ON"
 
     async def get_tables(self) -> list[str]:
-        query = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name;"
-        data = await self.query(query)
+        data = await self.query(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name;"
+        )
         if not len(data):
             return []
         return data["name"].tolist()

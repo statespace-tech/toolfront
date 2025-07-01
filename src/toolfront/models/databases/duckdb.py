@@ -81,13 +81,13 @@ class DuckDB(FileMixin, Database):
 
     async def _get_db_tables(self) -> list[str]:
         """Get all table names in the DuckDB database."""
-        query = """
+        code = """
             SELECT table_schema, table_name 
             FROM information_schema.tables
             WHERE table_type = 'BASE TABLE'
             ORDER BY table_schema, table_name;
         """
-        data = await self.query(query)
+        data = await self.query(code)
         return data.apply(lambda x: f"{x['table_schema']}.{x['table_name']}", axis=1).tolist()
 
     async def _inspect_db_table(self, table_path: str) -> pd.DataFrame:

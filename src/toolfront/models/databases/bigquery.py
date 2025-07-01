@@ -42,7 +42,7 @@ class BigQuery(Database):
         """Test the connection to the database."""
 
         try:
-            self.client.query("SELECT 1")
+            await self.query(code="SELECT 1")
             return ConnectionResult(connected=True, message="Connection successful")
         except Exception as e:
             return ConnectionResult(connected=False, message=f"Connection failed: {e}")
@@ -137,4 +137,4 @@ class BigQuery(Database):
             ORDER BY RAND()
             LIMIT {n}
         """
-        return await self.query(code)
+        return await self.query(code=code)

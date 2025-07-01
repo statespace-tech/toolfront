@@ -1,26 +1,24 @@
-"""
-Database abstraction layer for Relay SDK.
-"""
-
 import logging
 import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from async_lru import _LRUCacheWrapper
-from jellyfish import jaro_winkler_similarity
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
-from rank_bm25 import BM25Okapi
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.exc import InvalidRequestError, StatementError
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from toolfront.utils import tokenize
+from toolfront.utils import (
+    ConnectionResult,
+    SearchMode,
+    search_items_bm25,
+    search_items_jaro_winkler,
+    search_items_regex,
+)
 
 try:
     from sqlalchemy.exc import MissingGreenlet
@@ -33,26 +31,10 @@ except ImportError:
 logger = logging.getLogger("toolfront")
 
 
-@dataclass
-class ConnectionResult:
-    """Result of a database connection test."""
-
-    connected: bool
-    message: str
-
-
 class DatabaseError(Exception):
     """Exception for database-related errors."""
 
     pass
-
-
-class SearchMode(str, Enum):
-    """Search mode for table search."""
-
-    REGEX = "regex"
-    BM25 = "bm25"
-    JARO_WINKLER = "jaro_winkler"
 
 
 class FileMixin:
@@ -91,9 +73,9 @@ class SQLAlchemyMixin:
             logger.debug(f"Async failed due to configuration, trying sync: {config_error}")
             return await self._execute_sync(code, init_sql, config_error)
         except Exception as async_error:
-            # Check for greenlet-related errors
-            if self._is_greenlet_error(async_error):
-                logger.debug(f"Async failed due to greenlet issue, trying sync: {async_error}")
+            # Check for greenlet-related errors or asyncpg authentication errors
+            if self._is_greenlet_error(async_error) or self._is_asyncpg_auth_error(async_error):
+                logger.debug(f"Async failed due to greenlet/auth issue, trying sync: {async_error}")
                 return await self._execute_sync(code, init_sql, async_error)
             else:
                 logger.error(f"Query failed: {async_error}")
@@ -160,12 +142,23 @@ class SQLAlchemyMixin:
             or "await_only" in error_str
         )
 
+    def _is_asyncpg_auth_error(self, error: Exception) -> bool:
+        """Check if error is related to asyncpg authentication issues."""
+        error_str = str(error).lower()
+        error_type = type(error).__name__
+        return (
+            "internalclienterror" in error_type.lower()
+            or "authentication" in error_str
+            or "scram" in error_str
+            or "'nonetype' object has no attribute 'group'" in error_str
+        )
+
 
 class Database(BaseModel, ABC):
     """Abstract base class for all databases."""
 
     url: URL = Field(description="URL of the database")
-    model_config = ConfigDict(ignored_types=(_LRUCacheWrapper,), arbitrary_types_allowed=True)
+    model_config = ConfigDict(ignored_types=(_LRUCacheWrapper,), arbitrary_types_allowed=True, frozen=True)
 
     @field_validator("url", mode="before")
     def validate_url(cls, v: Any) -> URL:
@@ -173,13 +166,6 @@ class Database(BaseModel, ABC):
             v = make_url(v)
 
         return v  # type: ignore[no-any-return]
-
-    @field_serializer("url")
-    def serialize_url(self, url: URL) -> str:
-        return str(url)
-
-    def __hash__(self) -> int:
-        return hash(self.url)
 
     @abstractmethod
     async def test_connection(self) -> ConnectionResult:
@@ -214,53 +200,13 @@ class Database(BaseModel, ABC):
 
         try:
             if mode == SearchMode.REGEX:
-                return self._search_tables_regex(table_names, pattern, limit)
+                return search_items_regex(table_names, pattern, limit)
             elif mode == SearchMode.JARO_WINKLER:
-                return self._search_tables_jaro_winkler(table_names, pattern, limit)
+                return search_items_jaro_winkler(table_names, pattern, limit)
             elif mode == SearchMode.BM25:
-                return self._search_tables_bm25(table_names, pattern, limit)
+                return search_items_bm25(table_names, pattern, limit)
         except re.error as e:
             raise DatabaseError(f"Invalid regex pattern '{pattern}': {e}")
         except Exception as e:
             logger.error(f"Table search failed: {e}")
             raise DatabaseError(f"Table search failed: {e}") from e
-
-    def _search_tables_regex(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
-        """Search tables using regex pattern."""
-        regex = re.compile(pattern, re.IGNORECASE)
-        return [name for name in table_names if regex.search(name)][:limit]
-
-    def _search_tables_jaro_winkler(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
-        """Search tables using Jaro-Winkler similarity."""
-        tokenized_pattern = " ".join(tokenize(pattern))
-        similarities = [
-            (name, jaro_winkler_similarity(" ".join(tokenize(name)), tokenized_pattern)) for name in table_names
-        ]
-        return [name for name, _ in sorted(similarities, key=lambda x: x[1], reverse=True)][:limit]
-
-    def _search_tables_bm25(self, table_names: list[str], pattern: str, limit: int) -> list[str]:
-        """Search tables using BM25 ranking algorithm."""
-        query_tokens = tokenize(pattern)
-        if not query_tokens:
-            return []
-
-        valid_tables = [(name, tokenize(name)) for name in table_names]
-        valid_tables = [(name, tokens) for name, tokens in valid_tables if tokens]
-        if not valid_tables:
-            return []
-
-        # Create corpus of tokenized table names
-        corpus = [tokens for _, tokens in valid_tables]
-
-        # Initialize BM25 with the corpus
-        bm25 = BM25Okapi(corpus)
-
-        # Get BM25 scores for the query
-        scores = bm25.get_scores(query_tokens)
-
-        return [
-            name
-            for name, _ in sorted(
-                zip([n for n, _ in valid_tables], scores, strict=False), key=lambda x: x[1], reverse=True
-            )
-        ][:limit]

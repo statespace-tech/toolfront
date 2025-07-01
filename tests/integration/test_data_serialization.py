@@ -3,15 +3,15 @@
 import pandas as pd
 import pytest
 
-from toolfront.models.connection import Connection
+from toolfront.models.connection import DatabaseConnection
 from toolfront.models.query import Query as QueryModel
-from toolfront.tools import query
+from toolfront.tools import query_database
 from toolfront.utils import serialize_dataframe, serialize_response
 
 
 async def execute_query(url: str, sql: str) -> str:
     """Helper function to execute queries in tests."""
-    connection = Connection(url=url)
+    connection = DatabaseConnection(url=url)
     query_obj = QueryModel(connection=connection, code=sql, description="Test query")
 
     # Create a mock context since we don't need real MCP context for tests
@@ -19,12 +19,12 @@ async def execute_query(url: str, sql: str) -> str:
         pass
 
     ctx = MockContext()
-    return await query(ctx, query_obj)
+    return await query_database(ctx, query_obj)
 
 
 async def execute_ddl(url: str, sql: str) -> None:
     """Helper function to execute DDL statements in tests (bypasses read-only mode)."""
-    connection = Connection(url=url)
+    connection = DatabaseConnection(url=url)
     db = await connection.connect()
     # Use the database's execute method directly, which doesn't set read-only mode
     from sqlalchemy import create_engine, text
@@ -103,8 +103,10 @@ class TestRealDataSerialization:
         row_data = data["rows"][0]
         row = dict(zip(columns, row_data, strict=False))
         assert row["text_col"] == "Test text with special chars: áéíóú & <>\"'"
-        assert row["int_col"] == "42"  # DataFrame serialization converts to strings
-        assert row["bool_col"] == "True"  # DataFrame serialization converts to strings
+        # DataFrame serialization converts to strings
+        assert row["int_col"] == "42"
+        # DataFrame serialization converts to strings
+        assert row["bool_col"] == "True"
         assert "2024-01-15" in str(row["date_col"])
 
     @pytest.mark.asyncio
@@ -166,7 +168,8 @@ class TestRealDataSerialization:
         row_data = data["rows"][0]
         row = dict(zip(columns, row_data, strict=False))
         assert "🚀" in row["text_col"]
-        assert row["int_col"] == "42"  # DataFrame serialization converts to strings
+        # DataFrame serialization converts to strings
+        assert row["int_col"] == "42"
         assert row["enum_col"] == "medium"
 
     @pytest.mark.asyncio
@@ -234,9 +237,11 @@ class TestRealDataSerialization:
         columns = data["columns"]
         first_row_data = data["rows"][0]
         first_row = dict(zip(columns, first_row_data, strict=False))
-        assert first_row["nullable_text"] is None  # NULL values preserved as None
+        # NULL values preserved as None
+        assert first_row["nullable_text"] is None
         assert first_row["empty_text"] == ""
-        assert first_row["nullable_int"] is None  # NULL values preserved as None
+        # NULL values preserved as None
+        assert first_row["nullable_int"] is None
         assert first_row["zero_int"] == "0"
 
     def test_dataframe_serialization_edge_cases(self, sample_data):

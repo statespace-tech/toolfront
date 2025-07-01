@@ -4,7 +4,7 @@ import contextlib
 
 import pytest
 
-from toolfront.models.connection import Connection
+from toolfront.models.connection import DatabaseConnection
 
 
 class TestSQLServerFeatures:
@@ -13,7 +13,7 @@ class TestSQLServerFeatures:
     @pytest.mark.asyncio
     async def test_sqlserver_session_initialization(self, sqlserver_url):
         """Test that SQL Server sets READ UNCOMMITTED isolation level."""
-        connection = Connection(url=sqlserver_url)
+        connection = DatabaseConnection(url=sqlserver_url)
         database = await connection.connect()
 
         init_sql = database.initialize_session()
@@ -25,7 +25,7 @@ class TestSQLServerFeatures:
     @pytest.mark.asyncio
     async def test_sqlserver_get_tables(self, sqlserver_url):
         """Test SQL Server table discovery."""
-        connection = Connection(url=sqlserver_url)
+        connection = DatabaseConnection(url=sqlserver_url)
         database = await connection.connect()
 
         tables = await database.get_tables()
@@ -39,7 +39,7 @@ class TestSQLServerFeatures:
     @pytest.mark.asyncio
     async def test_sqlserver_schema_table_format(self, sqlserver_url):
         """Test SQL Server schema.table naming convention."""
-        connection = Connection(url=sqlserver_url)
+        connection = DatabaseConnection(url=sqlserver_url)
         database = await connection.connect()
 
         # Create a temporary table for testing
@@ -84,7 +84,7 @@ class TestSQLServerFeatures:
     @pytest.mark.asyncio
     async def test_sqlserver_data_types(self, sqlserver_url):
         """Test SQL Server data type handling."""
-        connection = Connection(url=sqlserver_url)
+        connection = DatabaseConnection(url=sqlserver_url)
         database = await connection.connect()
 
         # Create table with various SQL Server data types
@@ -122,7 +122,7 @@ class TestSQLServerFeatures:
     @pytest.mark.asyncio
     async def test_sqlserver_top_syntax(self, sqlserver_url):
         """Test SQL Server TOP syntax in queries."""
-        connection = Connection(url=sqlserver_url)
+        connection = DatabaseConnection(url=sqlserver_url)
         database = await connection.connect()
 
         # Create and populate test table
@@ -157,7 +157,7 @@ class TestSQLServerFeatures:
     @pytest.mark.asyncio
     async def test_sqlserver_multiple_schemas(self, sqlserver_url):
         """Test SQL Server with multiple schemas."""
-        connection = Connection(url=sqlserver_url)
+        connection = DatabaseConnection(url=sqlserver_url)
         database = await connection.connect()
 
         # Create a custom schema and table
@@ -196,7 +196,7 @@ class TestSQLServerFeatures:
     @pytest.mark.asyncio
     async def test_sqlserver_identity_columns(self, sqlserver_url):
         """Test SQL Server identity column handling."""
-        connection = Connection(url=sqlserver_url)
+        connection = DatabaseConnection(url=sqlserver_url)
         database = await connection.connect()
 
         # Create table with identity column
@@ -229,7 +229,7 @@ class TestSQLServerFeatures:
         """Test SQL Server connection error handling."""
         # Test with invalid database
         invalid_url = sqlserver_url.replace("/master", "/nonexistent_db")
-        connection = Connection(url=invalid_url)
+        connection = DatabaseConnection(url=invalid_url)
         database = await connection.connect()
 
         result = await database.test_connection()
@@ -239,7 +239,7 @@ class TestSQLServerFeatures:
     @pytest.mark.asyncio
     async def test_sqlserver_inspect_table_validation(self, sqlserver_url):
         """Test SQL Server table path validation in inspect_table."""
-        connection = Connection(url=sqlserver_url)
+        connection = DatabaseConnection(url=sqlserver_url)
         database = await connection.connect()
 
         # Test invalid table path formats

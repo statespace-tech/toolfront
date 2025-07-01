@@ -21,7 +21,7 @@ class SQLServer(SQLAlchemyMixin, Database):
             AND table_type IN ('BASE TABLE', 'VIEW')
             ORDER BY table_schema, table_name;
         """
-        data = await self.query(query)
+        data = await self.query(code=query)
         # Use positional access to avoid driver-specific column naming inconsistencies
         return data.apply(lambda x: f"{x.iloc[0]}.{x.iloc[1]}", axis=1).tolist()
 
@@ -35,7 +35,7 @@ class SQLServer(SQLAlchemyMixin, Database):
         table_schema, table_name = splits
 
         try:
-            query = f"""
+            code = f"""
                 SELECT
                     column_name,
                     data_type,
@@ -51,7 +51,7 @@ class SQLServer(SQLAlchemyMixin, Database):
                 ORDER BY ordinal_position;
             """
 
-            result = await self.query(query)
+            result = await self.query(code=code)
             if result.empty:
                 raise ValueError(f"Table or view '{table_path}' not found or has no columns")
 
@@ -71,6 +71,6 @@ class SQLServer(SQLAlchemyMixin, Database):
             raise ValueError(f"Sample size must be positive, got {n}")
 
         try:
-            return await self.query(f"SELECT TOP {n} * FROM [{splits[0]}].[{splits[1]}]")
+            return await self.query(code=f"SELECT TOP {n} * FROM [{splits[0]}].[{splits[1]}]")
         except Exception as e:
             raise ValueError(f"Failed to sample table '{table_path}': {str(e)}") from e

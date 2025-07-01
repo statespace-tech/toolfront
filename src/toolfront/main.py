@@ -4,19 +4,66 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Literal
+from urllib.parse import parse_qs, urlparse
 
 import click
+import diskcache
 import httpx
+import jsonref
 from mcp.server.fastmcp import FastMCP
-from pydantic import Field
-from sqlalchemy.engine.url import make_url
+from pydantic import Field, SecretStr
 
 from toolfront.config import API_KEY_HEADER, BACKEND_URL
 from toolfront.models.connection import Connection
-from toolfront.tools import discover, inspect, query, sample, search_queries, search_tables, test
+from toolfront.tools import (
+    discover,
+    inspect_endpoint,
+    inspect_table,
+    query_database,
+    request_api,
+    sample_table,
+    search_endpoints,
+    search_queries,
+    search_tables,
+)
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("toolfront")
+logger.setLevel(logging.INFO)
+
+_cache = diskcache.Cache(".toolfront_cache")
+
+
+def get_openapi_spec(url: str) -> dict | None:
+    """Get OpenAPI spec with retries if cached result is None."""
+    cache_key = url
+
+    # Check if we have a cached result
+    if cache_key in _cache:
+        cached_result = _cache[cache_key]
+        if cached_result is not None:
+            logger.debug(f"Cache hit for {url}")
+            return cached_result
+        else:
+            # Remove None from cache and retry
+            logger.debug(f"Cached None for {url}, removing and retrying")
+            del _cache[cache_key]
+
+    # Download and cache if successful
+    try:
+        logger.debug(f"Downloading OpenAPI spec for {url}")
+        with httpx.Client() as client:
+            response = client.get(url)
+            response.raise_for_status()
+            spec = response.json()
+
+            parsed_spec = jsonref.replace_refs(spec)
+            # Only cache non-None results
+            _cache.set(cache_key, parsed_spec, expire=3600)  # 1 hour TTL
+            logger.info(f"Successfully retrieved spec for {url}")
+            return parsed_spec
+    except Exception as e:
+        logger.warning(f"Failed to retrieve spec from {url}: {e}")
+        return None
 
 
 @dataclass
@@ -25,29 +72,121 @@ class AppContext:
     url_map: dict = Field(default_factory=dict)
 
 
-async def test_connections(urls: tuple[str, ...]) -> None:
-    """Test all connections in parallel"""
-    if not urls:
-        return
+async def process_datasource(url: str) -> tuple[str, dict]:
+    """Process datasource: parse, download spec, test connection"""
 
-    async def _test_connection(url: str) -> None:
-        """Test database connection"""
-        connection = Connection(url=url)
-        result = await connection.test_connection()
-        if not result.connected:
-            raise RuntimeError(f"Failed to connect to {url}: {result.message}")
-        logger.info(f"Connection successful to {url}")
+    parsed = urlparse(url)
+    extra = {}
 
-    await asyncio.gather(*(_test_connection(url) for url in urls))
+    if parsed.scheme in ("http", "https"):
+        spec = get_openapi_spec(url)
+
+        servers = spec.get("servers", [])
+        url = servers[0].get("url", None) if servers else None
+
+        # If no API URL is provided, use the parsed URL
+        if url is None:
+            url = f"{parsed.scheme}://{parsed.netloc}"
+        else:
+            # If the API URL is a relative path, prepend the parsed URL
+            if url.startswith("/"):
+                url = f"https://{parsed.netloc}{url}"
+
+        # Parse query parameters into a dictionary
+        query_params = parse_qs(parsed.query)
+        # Convert from lists to single values
+        query_params = {k: v[0] if len(v) == 1 else v for k, v in query_params.items()}
+
+        # Handle authentication based on OpenAPI spec
+        auth_headers = {}
+        auth_query_params = {}
+
+        # Common auth parameter names
+        auth_param_names = ["apikey", "api_key", "token", "access_token", "bearer", "key", "auth"]
+
+        # Check OpenAPI spec for security schemes
+        if spec and "components" in spec and "securitySchemes" in spec["components"]:
+            for _scheme_name, scheme in spec["components"]["securitySchemes"].items():
+                if scheme.get("type") == "apiKey":
+                    param_name = scheme.get("name")
+                    param_location = scheme.get("in", "query")
+
+                    # Find matching parameter in query params (case-insensitive)
+                    for qp_name, qp_value in list(query_params.items()):
+                        if qp_name.lower() == param_name.lower():
+                            if param_location == "header":
+                                auth_headers[param_name] = qp_value
+                                del query_params[qp_name]
+                            elif param_location == "query":
+                                auth_query_params[qp_name] = qp_value
+                                del query_params[qp_name]
+                            break
+                elif scheme.get("type") == "http" and scheme.get("scheme") == "bearer":
+                    # Look for bearer/token in query params
+                    for qp_name, qp_value in list(query_params.items()):
+                        if qp_name.lower() in ["bearer", "token", "access_token"]:
+                            auth_headers["Authorization"] = f"Bearer {qp_value}"
+                            del query_params[qp_name]
+                            break
+        else:
+            # No spec or security schemes - use heuristics
+            for qp_name, qp_value in list(query_params.items()):
+                if qp_name.lower() in auth_param_names:
+                    if qp_name.lower() in ["bearer", "token", "access_token"]:
+                        auth_headers["Authorization"] = f"Bearer {qp_value}"
+                        del query_params[qp_name]
+                    else:
+                        # Default to keeping in query params (like Polygon)
+                        auth_query_params[qp_name] = qp_value
+                        del query_params[qp_name]
+
+        extra = {
+            "openapi_spec": spec,
+            "query_params": query_params,
+            "auth_headers": auth_headers,
+            "auth_query_params": auth_query_params,
+        }
+
+    # Store SecretStr objects for automatic obfuscation
+    # API URLs don't need SecretStr (no passwords typically), database URLs do
+    url_key = url if parsed.scheme in ("http", "https") else SecretStr(url)
+
+    url_map = {url_key: {"parsed": parsed, "extra": extra}}
+
+    try:
+        logger.info("Creating connection from URL (password automatically hidden)")
+        # Pass the actual URL string to Connection.from_url, it will create its own SecretStr
+        connection = Connection.from_url(url)
+        logger.info(f"Connection type: {type(connection)}")
+
+        logger.info("Testing connection")
+        result = await connection.test_connection(url_map=url_map)
+
+        if result.connected:
+            logger.warning("Connection successful")
+        else:
+            logger.warning(f"Connection failed: {result.message}")
+    except Exception as e:
+        logger.error(f"Exception during connection process: {type(e).__name__}: {e}")
+        import traceback
+
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        # Create a failed result to maintain compatibility
+        from toolfront.models.database import ConnectionResult
+
+        result = ConnectionResult(connected=False, message=f"Connection error: {e}")
+
+    return url_map
 
 
-def get_mcp(urls: tuple[str, ...], api_key: str | None = None) -> FastMCP:
+async def get_mcp(urls: tuple[str, ...], api_key: str | None = None) -> FastMCP:
     cleaned_urls = [url.lstrip("'").rstrip("'") for url in urls]
 
-    # Test all connections asynchronously before starting the MCP server
-    url_map = {str(url_obj): url_obj for url_obj in map(make_url, cleaned_urls)}
+    # Process all datasources concurrently
+    datasource_results = await asyncio.gather(*[process_datasource(url) for url in cleaned_urls])
 
-    asyncio.run(test_connections(cleaned_urls))
+    # Build url_map from results
+    url_map = {k: v for d in datasource_results for k, v in d.items()}
 
     @asynccontextmanager
     async def app_lifespan(mcp_server: FastMCP) -> AsyncIterator[AppContext]:
@@ -62,11 +201,13 @@ def get_mcp(urls: tuple[str, ...], api_key: str | None = None) -> FastMCP:
     mcp = FastMCP("ToolFront MCP server", lifespan=app_lifespan)
 
     mcp.add_tool(discover)
-    mcp.add_tool(inspect)
-    mcp.add_tool(sample)
-    mcp.add_tool(query)
+    mcp.add_tool(inspect_endpoint)
+    mcp.add_tool(inspect_table)
+    mcp.add_tool(query_database)
+    mcp.add_tool(request_api)
+    mcp.add_tool(sample_table)
+    mcp.add_tool(search_endpoints)
     mcp.add_tool(search_tables)
-    mcp.add_tool(test)
 
     if api_key:
         mcp.add_tool(search_queries)
@@ -81,7 +222,7 @@ def get_mcp(urls: tuple[str, ...], api_key: str | None = None) -> FastMCP:
 def main(api_key: str | None = None, transport: Literal["stdio", "sse"] = "stdio", urls: tuple[str, ...] = ()) -> None:
     """ToolFront CLI - Run the MCP server"""
     logger.info("Starting MCP server with urls: %s", urls)
-    mcp_instance = get_mcp(urls, api_key)
+    mcp_instance = asyncio.run(get_mcp(urls, api_key))
     mcp_instance.run(transport=transport)
 
 

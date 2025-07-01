@@ -125,3 +125,6 @@ cython_debug/
 .ruff_cache/
 AGENT.md
 CLAUDE.md
+
+# MacOS
+*.DS_Store

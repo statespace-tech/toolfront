@@ -102,7 +102,7 @@ class Databricks(Database):
                     WHERE table_type = 'BASE TABLE'
                     ORDER BY table_catalog, table_schema, table_name
                 """
-                data = await self.query(query)
+                data = await self.query(code=query)
 
                 if data.empty:
                     return []
@@ -133,13 +133,13 @@ class Databricks(Database):
             if len(splits) == 3:
                 catalog, schema, table = splits
                 try:
-                    query = self._get_detailed_table_info(catalog, schema, table)
-                    return await self.query(query)
+                    code = self._get_detailed_table_info(catalog, schema, table)
+                    return await self.query(code=code)
                 except Exception as e:
                     logger.warning(f"Failed to inspect using information_schema: {e}")
-                    return await self.query(f"DESCRIBE TABLE {table_path}")
+                    return await self.query(code=f"DESCRIBE TABLE {table_path}")
             elif len(splits) == 2:
-                return await self.query(f"DESCRIBE TABLE {table_path}")
+                return await self.query(code=f"DESCRIBE TABLE {table_path}")
             else:
                 raise ValueError(f"Invalid table path: {table_path}. Expected format: [catalog.]schema.table")
 
@@ -156,16 +156,16 @@ class Databricks(Database):
             logger.warning(f"Table path doesn't contain schema: {table_path}")
 
         try:
-            return await self.query(f"SELECT * FROM {table_path} LIMIT {n}")
+            return await self.query(code=f"SELECT * FROM {table_path} LIMIT {n}")
         except Exception as limit_error:
             logger.warning(f"LIMIT failed: {limit_error}, trying TABLESAMPLE")
 
             try:
-                return await self.query(f"SELECT * FROM {table_path} TABLESAMPLE ({n} ROWS)")
+                return await self.query(code=f"SELECT * FROM {table_path} TABLESAMPLE ({n} ROWS)")
             except Exception as sample_error:
                 logger.warning(f"TABLESAMPLE failed: {sample_error}, retrying LIMIT")
                 try:
-                    return await self.query(f"SELECT * FROM {table_path} LIMIT {n}")
+                    return await self.query(code=f"SELECT * FROM {table_path} LIMIT {n}")
                 except Exception as e:
                     logger.error(f"Failed to sample table {table_path}: {e}")
                     raise DatabaseError(f"Failed to sample table {table_path}: {e}") from e

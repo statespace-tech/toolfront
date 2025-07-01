@@ -2,7 +2,7 @@
 
 import pytest
 
-from toolfront.models.connection import Connection
+from toolfront.models.connection import DatabaseConnection
 from toolfront.models.database import SearchMode
 
 
@@ -15,7 +15,7 @@ class TestDatabaseIntegration:
         urls = [postgres_url, mysql_url, sqlite_url, duckdb_url]
 
         for url in urls:
-            connection = Connection(url=url)
+            connection = DatabaseConnection(url=url)
             db = await connection.connect()
             result = await db.test_connection()
 
@@ -29,7 +29,7 @@ class TestDatabaseIntegration:
         # Use a known system table that should always exist
         table_name = "information_schema.tables"
 
-        connection = Connection(url=postgres_url)
+        connection = DatabaseConnection(url=postgres_url)
         db = await connection.connect()
         result = await db.inspect_table(table_name)
 
@@ -43,7 +43,7 @@ class TestDatabaseIntegration:
         # Use a known system table
         table_name = "information_schema.tables"
 
-        connection = Connection(url=postgres_url)
+        connection = DatabaseConnection(url=postgres_url)
         db = await connection.connect()
         result = await db.sample_table(table_name, n=3)
 
@@ -62,7 +62,7 @@ class TestDatabaseIntegration:
         ]
 
         for url, sql in test_cases:
-            connection = Connection(url=url)
+            connection = DatabaseConnection(url=url)
             db = await connection.connect()
             result = await db.query(sql)
 
@@ -74,7 +74,7 @@ class TestDatabaseIntegration:
     async def test_table_searchning_pattern_matching(self, postgres_url):
         """Test table searchning for pattern matching."""
         # Test with a common pattern
-        connection = Connection(url=postgres_url)
+        connection = DatabaseConnection(url=postgres_url)
         db = await connection.connect()
         result = await db.search_tables("information", mode=SearchMode.REGEX, limit=10)
 
@@ -84,7 +84,7 @@ class TestDatabaseIntegration:
     @pytest.mark.asyncio
     async def test_error_handling_invalid_queries(self, postgres_url):
         """Test that database handles invalid queries gracefully."""
-        connection = Connection(url=postgres_url)
+        connection = DatabaseConnection(url=postgres_url)
         db = await connection.connect()
 
         # Test with invalid SQL - this should raise a DatabaseError
@@ -96,7 +96,7 @@ class TestDatabaseIntegration:
     @pytest.mark.asyncio
     async def test_error_handling_nonexistent_tables(self, postgres_url):
         """Test that database handles nonexistent tables gracefully."""
-        connection = Connection(url=postgres_url)
+        connection = DatabaseConnection(url=postgres_url)
         db = await connection.connect()
 
         # Test with nonexistent table - this should raise an exception
@@ -118,7 +118,7 @@ class TestConcurrentConnections:
         import pandas as pd
 
         async def run_query(query_id: int):
-            connection = Connection(url=postgres_url)
+            connection = DatabaseConnection(url=postgres_url)
             db = await connection.connect()
             result = await db.query(f"SELECT {query_id} as query_id, pg_backend_pid() as backend_pid")
             return result
@@ -141,12 +141,12 @@ class TestConcurrentConnections:
         import pandas as pd
 
         async def test_postgres():
-            connection = Connection(url=postgres_url)
+            connection = DatabaseConnection(url=postgres_url)
             db = await connection.connect()
             return await db.query("SELECT 'postgres' as db_type")
 
         async def test_mysql():
-            connection = Connection(url=mysql_url)
+            connection = DatabaseConnection(url=mysql_url)
             db = await connection.connect()
             return await db.query("SELECT 'mysql' as db_type")
 
