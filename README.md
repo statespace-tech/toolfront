@@ -22,7 +22,7 @@
 
 </div>
 
-> It's hard to ask AI about your data. Out-of-the-box models struggle to understand large databases and APIs, while fine-tuning models is costly and time-consuming. ToolFront solves this by helping AI models discover and learn about your data on the fly, so they can quickly answer your questions.
+> It's hard to ask AI about your data. Out-of-the-box models struggle to understand large databases and APIs, while fine-tuned models are expensive and brittle. ToolFront solves this by helping AI models discover and learn about your data on the fly, so they can quickly answer your questions.
 
 <br>
 <div align="center">
@@ -32,9 +32,9 @@
 
 ## Features
 
-- **🌊 Seamless**: Bring AI to all your databases, warehouses, and APIs.
+- **🌊 Seamless**: Connect AI to all your databases, warehouses, and APIs.
 - **⚡ Instant**: Get up and running in seconds with a single command.
-- **🧩 Pluggable**: Works with any LLM, agent library, and IDE that supports MCP.
+- **🧩 Pluggable**: Works with any LLM, agent framework, and IDE that supports MCP.
 - **🧠 Self-improving**: Your AI learns from experience, becoming smarter and faster over time.
 - **🔒 Secure**: Your data stays local, private, and under your control.
 
@@ -47,20 +47,20 @@ ToolFront runs on your computer through an **[MCP server](https://modelcontextpr
 
 - **[uv](https://docs.astral.sh/uv/)** or **[Docker](https://www.docker.com/)** to run the MCP server (we recommend **uv**)
 - **URLs** of your databases and APIs - [see below](#data-sources)
-- **API key** (optional) enables self-improving AI with the teacher API
+- **API key** (optional) to activate self-improving AI with the learning API
 
 
-### Run ToolFront with your AI Framework or IDE
+### Run ToolFront inside your AI Framework or IDE
 
 First, create an MCP config by following the instructions for your chosen framework or IDE. 
 
 | IDE | Setup Instructions | Install with UV | Install with Docker |
 |-----|-------------------|-----------------|-------------------|
-| [**Cursor**](https://docs.cursor.com/context/model-context-protocol#manual-configuration) | Settings → Cursor Settings → MCP Tools (or create `.cursor/mcp.json` file) | [🔗 Quick Install](https://cursor.com/install-mcp?name=toolfront&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJ0b29sZnJvbnRbYWxsXSIsIkRBVEFCQVNFLVVSTC0xIiwiREFUQUJBU0UtVVJMLTIiLCItLWFwaS1rZXkiLCJZT1VSLUFQSS1LRVkiXX0K) | [🔗 Quick Install](https://cursor.com/install-mcp?name=toolfront&config=eyJjb21tYW5kIjoiZG9ja2VyIiwiYXJncyI6WyJydW4iLCItaSIsImFudGlkbWcvdG9vbGZyb250IiwiREFUQUJBU0UtVVJMLTEiLCJEQVRBQkFTRS1VUkwtMiIsIi0tYXBpLWtleSIsIllPVVItQVBJLUtFWSJdfQo=) |
-| [**GitHub Copilot (VSCode)**](https://docs.github.com/en/copilot/customizing-copilot/using-model-context-protocol/extending-copilot-chat-with-mcp) | Copilot icon → Edit preferences → Copilot Chat → MCP | [🔗 Quick Install](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22toolfront[all]%22%2C%22DATABASE-URL-1%22%2C%22DATABASE-URL-2%22%2C%22--api-key%22%2C%22YOUR-API-KEY%22%5D%7D) | [🔗 Quick Install](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22antidmg%2Ftoolfront%22%2C%22DATABASE-URL-1%22%2C%22DATABASE-URL-2%22%2C%22--api-key%22%2C%22YOUR-API-KEY%22%5D%7D) |
+| [**Cursor**](https://docs.cursor.com/context/model-context-protocol#manual-configuration) | Settings → Cursor Settings → MCP Tools (or create `.cursor/mcp.json` file) | [🔗 Quick Install](https://cursor.com/install-mcp?name=toolfront&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJ0b29sZnJvbnRbYWxsXSIsIkRBVEFCQVNFLVVSTCIsIkFQSS1VUkwiLCItLWFwaS1rZXkiLCJZT1VSLUFQSS1LRVkiXX0=) | [🔗 Quick Install](https://cursor.com/install-mcp?name=toolfront&config=eyJjb21tYW5kIjoiZG9ja2VyIiwiYXJncyI6WyJydW4iLCItaSIsImFudGlkbWcvdG9vbGZyb250IiwiREFUQUJBU0UtVVJMIiwiQVBJLVVSTCIsIi0tYXBpLWtleSIsIllPVVItQVBJLUtFWSJdfQ==) |
+| [**GitHub Copilot (VSCode)**](https://docs.github.com/en/copilot/customizing-copilot/using-model-context-protocol/extending-copilot-chat-with-mcp) | Copilot icon → Edit preferences → Copilot Chat → MCP | [🔗 Quick Install](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22toolfront%5Ball%5D%22%2C%22DATABASE-URL%22%2C%22API-URL%22%2C%22--api-key%22%2C%22YOUR-API-KEY%22%5D%7D) | [🔗 Quick Install](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22antidmg/toolfront%22%2C%22DATABASE-URL%22%2C%22API-URL%22%2C%22--api-key%22%2C%22YOUR-API-KEY%22%5D%7D) |
 
 
-Then, add your databse and API urls to the MCP configuration:
+Then, add as many databse and API URLs to the MCP configuration as you need
 
 <details open>
 <summary><strong>Edit UV Config</strong></summary>
@@ -73,6 +73,7 @@ Then, add your databse and API urls to the MCP configuration:
       "toolfront[all]",
       "postgresql://user:pass@host:port/db",
       "https://api.com/openapi.json?api_key=key",
+      "...",
       "--api-key", "YOUR-API-KEY" // Optional: learning API
     ]
   }
@@ -93,7 +94,7 @@ Then, add your databse and API urls to the MCP configuration:
       "-i",
       "antidmg/toolfront",
       "postgresql://user:pass@host:port/db",
-      "https://api.com/openapi.json?secret=my_secret",
+      "https://api.com/openapi.json?token=my_token",
       "--api-key", "YOUR-API-KEY" // Optional: learning API
     ]
   }
@@ -106,21 +107,21 @@ Then, add your databse and API urls to the MCP configuration:
 You're all set! You can now ask your AI agent about your databases.
 
 > [!TIP]
-> By default, `uvx toolfront[all]` installs all database drivers. To keep things lighter, you can install only the ones you need e.g. `uvx toolfront[postgres,mysql]`. See [Databases](#databases) for the full list of drivers.
+> By default, `uvx toolfront[all]` installs all database drivers. For a lighter setup, you can directly install the extra drivers you need e.g. `uvx toolfront[postgres,mysql]`. See [Databases](#databases) for the full list of extras.
 
-### Running ToolFront's MCP
+### Run ToolFront's MCP directly
 
 You can also spin up the the ToolFront MCP server with SSE or stdio using the the `--transport` flag.
 
 ```bash
 # Using uvx and SSE
-uvx "toolfront[postgres]" "postgres://user:pass@host:port/db" "https://api.com/spec.json?secret=my_secret" --transport sse
+uvx "toolfront[postgres]" "postgres://user:pass@host:port/db" "https://api.com/spec.json?token=my_token" --transport sse
 
 # Using Docker and stdio
-docker run -i antidmg/toolfront "postgres://user:pass@host:port/db" "https://api.com/spec.json?secret=my_secret" --transport stdio
+docker run -i antidmg/toolfront "postgres://user:pass@host:port/db" "https://api.com/spec.json?token=my_token" --transport stdio
 ```
 
-You can also enable self-improving AI by passing your API key with the `--api-key "YOUR-API-KEY"` flag.
+You can also activate self-improving AI by passing your learning API key with the `--api-key "YOUR-API-KEY"` flag.
 
 > [!TIP]
 > **Version control**: You can pin specific versions of ToolFront for consistency. Use `"toolfront[all]==0.1.x"` for UV or `antidmg/toolfront:0.1.x` for Docker.
@@ -128,11 +129,13 @@ You can also enable self-improving AI by passing your API key with the `--api-ke
 
 ## Learning API
 
-> AI agents can be frustrating. Every interaction feels like starting from scratch, while models constantly relearn what they already knew. ToolFront fixes this with a learning API for your AI, surfacing the right knowledge exactly when it’s needed so your AI can learn instantly.
+> AI agents can be frustrating. Every interaction feels like starting from scratch, while models constantly relearn what they already knew. ToolFront fixes this with a learning API for your AI, surfacing the right knowledge exactly when it's needed so your AI can learn instantly.
 
 The learning API uses [in-context learning](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html#in-context-learning-key-concept), a novel training-free learning framework pioneered by OpenAI. By augmenting your LLM's context with ever-growing query samples, your agents can reason by analogy over your databases and APIs to quickly arrive at the correct answer.
 
 ## Data Sources
+
+ToolFront supports both databases and APIs:
 
 ### Databases
 
@@ -161,19 +164,14 @@ ToolFronts supports virtually **all** APIs that have an [OpenAPI](https://www.op
 
 | API | Specification URL |
 |-----|------------------|
+| Wikipedia | `https://en.wikipedia.org/api/rest_v1/?spec` |
 | GitHub | `https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json` |
 | Stripe | `https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.json` |
 | Slack | `https://raw.githubusercontent.com/slackapi/slack-api-specs/master/web-api/slack_web_openapi_v2.json` |
 | Discord | `https://raw.githubusercontent.com/discord/discord-api-spec/main/specs/openapi.json` |
-| Twilio | `https://raw.githubusercontent.com/twilio/twilio-oai/main/spec/json/twilio_api_v2010.json` |
-| Polygon.io | `https://api.polygon.io/openapi` |
-| SendGrid | `https://api.sendgrid.com/v3/api_schema.json` |
-| Jira | `https://developer.atlassian.com/cloud/jira/platform/swagger-v3.v3.json` |
-| DocuSign | `https://raw.githubusercontent.com/docusign/OpenAPI-Specifications/master/esignature.rest.swagger-v2.1.json` |
-| Zoom | `https://marketplace.zoom.us/docs/api-reference/zoom-api/openapi.json` |
 
 > [!NOTE]
-> **Authentication**: For APIs that require authentication, append your API key and any additional parameters to the specification URL e.g., `https://api.polygon.io/openapi?apiKey=YOUR-API-KEY`.
+> **Authentication**: For APIs that require authentication, append your API key or token to the specification URL (e.g., `https://api.polygon.io/spec?token=YOUR-API-TOKEN`). ToolFront will automatically detect and use the authentication parameters in the appropriate places.
 
 ## Tools
 
@@ -210,22 +208,14 @@ ToolFront stands out with *multi-database* support, *self-improving* AI, and a *
 </details>
 
 <details>
-<summary><strong>How does ToolFront's learning API work?</strong></summary>
-<br>
-
-ToolFront's learning API uses (in-context learning)[https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html#in-context-learning-key-concept], a novel training-free learning framework pioneered by OpenAI. By augmenting your LLM's context with ever-growing query samples, your agents can reason by analogy over your databases and APIs and arrive at the answer queicker.
-
-</details>
-
-<details>
 <summary><strong>How does ToolFront keep my data safe?</strong></summary>
 <br>
 
-- **Local execution**: All database connections and queries run on your machine.
+- **Local execution**: All database connections and queries run on machine.
 - **No secrets exposure**: Database secrets are never shared with LLMs.
 - **Read-only operations**: Only safe, read-only database queries are allowed.
 - **No data transmission**: Your database content never leaves your environment.
-- **Secure MCP protocol**: Direct communication between agents and databases with no third-party storage.
+- **Secure MCP protocol**: Direct communication between agents and databases without third-party storage.
 
 </details>
 
@@ -233,9 +223,7 @@ ToolFront's learning API uses (in-context learning)[https://transformer-circuits
 <summary><strong>How do I troubleshoot connection issues?</strong></summary>
 <br>
 
-Run the `uv run toolfront[all]` or `docker run` commands with your database URLs directly from the command line. ToolFront automatically tests all connections before starting and shows detailed error messages if any connection fails.
-
-If you're still having trouble, double-check your database URLs using the examples in the [Databases section](#data-sources) above.
+Run the `uv run toolfront[all]` or `docker run` commands with your database URLs directly from the command line. ToolFront automatically tests all connections when starting and will display detailed errors if a connection fails. If you're still having trouble, double-check your database and API URLs using the examples in the [Databases section](#data-sources) above.
 
 </details>
 
