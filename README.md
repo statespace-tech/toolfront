@@ -38,6 +38,13 @@
 - **🧠 Self-improving**: Your AI learns from experience, becoming smarter and faster over time.
 - **🔒 Secure**: Your data stays local, private, and under your control.
 
+## Learning API
+
+Your AI models need to be fast and accurate, but it's hard to get the right data to make that happen. ToolFront's learning API automatically gathers information about your databases and APIs to help your AI get better over time.
+
+> [!NOTE]
+> The learning API is an add-on, and currently in beta. We're actively working on it and would love your feedback!
+
 ## Quickstart
 
 ToolFront runs on your computer through an **[MCP server](https://modelcontextprotocol.io/)**, a secure protocol to connect apps to LLMs.
@@ -58,7 +65,7 @@ First, create an MCP config by following the instructions for your chosen framew
 | [**Cursor**](https://docs.cursor.com/context/model-context-protocol#manual-configuration) | Settings → Cursor Settings → MCP Tools (or create `.cursor/mcp.json` file) | [🔗 Quick Install](https://cursor.com/install-mcp?name=toolfront&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJ0b29sZnJvbnRbYWxsXSIsIkRBVEFCQVNFLVVSTCIsIkFQSS1VUkwiLCItLWFwaS1rZXkiLCJZT1VSLUFQSS1LRVkiXX0=) | [🔗 Quick Install](https://cursor.com/install-mcp?name=toolfront&config=eyJjb21tYW5kIjoiZG9ja2VyIiwiYXJncyI6WyJydW4iLCItaSIsImFudGlkbWcvdG9vbGZyb250IiwiREFUQUJBU0UtVVJMIiwiQVBJLVVSTCIsIi0tYXBpLWtleSIsIllPVVItQVBJLUtFWSJdfQ==) |
 | [**GitHub Copilot (VSCode)**](https://docs.github.com/en/copilot/customizing-copilot/using-model-context-protocol/extending-copilot-chat-with-mcp) | Copilot icon → Edit preferences → Copilot Chat → MCP | [🔗 Quick Install](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22toolfront%5Ball%5D%22%2C%22DATABASE-URL%22%2C%22API-URL%22%2C%22--api-key%22%2C%22YOUR-API-KEY%22%5D%7D) | [🔗 Quick Install](https://insiders.vscode.dev/redirect/mcp/install?name=toolfront&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22antidmg/toolfront%22%2C%22DATABASE-URL%22%2C%22API-URL%22%2C%22--api-key%22%2C%22YOUR-API-KEY%22%5D%7D) |
 
-Then, add as many databse and API URLs to the MCP configuration as you need:
+Then, add as many database and API URLs to the MCP configuration as you need:
 
 <details open>
 <summary><strong>Edit UV Config</strong></summary>
@@ -102,14 +109,14 @@ Then, add as many databse and API URLs to the MCP configuration as you need:
 </details>
 <br>
 
-You're all set! You can now ask your AI agent about your databases.
+You're all set! You can now ask your AI agents about your data.
 
 > [!TIP]
-> By default, `uvx toolfront[all]` installs all database drivers. For a lighter setup, you can directly install the extra drivers you need e.g. `uvx toolfront[postgres,mysql]`. See [Databases](#databases) for the full list of extras.
+> By default, `uvx toolfront[all]` installs all package extras. For a lighter setup, you can directly install the extras you need e.g. `uvx toolfront[postgres,mysql]`. See [Databases](#databases) for the full list of extras.
 
 ### Run directly
 
-Spin up the ToolFront MCP server with SSE or stdio using the the `--transport` flag.
+Spin up the ToolFront MCP server with SSE or stdio using the `--transport` flag.
 
 ```bash
 # Using uvx and SSE
@@ -119,20 +126,11 @@ uvx "toolfront[postgres]" "postgres://user:pass@host:port/db" "https://api.com/s
 docker run -i antidmg/toolfront "postgres://user:pass@host:port/db" "https://api.com/spec.json?token=my_token" --transport stdio
 ```
 
-You can also activate self-improving AI by passing your learning API key with the `--api-key "YOUR-API-KEY"` flag.
+Optionally, activate self-improving AI by passing your learning API key with the `--api-key "YOUR-API-KEY"` flag.
 
 > [!TIP]
-> **Version control**: You can pin specific versions of ToolFront for consistency. Use `"toolfront[all]==0.1.x"` for UV or `antidmg/toolfront:0.1.x` for Docker.
+> **Version control**: To pin specific versions of ToolFront, use `"toolfront[all]==0.1.x"` for UV or `antidmg/toolfront:0.1.x` for Docker.
 
-
-## Learning API
-
-> AI agents can be frustrating. Every interaction feels like starting from scratch, while models constantly relearn what they already knew. ToolFront fixes this with a learning API, surfacing the right knowledge exactly when it's needed so your AI can learn instantly.
-
-The learning API uses [in-context learning](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html#in-context-learning-key-concept), a novel training-free learning framework pioneered by OpenAI. By augmenting your LLM's context with ever-growing query samples, your agents can reason by analogy over your databases and APIs to quickly arrive at the correct answer.
-
-> [!NOTE]
-> **Beta Access**: The learning API is currently in open beta. To get an API key, please email esteban@kruskal.ai or join our [Discord community](https://discord.gg/rRyM7zkZTf).
 
 ## Data Sources
 
@@ -140,9 +138,9 @@ ToolFront supports both databases and APIs:
 
 ### Databases
 
-See the table below for the list of supported databases, drivers (e.g., `uvx "toolfront[snowflake,databricks]"`) and connection URL formats.
+See the table below for the list of supported databases, extras (e.g., `uvx "toolfront[snowflake,databricks]"`) and connection URL formats.
 
-| Database    | Driver                  | URL Format                                                                                         |
+| Database    | Extras                  | URL Format                                                                                         |
 |-------------|-------------------------|----------------------------------------------------------------------------------------------------|
 | BigQuery    | `bigquery`              | `bigquery://{project-id}?credentials_path={path-to-account-credentials.json}`                      |
 | Databricks  | `databricks`            | `databricks://token:{token}@{workspace}.cloud.databricks.com/{catalog}?http_path={warehouse-path}` |
@@ -180,17 +178,16 @@ MCP tools are functions that AI agents can call to interact with external system
 
 | Tool                | Description                                                      | Requires API Key |
 |---------------------|------------------------------------------------------------------|------------------|
-| `test`              | Test connection to a database or API                             | ✗                |
 | `discover`          | List all configured databases and APIs                           | ✗                |
-| `inspect_table`     | Show structure and columns of a database table                   | ✗                |
-| `inspect_endpoint`  | Show structure and parameters of an API endpoint                 | ✗                |
-| `sample`            | Get sample rows from a database table                            | ✗                |
-| `query`             | Run read-only SQL queries against databases                      | ✗                |
-| `request`           | Make requests to API endpoints                                   | ✗                |
 | `search_endpoints`  | Search API endpoints by pattern or similarity                    | ✗                |
 | `search_tables`     | Search database tables by pattern or similarity                  | ✗                |
-| `search_requests`   | Retrieve and learn from relevant requests samples                | ✓                |
+| `sample_table`      | Get sample rows from a database table                            | ✗                |
+| `inspect_table`     | Show structure and columns of a database table                   | ✗                |
+| `inspect_endpoint`  | Show structure and parameters of an API endpoint                 | ✗                |
+| `query_database`    | Run read-only SQL queries against databases                      | ✗                |
+| `request_api`       | Make requests to API endpoints                                   | ✗                |
 | `search_queries`    | Retrieve and learn from relevant query samples                   | ✓                |
+| `search_requests`   | Retrieve and learn from relevant requests samples                | ✓                |
 
 ## FAQ
 
@@ -207,6 +204,15 @@ ToolFront stands out with *multi-database* support, *self-improving* AI, and a *
 **Local-first**: Cloud solutions compromise your data and rack up egress fees. ToolFront keeps everything local.
 
 </details>
+
+<details>
+<summary><strong>How does the learning API work?</strong></summary>
+<br>
+
+The learning API uses [in-context learning](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html#in-context-learning-key-concept), a novel training-free learning framework pioneered by OpenAI. By augmenting your LLM's context query and request samples, your agents can reason by analogy over your databases and APIs to quickly arrive at the correct answer.
+
+</details>
+
 
 <details>
 <summary><strong>How does ToolFront keep my data safe?</strong></summary>
@@ -227,6 +233,7 @@ ToolFront stands out with *multi-database* support, *self-improving* AI, and a *
 Run the `uv run toolfront[all]` or `docker run` commands with your database URLs directly from the command line. ToolFront automatically tests all connections when starting and will display detailed errors if a connection fails. If you're still having trouble, double-check your database and API URLs using the examples in the [Databases section](#data-sources) above.
 
 </details>
+
 
 ## Support & Community
 
