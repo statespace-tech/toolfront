@@ -35,7 +35,7 @@
 - **🌊 Seamless**: Connect AI to all your databases, warehouses, and APIs.
 - **⚡ Instant**: Get up and running in seconds with a single command.
 - **🧩 Pluggable**: Works with any LLM, agent framework, and IDE that supports MCP.
-- **🧠 Self-improving**: Your AI learns from experience, becoming smarter and faster over time.*
+- **🧠 Self-improving**: Your AI learns from experience, becoming smarter and faster over time.
 - **🔒 Secure**: Your data stays local, private, and under your control.
 
 > You need relevant data to make AI fast and accurate. ToolFront's learning API (🧠) automatically gathers structural information about your databases and APIs to help your AI get better over time. This feature is in beta, and we'd love your feedback!
