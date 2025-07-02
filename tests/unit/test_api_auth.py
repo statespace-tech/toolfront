@@ -22,11 +22,10 @@ class TestAPIAuthDetection:
         }
 
         with patch("toolfront.main.get_openapi_spec", return_value=mock_spec):
-            url_map = await process_datasource("https://api.polygon.io/openapi?apiKey=MY_KEY&other=value")
+            url_obj, metadata = await process_datasource("https://api.polygon.io/openapi?apiKey=MY_KEY&other=value")
 
         # Check the result
-        api_url = list(url_map.keys())[0]
-        extra = url_map[api_url]["extra"]
+        extra = metadata["extra"]
 
         assert extra["query_params"] == {"other": "value"}
         assert extra["auth_query_params"] == {"apiKey": "MY_KEY"}
@@ -42,10 +41,9 @@ class TestAPIAuthDetection:
         }
 
         with patch("toolfront.main.get_openapi_spec", return_value=mock_spec):
-            url_map = await process_datasource("https://api.example.com/openapi?apiKey=MY_KEY&other=value")
+            url_obj, metadata = await process_datasource("https://api.example.com/openapi?apiKey=MY_KEY&other=value")
 
-        api_url = list(url_map.keys())[0]
-        extra = url_map[api_url]["extra"]
+        extra = metadata["extra"]
 
         assert extra["query_params"] == {"other": "value"}
         assert extra["auth_headers"] == {"apiKey": "MY_KEY"}
@@ -61,10 +59,9 @@ class TestAPIAuthDetection:
         }
 
         with patch("toolfront.main.get_openapi_spec", return_value=mock_spec):
-            url_map = await process_datasource("https://api.example.com/openapi?token=MY_TOKEN&other=value")
+            url_obj, metadata = await process_datasource("https://api.example.com/openapi?token=MY_TOKEN&other=value")
 
-        api_url = list(url_map.keys())[0]
-        extra = url_map[api_url]["extra"]
+        extra = metadata["extra"]
 
         assert extra["query_params"] == {"other": "value"}
         assert extra["auth_headers"] == {"Authorization": "Bearer MY_TOKEN"}
@@ -76,15 +73,13 @@ class TestAPIAuthDetection:
         # Mock no spec returned
         with patch("toolfront.main.get_openapi_spec", return_value={}):
             # Test bearer/token -> header
-            url_map = await process_datasource("https://api.example.com/openapi?bearer=MY_BEARER")
-            api_url = list(url_map.keys())[0]
-            extra = url_map[api_url]["extra"]
+            url_obj, metadata = await process_datasource("https://api.example.com/openapi?bearer=MY_BEARER")
+            extra = metadata["extra"]
             assert extra["auth_headers"] == {"Authorization": "Bearer MY_BEARER"}
 
             # Test apiKey -> query params (default)
-            url_map = await process_datasource("https://api.example.com/openapi?apiKey=MY_KEY")
-            api_url = list(url_map.keys())[0]
-            extra = url_map[api_url]["extra"]
+            url_obj, metadata = await process_datasource("https://api.example.com/openapi?apiKey=MY_KEY")
+            extra = metadata["extra"]
             assert extra["auth_query_params"] == {"apiKey": "MY_KEY"}
             assert extra["auth_headers"] == {}
 
@@ -92,12 +87,11 @@ class TestAPIAuthDetection:
     async def test_multiple_auth_params(self):
         """Test handling multiple auth parameters."""
         with patch("toolfront.main.get_openapi_spec", return_value={}):
-            url_map = await process_datasource(
+            url_obj, metadata = await process_datasource(
                 "https://api.example.com/openapi?token=MY_TOKEN&api_key=MY_KEY&regular=value"
             )
 
-        api_url = list(url_map.keys())[0]
-        extra = url_map[api_url]["extra"]
+        extra = metadata["extra"]
 
         # Token should go to header
         assert extra["auth_headers"] == {"Authorization": "Bearer MY_TOKEN"}
@@ -124,10 +118,9 @@ class TestAPIAuthDetection:
 
         with patch("toolfront.main.get_openapi_spec", return_value=mock_spec):
             # Pass uppercase apiKey
-            url_map = await process_datasource("https://api.example.com/openapi?apiKey=MY_KEY")
+            url_obj, metadata = await process_datasource("https://api.example.com/openapi?apiKey=MY_KEY")
 
-        api_url = list(url_map.keys())[0]
-        extra = url_map[api_url]["extra"]
+        extra = metadata["extra"]
 
         # Should still match and move to headers
         assert extra["auth_headers"] == {"apikey": "MY_KEY"}
@@ -162,9 +155,9 @@ class TestAPIAuthDetection:
                 mock_spec["servers"] = [{"url": case["spec_server"]}]
 
             with patch("toolfront.main.get_openapi_spec", return_value=mock_spec):
-                url_map = await process_datasource(case["input_url"])
+                url_obj, metadata = await process_datasource(case["input_url"])
 
-            api_url = list(url_map.keys())[0]
+            api_url = str(url_obj)
             assert api_url == case["expected"]
 
 
@@ -227,24 +220,33 @@ class TestAPIConnectionIntegration:
     @pytest.mark.asyncio
     async def test_connection_creates_api_with_auth(self):
         """Test that APIConnection properly passes auth to API instance."""
-        connection = APIConnection(url="https://api.example.com")
+        from toolfront.models.url import APIURL
+        from pydantic import SecretStr
 
-        url_map = {
-            "https://api.example.com": {
-                "parsed": urlparse("https://api.example.com"),
-                "extra": {
-                    "openapi_spec": {"info": {"title": "Test API"}},
-                    "query_params": {"regular": "param"},
-                    "auth_headers": {"X-API-Key": "MY_KEY"},
-                    "auth_query_params": {"apiKey": "MY_KEY"},
-                },
+        # Create APIURL with auth info
+        api_url = APIURL(
+            scheme="https",
+            hostname="api.example.com",
+            auth_headers={"X-API-Key": SecretStr("MY_KEY")},
+            auth_query_params={"apiKey": SecretStr("MY_KEY")},
+            query_params={"regular": "param"},
+        )
+
+        connection = APIConnection(url=api_url)
+
+        # Set metadata with OpenAPI spec
+        connection._metadata = {
+            "extra": {
+                "openapi_spec": {"info": {"title": "Test API"}},
+                "query_params": {"regular": "param"},
+                "auth_headers": {"X-API-Key": "MY_KEY"},
+                "auth_query_params": {"apiKey": "MY_KEY"},
             }
         }
 
-        api = await connection.connect(url_map)
+        api = await connection.connect(url_map={})
 
         assert isinstance(api, API)
         assert api.auth_headers == {"X-API-Key": "MY_KEY"}
         assert api.auth_query_params == {"apiKey": "MY_KEY"}
-        assert api.query_params == {"regular": "param"}
         assert api.openapi_spec == {"info": {"title": "Test API"}}

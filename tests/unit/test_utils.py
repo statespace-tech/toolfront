@@ -5,7 +5,83 @@ from datetime import datetime
 import pandas as pd
 
 from toolfront.config import MAX_DATA_ROWS
-from toolfront.utils import serialize_dataframe, serialize_response, tokenize
+from toolfront.utils import mask_database_password, serialize_dataframe, serialize_response, tokenize
+
+
+class TestMaskDatabasePassword:
+    """Test the mask_database_password utility function."""
+
+    def test_basic_postgresql_url(self):
+        url = "postgresql://user:password@localhost:5432/mydb"
+        result = mask_database_password(url)
+        assert result == "postgresql://user:***@localhost:5432/mydb"
+
+    def test_mysql_url_with_domain(self):
+        url = "mysql://admin:secret123@db.example.com/prod"
+        result = mask_database_password(url)
+        assert result == "mysql://admin:***@db.example.com/prod"
+
+    def test_url_with_special_chars_in_password(self):
+        url = "postgresql://postgres:my$ecretP@ss@host.com:5432/database"
+        result = mask_database_password(url)
+        assert result == "postgresql://postgres:***@host.com:5432/database"
+
+    def test_sqlite_file_url_no_password(self):
+        url = "sqlite:///path/to/database.db"
+        result = mask_database_password(url)
+        assert result == "sqlite:///path/to/database.db"  # Unchanged
+
+    def test_duckdb_file_url_no_password(self):
+        url = "duckdb:///home/user/data.duckdb"
+        result = mask_database_password(url)
+        assert result == "duckdb:///home/user/data.duckdb"  # Unchanged
+
+    def test_snowflake_url(self):
+        url = "snowflake://user:pass@account.region.snowflakecomputing.com/db/schema"
+        result = mask_database_password(url)
+        assert result == "snowflake://user:***@account.region.snowflakecomputing.com/db/schema"
+
+    def test_sqlserver_with_query_params(self):
+        url = "mssql://sa:P@ssw0rd!@server:1433/database?driver=ODBC+Driver+17+for+SQL+Server"
+        result = mask_database_password(url)
+        assert result == "mssql://sa:***@server:1433/database?driver=ODBC+Driver+17+for+SQL+Server"
+
+    def test_url_without_username(self):
+        url = "postgresql://:password@localhost:5432/mydb"
+        result = mask_database_password(url)
+        assert result == "postgresql://***@localhost:5432/mydb"
+
+    def test_url_without_port(self):
+        url = "postgresql://user:password@localhost/mydb"
+        result = mask_database_password(url)
+        assert result == "postgresql://user:***@localhost/mydb"
+
+    def test_url_with_fragment(self):
+        url = "postgresql://user:password@localhost:5432/mydb#fragment"
+        result = mask_database_password(url)
+        assert result == "postgresql://user:***@localhost:5432/mydb#fragment"
+
+    def test_empty_password(self):
+        url = "postgresql://user:@localhost:5432/mydb"
+        result = mask_database_password(url)
+        # Empty password is still considered a password
+        assert result == "postgresql://user:***@localhost:5432/mydb"
+
+    def test_url_with_encoded_chars(self):
+        url = "postgresql://user:p%40ssw%3Drd@localhost:5432/mydb"
+        result = mask_database_password(url)
+        assert result == "postgresql://user:***@localhost:5432/mydb"
+
+    def test_bigquery_url(self):
+        url = "bigquery://project-id/dataset"
+        result = mask_database_password(url)
+        assert result == "bigquery://project-id/dataset"  # No password to mask
+
+    def test_databricks_url_with_token(self):
+        # Databricks typically uses tokens in connection params, not in URL
+        url = "databricks://token:dapi1234567890@host.databricks.com:443/http_path"
+        result = mask_database_password(url)
+        assert result == "databricks://token:***@host.databricks.com:443/http_path"
 
 
 class TestTokenize:

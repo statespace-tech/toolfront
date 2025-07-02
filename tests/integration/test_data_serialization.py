@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from toolfront.models.connection import DatabaseConnection
+from toolfront.models.url import DatabaseURL
 from toolfront.models.query import Query as QueryModel
 from toolfront.tools import query_database
 from toolfront.utils import serialize_dataframe, serialize_response
@@ -11,7 +12,8 @@ from toolfront.utils import serialize_dataframe, serialize_response
 
 async def execute_query(url: str, sql: str) -> str:
     """Helper function to execute queries in tests."""
-    connection = DatabaseConnection(url=url)
+    db_url = DatabaseURL.from_url_string(url)
+    connection = DatabaseConnection(url=db_url)
     query_obj = QueryModel(connection=connection, code=sql, description="Test query")
 
     # Create a mock context since we don't need real MCP context for tests
@@ -24,7 +26,8 @@ async def execute_query(url: str, sql: str) -> str:
 
 async def execute_ddl(url: str, sql: str) -> None:
     """Helper function to execute DDL statements in tests (bypasses read-only mode)."""
-    connection = DatabaseConnection(url=url)
+    db_url = DatabaseURL.from_url_string(url)
+    connection = DatabaseConnection(url=db_url)
     db = await connection.connect()
     # Use the database's execute method directly, which doesn't set read-only mode
     from sqlalchemy import create_engine, text

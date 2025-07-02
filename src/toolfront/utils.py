@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
 import pandas as pd
 from jellyfish import jaro_winkler_similarity
@@ -14,6 +15,32 @@ from pydantic import TypeAdapter
 from rank_bm25 import BM25Okapi
 
 from toolfront.config import MAX_DATA_CHARS, MAX_DATA_ROWS
+
+
+def mask_database_password(url: str) -> str:
+    """
+    Mask only the password portion of a database URL.
+
+    Examples:
+        postgresql://user:password@host:5432/db -> postgresql://user:***@host:5432/db
+        sqlite:///path/to/db.sqlite -> sqlite:///path/to/db.sqlite (unchanged)
+    """
+    parsed = urlparse(url)
+
+    # Only mask if there's a password field (even if empty)
+    if parsed.password is not None:
+        # Replace password with asterisks, keeping username if present
+        netloc = f"{parsed.username}:***@{parsed.hostname}" if parsed.username else f"***@{parsed.hostname}"
+
+        # Add port if present
+        if parsed.port:
+            netloc = f"{netloc}:{parsed.port}"
+
+        # Reconstruct URL with masked password
+        return urlunparse((parsed.scheme, netloc, parsed.path, parsed.params, parsed.query, parsed.fragment))
+
+    # Return unchanged if no password
+    return url
 
 
 class HTTPMethod(str, Enum):

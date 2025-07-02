@@ -128,3 +128,7 @@ CLAUDE.md
 
 # MacOS
 *.DS_Store
+
+# Cache and test files
+.toolfront_cache/
+test.db
