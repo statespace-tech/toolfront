@@ -2,19 +2,155 @@
 Data serialization utilities for converting DataFrames and other data structures.
 """
 
+import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import parse_qs, urlparse, urlunparse
 
+import diskcache
+import httpx
+import jsonref
 import pandas as pd
 from jellyfish import jaro_winkler_similarity
-from pydantic import TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter
 from rank_bm25 import BM25Okapi
 
 from toolfront.config import MAX_DATA_CHARS, MAX_DATA_ROWS
+
+_cache = diskcache.Cache(".toolfront_cache")
+
+logger = logging.getLogger("toolfront")
+logger.setLevel(logging.INFO)
+
+
+class APIURLParseResult(BaseModel):
+    """Result of API URL parsing."""
+
+    url: str = Field(description="The base URL (with server URL from spec if available)")
+    openapi_spec: dict[str, Any] | None = Field(default=None, description="The OpenAPI specification")
+    query_params: dict[str, Any] = Field(default_factory=dict, description="Regular query parameters")
+    auth_headers: dict[str, Any] = Field(default_factory=dict, description="Authentication headers")
+    auth_query_params: dict[str, Any] = Field(default_factory=dict, description="Authentication query parameters")
+
+
+def parse_api_url(url: str, spec: dict[str, Any] | None = None) -> APIURLParseResult:
+    """Parse an API URL and extract authentication and query parameters.
+
+    Args:
+        url: The URL to parse
+        spec: Optional OpenAPI specification
+
+    Returns:
+        APIURLParseResult containing:
+            - url: The base URL (with server URL from spec if available)
+            - openapi_spec: The OpenAPI specification
+            - query_params: Regular query parameters
+            - auth_headers: Authentication headers
+            - auth_query_params: Authentication query parameters
+    """
+    parsed = urlparse(url)
+
+    # Get server URL from spec or construct from parsed URL
+    servers = spec.get("servers", []) if spec else []
+    server_url = servers[0].get("url", None) if servers else None
+
+    if server_url is None:
+        final_url = f"{parsed.scheme}://{parsed.netloc}"
+    else:
+        # If the API URL is a relative path, prepend the parsed URL
+        final_url = server_url if server_url.startswith("http") else f"https://{parsed.netloc}{server_url}"
+
+    # Parse query parameters
+    query_params = parse_qs(parsed.query)
+    # Convert from lists to single values
+    query_params = {k: v[0] if len(v) == 1 else v for k, v in query_params.items()}
+
+    # Initialize auth containers
+    auth_headers = {}
+    auth_query_params = {}
+
+    # Common auth parameter names
+    auth_param_names = ["apikey", "api_key", "token", "access_token", "bearer", "key", "auth"]
+
+    # Check OpenAPI spec for security schemes
+    if spec and "components" in spec and "securitySchemes" in spec["components"]:
+        for _scheme_name, scheme in spec["components"]["securitySchemes"].items():
+            if scheme.get("type") == "apiKey":
+                param_name = scheme.get("name")
+                param_location = scheme.get("in", "query")
+
+                # Find matching parameter in query params (case-insensitive)
+                for qp_name, qp_value in list(query_params.items()):
+                    if qp_name.lower() == param_name.lower():
+                        if param_location == "header":
+                            auth_headers[param_name] = qp_value
+                            del query_params[qp_name]
+                        elif param_location == "query":
+                            auth_query_params[qp_name] = qp_value
+                            del query_params[qp_name]
+                        break
+            elif scheme.get("type") == "http" and scheme.get("scheme") == "bearer":
+                # Look for bearer/token in query params
+                for qp_name, qp_value in list(query_params.items()):
+                    if qp_name.lower() in ["bearer", "token", "access_token"]:
+                        auth_headers["Authorization"] = f"Bearer {qp_value}"
+                        del query_params[qp_name]
+                        break
+    else:
+        # No spec or security schemes - use heuristics
+        for qp_name, qp_value in list(query_params.items()):
+            if qp_name.lower() in auth_param_names:
+                if qp_name.lower() in ["bearer", "token", "access_token"]:
+                    auth_headers["Authorization"] = f"Bearer {qp_value}"
+                    del query_params[qp_name]
+                else:
+                    # Default to keeping in query params (like Polygon)
+                    auth_query_params[qp_name] = qp_value
+                    del query_params[qp_name]
+
+    return APIURLParseResult(
+        url=final_url,
+        openapi_spec=spec,
+        query_params=query_params,
+        auth_headers=auth_headers,
+        auth_query_params=auth_query_params,
+    )
+
+
+def get_openapi_spec(url: str) -> dict | None:
+    """Get OpenAPI spec with retries if cached result is None."""
+    cache_key = url
+
+    # Check if we have a cached result
+    if cache_key in _cache:
+        cached_result = _cache[cache_key]
+        if cached_result is not None:
+            logger.debug(f"Cache hit for {url}")
+            return cached_result
+        else:
+            # Remove None from cache and retry
+            logger.debug(f"Cached None for {url}, removing and retrying")
+            del _cache[cache_key]
+
+    # Download and cache if successful
+    try:
+        logger.debug(f"Downloading OpenAPI spec for {url}")
+        with httpx.Client() as client:
+            response = client.get(url)
+            response.raise_for_status()
+            spec = response.json()
+
+            parsed_spec = jsonref.replace_refs(spec)
+            # Only cache non-None results
+            _cache.set(cache_key, parsed_spec, expire=3600)  # 1 hour TTL
+            logger.info(f"Successfully retrieved spec for {url}")
+            return parsed_spec
+    except Exception as e:
+        logger.warning(f"Failed to retrieve spec from {url}: {e}")
+        return None
 
 
 def mask_database_password(url: str) -> str:

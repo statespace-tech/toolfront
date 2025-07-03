@@ -4,16 +4,14 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Literal
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlparse
 
 import click
-import diskcache
 import httpx
-import jsonref
 from mcp.server.fastmcp import FastMCP
 
 from toolfront.config import API_KEY_HEADER, BACKEND_URL
-from toolfront.models.connection import Connection
+from toolfront.models.connection import APIConnection, DatabaseConnection
 from toolfront.models.url import APIURL, DatabaseURL
 from toolfront.tools import (
     discover,
@@ -26,44 +24,12 @@ from toolfront.tools import (
     search_queries,
     search_tables,
 )
+from toolfront.utils import get_openapi_spec, parse_api_url
 
 logger = logging.getLogger("toolfront")
 logger.setLevel(logging.INFO)
 
-_cache = diskcache.Cache(".toolfront_cache")
-
-
-def get_openapi_spec(url: str) -> dict | None:
-    """Get OpenAPI spec with retries if cached result is None."""
-    cache_key = url
-
-    # Check if we have a cached result
-    if cache_key in _cache:
-        cached_result = _cache[cache_key]
-        if cached_result is not None:
-            logger.debug(f"Cache hit for {url}")
-            return cached_result
-        else:
-            # Remove None from cache and retry
-            logger.debug(f"Cached None for {url}, removing and retrying")
-            del _cache[cache_key]
-
-    # Download and cache if successful
-    try:
-        logger.debug(f"Downloading OpenAPI spec for {url}")
-        with httpx.Client() as client:
-            response = client.get(url)
-            response.raise_for_status()
-            spec = response.json()
-
-            parsed_spec = jsonref.replace_refs(spec)
-            # Only cache non-None results
-            _cache.set(cache_key, parsed_spec, expire=3600)  # 1 hour TTL
-            logger.info(f"Successfully retrieved spec for {url}")
-            return parsed_spec
-    except Exception as e:
-        logger.warning(f"Failed to retrieve spec from {url}: {e}")
-        return None
+logging.info("Starting ToolFront MCP server")
 
 
 @dataclass
@@ -91,116 +57,36 @@ async def process_datasource(url: str) -> tuple:
 
     if parsed.scheme in ("http", "https"):
         spec = get_openapi_spec(url)
-
-        servers = spec.get("servers", []) if spec else []
-        url = servers[0].get("url", None) if servers else None
-
-        # If no API URL is provided, use the parsed URL
-        if url is None:
-            url = f"{parsed.scheme}://{parsed.netloc}"
-        else:
-            # If the API URL is a relative path, prepend the parsed URL
-            if url.startswith("/"):
-                url = f"https://{parsed.netloc}{url}"
-
-        # Parse query parameters into a dictionary
-        query_params = parse_qs(parsed.query)
-        # Convert from lists to single values
-        query_params = {k: v[0] if len(v) == 1 else v for k, v in query_params.items()}
-
-        # Handle authentication based on OpenAPI spec
-        auth_headers = {}
-        auth_query_params = {}
-
-        # Common auth parameter names
-        auth_param_names = ["apikey", "api_key", "token", "access_token", "bearer", "key", "auth"]
-
-        # Check OpenAPI spec for security schemes
-        if spec and "components" in spec and "securitySchemes" in spec["components"]:
-            for _scheme_name, scheme in spec["components"]["securitySchemes"].items():
-                if scheme.get("type") == "apiKey":
-                    param_name = scheme.get("name")
-                    param_location = scheme.get("in", "query")
-
-                    # Find matching parameter in query params (case-insensitive)
-                    for qp_name, qp_value in list(query_params.items()):
-                        if qp_name.lower() == param_name.lower():
-                            if param_location == "header":
-                                auth_headers[param_name] = qp_value
-                                del query_params[qp_name]
-                            elif param_location == "query":
-                                auth_query_params[qp_name] = qp_value
-                                del query_params[qp_name]
-                            break
-                elif scheme.get("type") == "http" and scheme.get("scheme") == "bearer":
-                    # Look for bearer/token in query params
-                    for qp_name, qp_value in list(query_params.items()):
-                        if qp_name.lower() in ["bearer", "token", "access_token"]:
-                            auth_headers["Authorization"] = f"Bearer {qp_value}"
-                            del query_params[qp_name]
-                            break
-        else:
-            # No spec or security schemes - use heuristics
-            for qp_name, qp_value in list(query_params.items()):
-                if qp_name.lower() in auth_param_names:
-                    if qp_name.lower() in ["bearer", "token", "access_token"]:
-                        auth_headers["Authorization"] = f"Bearer {qp_value}"
-                        del query_params[qp_name]
-                    else:
-                        # Default to keeping in query params (like Polygon)
-                        auth_query_params[qp_name] = qp_value
-                        del query_params[qp_name]
-
+        parse_result = parse_api_url(url, spec)
+        url = parse_result.url
         extra = {
-            "openapi_spec": spec,
-            "query_params": query_params,
-            "auth_headers": auth_headers,
-            "auth_query_params": auth_query_params,
+            "openapi_spec": parse_result.openapi_spec,
+            "query_params": parse_result.query_params,
+            "auth_headers": parse_result.auth_headers,
+            "auth_query_params": parse_result.auth_query_params,
         }
-
-    # Create structured URL objects
-    if parsed.scheme in ("http", "https"):
-        # Create API URL with auth info
-        url_obj = APIURL.from_url_string(
-            url, auth_headers=auth_headers, auth_query_params=auth_query_params, query_params=query_params
-        )
-    else:
-        # Create database URL
-        url_obj = DatabaseURL.from_url_string(url)
 
     # Store metadata with the URL object
     metadata = {"parsed": parsed, "extra": extra}
 
     try:
-        logger.info("Creating connection from URL (password automatically hidden)")
         # Create connection using the structured URL object
         if parsed.scheme in ("http", "https"):
-            connection = Connection.from_url(
-                url, auth_headers=auth_headers, auth_query_params=auth_query_params, query_params=query_params
-            )
+            url_obj = APIURL.from_url_string(url)
+            connection = APIConnection(url=url_obj)
+            result = await connection.test_connection(openapi_spec=spec)
         else:
-            # Use the structured URL object directly for database connections
-            from toolfront.models.connection import DatabaseConnection
-
+            url_obj = DatabaseURL.from_url_string(url)
             connection = DatabaseConnection(url=url_obj)
-        logger.info(f"Connection type: {type(connection)}")
+            result = await connection.test_connection()
 
-        logger.info("Testing connection")
-        # Test connection
-        result = await connection.test_connection(url_map={})
+        logger.info(f"Connected to {url} - {result.connected}")
 
-        if result.connected:
-            logger.warning("Connection successful")
-        else:
-            logger.warning(f"Connection failed: {result.message}")
     except Exception as e:
-        logger.error(f"Exception during connection process: {type(e).__name__}: {e}")
+        logging.error(f"Exception during connection process: {type(e).__name__}: {e}")
         import traceback
 
-        logger.error(f"Full traceback: {traceback.format_exc()}")
-        from toolfront.models.database import ConnectionResult
-
-        result = ConnectionResult(connected=False, message=f"Connection error: {e}")
+        logging.error(f"Full traceback: {traceback.format_exc()}")
 
     return url_obj, metadata
 

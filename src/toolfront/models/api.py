@@ -21,7 +21,7 @@ class API(BaseModel, ABC):
     """Abstract base class for OpenAPI-based APIs."""
 
     url: ParseResult = Field(description="URL of the API")
-    openapi_spec: dict[str, Any] = Field(default_factory=dict, description="OpenAPI specification.")
+    openapi_spec: dict[str, Any] = Field(description="OpenAPI specification.")
     query_params: dict[str, Any] | None = Field(None, description="Additional request parameters.")
     auth_headers: dict[str, Any] | None = Field(None, description="Authentication headers.")
     auth_query_params: dict[str, Any] | None = Field(None, description="Authentication query parameters.")
