@@ -17,16 +17,16 @@ logger = logging.getLogger("toolfront.connection")
 class Connection(BaseModel):
     """Connection to a data source."""
 
-    async def connect(self, url_map: dict[str, Any]) -> Database | API:
+    async def connect(self, **kwargs) -> Database | API:
         """Connect to the data source."""
         raise NotImplementedError("Subclasses must implement connect")
 
-    async def test_connection(self, url_map: dict[str, Any]) -> ConnectionResult:
+    async def test_connection(self, **kwargs) -> ConnectionResult:
         """Test the connection to the data source."""
         raise NotImplementedError("Subclasses must implement test_connection")
 
     @classmethod
-    def from_url(cls, url: str, url_map: dict[Any, Any] | None = None, **kwargs) -> "Connection":
+    def from_url(cls, url: str, **kwargs) -> "Connection":
         """Create a connection from a URL."""
         if url.startswith("http"):
             # For API URLs, we might need additional auth info
@@ -34,18 +34,18 @@ class Connection(BaseModel):
             auth_query_params = kwargs.get("auth_query_params", {})
             query_params = kwargs.get("query_params", {})
             api_url = APIURL.from_url_string(url, auth_headers, auth_query_params, query_params)
-            return APIConnection(url=api_url)
+            return APIConnection(url=api_url, **kwargs)
         else:
-            # Check if this is a display URL that needs to be resolved
-            if url_map and "***" in url:
-                # This is a display URL, find the actual structured URL object
-                for url_obj in url_map:
-                    if str(url_obj) == url:  # Match display string
-                        return DatabaseConnection(url=url_obj)
+            # # Check if this is a display URL that needs to be resolved
+            # if url_map and "***" in url:
+            #     # This is a display URL, find the actual structured URL object
+            #     for url_obj in url_map:
+            #         if str(url_obj) == url:  # Match display string
+            #             return DatabaseConnection(url=url_obj)
 
             # Parse as new URL
             db_url = DatabaseURL.from_url_string(url)
-            return DatabaseConnection(url=db_url)
+            return DatabaseConnection(url=db_url, **kwargs)
 
 
 class APIConnection(Connection):
@@ -53,7 +53,7 @@ class APIConnection(Connection):
 
     url: APIURL = Field(..., description="Structured API URL.")
 
-    async def connect(self, url_map: dict[str, Any]) -> API:
+    async def connect(self, openapi_spec: dict[str, Any]) -> API:
         """Connect to the API."""
         # Use display string (base URL without auth params) for the API URL
         base_url = self.url.to_display_string()
@@ -61,20 +61,14 @@ class APIConnection(Connection):
         auth_headers = {k: v.get_secret_value() for k, v in self.url.auth_headers.items()}
         auth_query_params = {k: v.get_secret_value() for k, v in self.url.auth_query_params.items()}
 
-        # Get OpenAPI spec from metadata if available
-        openapi_spec = None
-        if hasattr(self, "_metadata") and self._metadata:
-            extra = self._metadata.get("extra", {})
-            openapi_spec = extra.get("openapi_spec")
-
         return API(
             url=base_url, auth_headers=auth_headers, auth_query_params=auth_query_params, openapi_spec=openapi_spec
         )
 
-    async def test_connection(self, url_map: dict[str, Any]) -> ConnectionResult:
+    async def test_connection(self, openapi_spec: dict[str, Any] | None = None) -> ConnectionResult:
         """Test database connection"""
         try:
-            api = await self.connect(url_map=url_map)
+            api = await self.connect(openapi_spec=openapi_spec)
             return await api.test_connection()
         except ImportError as e:
             return ConnectionResult(connected=False, message=str(e))
@@ -85,7 +79,7 @@ class DatabaseConnection(Connection):
 
     url: DatabaseURL = Field(..., description="Structured database URL.")
 
-    async def connect(self, url_map: dict[str, Any] | None = None) -> Database:
+    async def connect(self, **kwargs) -> Database:
         """Get the appropriate connector for this data source"""
         # Get the actual connection string
         connection_string = self.url.to_connection_string()
@@ -140,10 +134,10 @@ class DatabaseConnection(Connection):
 
         return db_class(url=url)
 
-    async def test_connection(self, url_map: dict[str, Any]) -> ConnectionResult:
+    async def test_connection(self, **kwargs) -> ConnectionResult:
         """Test database connection"""
         try:
-            db = await self.connect(url_map=url_map)
+            db = await self.connect(**kwargs)
             return await db.test_connection()
         except ImportError as e:
             return ConnectionResult(connected=False, message=str(e))
