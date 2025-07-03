@@ -1,7 +1,7 @@
 import importlib
 import importlib.util
 import logging
-from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from pydantic import BaseModel, Field
 from sqlalchemy.engine.url import URL, make_url
@@ -9,106 +9,133 @@ from sqlalchemy.engine.url import URL, make_url
 from toolfront.models.api import API
 from toolfront.models.database import ConnectionResult, Database
 from toolfront.models.databases import DatabaseType
-from toolfront.models.url import APIURL, DatabaseURL
+from toolfront.storage import load_connection, load_openapi_spec_from_clean_url, load_spec_url_from_clean_url
 
 logger = logging.getLogger("toolfront.connection")
+
+db_map = {
+    "bigquery": (DatabaseType.BIGQUERY, "BigQuery"),
+    "databricks": (DatabaseType.DATABRICKS, "Databricks"),
+    "duckdb": (DatabaseType.DUCKDB, "DuckDB"),
+    "mysql": (DatabaseType.MYSQL, "MySQL"),
+    "postgresql": (DatabaseType.POSTGRESQL, "PostgreSQL"),
+    "postgres": (DatabaseType.POSTGRESQL, "PostgreSQL"),
+    "snowflake": (DatabaseType.SNOWFLAKE, "Snowflake"),
+    "sqlite": (DatabaseType.SQLITE, "SQLite"),
+    "mssql": (DatabaseType.SQLSERVER, "SQLServer"),
+    "sqlserver": (DatabaseType.SQLSERVER, "SQLServer"),
+}
 
 
 class Connection(BaseModel):
     """Connection to a data source."""
 
-    async def connect(self, **kwargs) -> Database | API:
+    async def connect(self) -> Database | API:
         """Connect to the data source."""
         raise NotImplementedError("Subclasses must implement connect")
 
-    async def test_connection(self, **kwargs) -> ConnectionResult:
+    async def test_connection(self, url: str) -> ConnectionResult:
         """Test the connection to the data source."""
         raise NotImplementedError("Subclasses must implement test_connection")
-
-    @classmethod
-    def from_url(cls, url: str, **kwargs) -> "Connection":
-        """Create a connection from a URL."""
-        if url.startswith("http"):
-            # For API URLs, we might need additional auth info
-            auth_headers = kwargs.get("auth_headers", {})
-            auth_query_params = kwargs.get("auth_query_params", {})
-            query_params = kwargs.get("query_params", {})
-            api_url = APIURL.from_url_string(url, auth_headers, auth_query_params, query_params)
-            return APIConnection(url=api_url, **kwargs)
-        else:
-            # # Check if this is a display URL that needs to be resolved
-            # if url_map and "***" in url:
-            #     # This is a display URL, find the actual structured URL object
-            #     for url_obj in url_map:
-            #         if str(url_obj) == url:  # Match display string
-            #             return DatabaseConnection(url=url_obj)
-
-            # Parse as new URL
-            db_url = DatabaseURL.from_url_string(url)
-            return DatabaseConnection(url=db_url, **kwargs)
 
 
 class APIConnection(Connection):
     """API connection."""
 
-    url: APIURL = Field(..., description="Structured API URL.")
+    url: str = Field(..., description="Full API URL.")
 
-    async def connect(self, openapi_spec: dict[str, Any]) -> API:
-        """Connect to the API."""
-        # Use display string (base URL without auth params) for the API URL
-        base_url = self.url.to_display_string()
-        # Extract auth parameters from the structured URL
-        auth_headers = {k: v.get_secret_value() for k, v in self.url.auth_headers.items()}
-        auth_query_params = {k: v.get_secret_value() for k, v in self.url.auth_query_params.items()}
+    async def connect(self) -> API:
+        # Get the clean URL (this is what we'll use for the API connection)
+        clean_url = str(self.url)
+
+        # Load OpenAPI spec from clean URL
+        openapi_spec = load_openapi_spec_from_clean_url(clean_url)
+
+        # Get the original spec URL that contains auth parameters
+        original_spec_url = load_spec_url_from_clean_url(clean_url)
+        if not original_spec_url:
+            raise ConnectionError(f"No spec URL found for clean URL: {clean_url}")
+
+        # Parse the original spec URL to extract auth parameters
+        parsed_original = urlparse(original_spec_url)
+        query_params = parse_qs(parsed_original.query)
+        # Convert from lists to single values
+        query_params = {k: v[0] if len(v) == 1 else v for k, v in query_params.items()}
+
+        # Initialize auth containers
+        auth_headers = {}
+        auth_query_params = {}
+
+        # Common auth parameter names
+        auth_param_names = ["apikey", "api_key", "token", "access_token", "bearer", "key", "auth"]
+
+        # Check OpenAPI spec for security schemes
+        if openapi_spec and "components" in openapi_spec and "securitySchemes" in openapi_spec["components"]:
+            for _scheme_name, scheme in openapi_spec["components"]["securitySchemes"].items():
+                if scheme.get("type") == "apiKey":
+                    param_name = scheme.get("name")
+                    param_location = scheme.get("in", "query")
+
+                    # Find matching parameter in query params (case-insensitive)
+                    for qp_name, qp_value in list(query_params.items()):
+                        if qp_name.lower() == param_name.lower():
+                            if param_location == "header":
+                                auth_headers[param_name] = qp_value
+                                del query_params[qp_name]
+                            elif param_location == "query":
+                                auth_query_params[qp_name] = qp_value
+                                del query_params[qp_name]
+                            break
+                elif scheme.get("type") == "http" and scheme.get("scheme") == "bearer":
+                    # Look for bearer/token in query params
+                    for qp_name, qp_value in list(query_params.items()):
+                        if qp_name.lower() in ["bearer", "token", "access_token"]:
+                            auth_headers["Authorization"] = f"Bearer {qp_value}"
+                            del query_params[qp_name]
+                            break
+        else:
+            # No spec or security schemes - use heuristics
+            for qp_name, qp_value in list(query_params.items()):
+                if qp_name.lower() in auth_param_names:
+                    if qp_name.lower() in ["bearer", "token", "access_token"]:
+                        auth_headers["Authorization"] = f"Bearer {qp_value}"
+                        del query_params[qp_name]
+                    else:
+                        # Default to keeping in query params (like Polygon)
+                        auth_query_params[qp_name] = qp_value
+                        del query_params[qp_name]
 
         return API(
-            url=base_url, auth_headers=auth_headers, auth_query_params=auth_query_params, openapi_spec=openapi_spec
+            url=clean_url, auth_headers=auth_headers, auth_query_params=auth_query_params, openapi_spec=openapi_spec
         )
 
-    async def test_connection(self, openapi_spec: dict[str, Any] | None = None) -> ConnectionResult:
+    @classmethod
+    async def test_connection(cls, url: str) -> ConnectionResult:
         """Test database connection"""
         try:
-            api = await self.connect(openapi_spec=openapi_spec)
+            connection = cls(url=url)
+            api = await connection.connect()
             return await api.test_connection()
         except ImportError as e:
             return ConnectionResult(connected=False, message=str(e))
 
 
 class DatabaseConnection(Connection):
-    """Enhanced data source with smart path resolution."""
+    url: str = Field(..., description="Full database URL.")
 
-    url: DatabaseURL = Field(..., description="Structured database URL.")
+    async def connect(self) -> Database:
+        # Load the actual connection URL and validate it
+        url_str = load_connection(self.url)
+        url = make_url(url_str) if isinstance(url_str, str) else url_str
 
-    async def connect(self, **kwargs) -> Database:
-        """Get the appropriate connector for this data source"""
-        # Get the actual connection string
-        connection_string = self.url.to_connection_string()
-        url = make_url(connection_string)
-        return self._create_database(url)
+        if not isinstance(url, URL):
+            raise ValueError(f"Invalid URL: {url}")
 
-    def _create_database(self, url: URL) -> Database:
-        """Create a database instance without SSH tunnel."""
-        db_map = {
-            "bigquery": (DatabaseType.BIGQUERY, "BigQuery"),
-            "databricks": (DatabaseType.DATABRICKS, "Databricks"),
-            "duckdb": (DatabaseType.DUCKDB, "DuckDB"),
-            "mysql": (DatabaseType.MYSQL, "MySQL"),
-            "postgresql": (DatabaseType.POSTGRESQL, "PostgreSQL"),
-            "postgres": (DatabaseType.POSTGRESQL, "PostgreSQL"),
-            "snowflake": (DatabaseType.SNOWFLAKE, "Snowflake"),
-            "sqlite": (DatabaseType.SQLITE, "SQLite"),
-            "mssql": (DatabaseType.SQLSERVER, "SQLServer"),
-            "sqlserver": (DatabaseType.SQLSERVER, "SQLServer"),
-        }
+        drivername = url.drivername
+        if drivername not in db_map:
+            raise ValueError(f"Unsupported data source: {drivername}")
 
-        driver_name = url.drivername
-        if driver_name not in db_map:
-            raise ValueError(f"Unsupported data source: {driver_name}")
-
-        db_type, db_class_name = db_map[driver_name]
-
-        module = importlib.import_module(f"toolfront.models.databases.{db_type.value}")
-        db_class = getattr(module, db_class_name)
+        db_type, db_class_name = db_map[drivername]
 
         # Set the correct async driver for certain databases
         if db_type == DatabaseType.MYSQL:
@@ -120,7 +147,7 @@ class DatabaseConnection(Connection):
                 raise ImportError(
                     "Missing dependencies for PostgreSQL. Please install them using: uvx 'toolfront[postgresql]'"
                 )
-            url = url.set(drivername=f"{driver_name}+asyncpg")
+            url = url.set(drivername=f"{drivername}+asyncpg")
         elif db_type == DatabaseType.SQLITE:
             if not importlib.util.find_spec("aiosqlite"):
                 raise ImportError("Missing dependencies for SQLite. Please install them using: uvx 'toolfront[sqlite]'")
@@ -132,12 +159,17 @@ class DatabaseConnection(Connection):
                 )
             url = url.set(drivername="mssql+pyodbc")
 
+        # Create and return the database instance
+        module = importlib.import_module(f"toolfront.models.databases.{db_type.value}")
+        db_class = getattr(module, db_class_name)
         return db_class(url=url)
 
-    async def test_connection(self, **kwargs) -> ConnectionResult:
+    @classmethod
+    async def test_connection(cls, url: str) -> ConnectionResult:
         """Test database connection"""
         try:
-            db = await self.connect(**kwargs)
+            connection = cls(url=url)
+            db = await connection.connect()
             return await db.test_connection()
         except ImportError as e:
             return ConnectionResult(connected=False, message=str(e))

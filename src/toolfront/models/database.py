@@ -12,13 +12,8 @@ from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.exc import InvalidRequestError, StatementError
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from toolfront.utils import (
-    ConnectionResult,
-    SearchMode,
-    search_items_bm25,
-    search_items_jaro_winkler,
-    search_items_regex,
-)
+from toolfront.types import ConnectionResult, SearchMode
+from toolfront.utils import search_items_bm25, search_items_jaro_winkler, search_items_regex
 
 try:
     from sqlalchemy.exc import MissingGreenlet

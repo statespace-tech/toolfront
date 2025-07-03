@@ -6,7 +6,8 @@ from urllib.parse import ParseResult, urlparse
 import httpx
 from pydantic import BaseModel, Field, field_validator
 
-from toolfront.utils import ConnectionResult, HTTPMethod, SearchMode, search_items
+from toolfront.types import ConnectionResult, HTTPMethod, SearchMode
+from toolfront.utils import search_items
 
 logger = logging.getLogger("toolfront")
 
