@@ -12,4 +12,17 @@ class DatabaseType(str, Enum):
     SQLSERVER = "sqlserver"
 
 
+db_map = {
+    "bigquery": (DatabaseType.BIGQUERY, "BigQuery"),
+    "databricks": (DatabaseType.DATABRICKS, "Databricks"),
+    "duckdb": (DatabaseType.DUCKDB, "DuckDB"),
+    "mysql": (DatabaseType.MYSQL, "MySQL"),
+    "postgresql": (DatabaseType.POSTGRESQL, "PostgreSQL"),
+    "postgres": (DatabaseType.POSTGRESQL, "PostgreSQL"),
+    "snowflake": (DatabaseType.SNOWFLAKE, "Snowflake"),
+    "sqlite": (DatabaseType.SQLITE, "SQLite"),
+    "mssql": (DatabaseType.SQLSERVER, "SQLServer"),
+    "sqlserver": (DatabaseType.SQLSERVER, "SQLServer"),
+}
+
 __all__ = ["DatabaseType"]

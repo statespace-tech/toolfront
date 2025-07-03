@@ -1,30 +1,17 @@
 import importlib
 import importlib.util
 import logging
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import ParseResult, parse_qs, urlparse
 
 from pydantic import BaseModel, Field
 from sqlalchemy.engine.url import URL, make_url
 
 from toolfront.models.api import API
 from toolfront.models.database import ConnectionResult, Database
-from toolfront.models.databases import DatabaseType
+from toolfront.models.databases import DatabaseType, db_map
 from toolfront.storage import load_connection, load_openapi_spec_from_clean_url, load_spec_url_from_clean_url
 
 logger = logging.getLogger("toolfront.connection")
-
-db_map = {
-    "bigquery": (DatabaseType.BIGQUERY, "BigQuery"),
-    "databricks": (DatabaseType.DATABRICKS, "Databricks"),
-    "duckdb": (DatabaseType.DUCKDB, "DuckDB"),
-    "mysql": (DatabaseType.MYSQL, "MySQL"),
-    "postgresql": (DatabaseType.POSTGRESQL, "PostgreSQL"),
-    "postgres": (DatabaseType.POSTGRESQL, "PostgreSQL"),
-    "snowflake": (DatabaseType.SNOWFLAKE, "Snowflake"),
-    "sqlite": (DatabaseType.SQLITE, "SQLite"),
-    "mssql": (DatabaseType.SQLSERVER, "SQLServer"),
-    "sqlserver": (DatabaseType.SQLSERVER, "SQLServer"),
-}
 
 
 class Connection(BaseModel):
@@ -54,11 +41,11 @@ class APIConnection(Connection):
         # Get the original spec URL that contains auth parameters
         original_spec_url = load_spec_url_from_clean_url(clean_url)
         if not original_spec_url:
-            raise ConnectionError(f"No spec URL found for clean URL: {clean_url}")
+            raise ConnectionError(f"No spec URL found for URL: {clean_url}")
 
         # Parse the original spec URL to extract auth parameters
-        parsed_original = urlparse(original_spec_url)
-        query_params = parse_qs(parsed_original.query)
+        url: ParseResult = urlparse(original_spec_url)
+        query_params = parse_qs(url.query)
         # Convert from lists to single values
         query_params = {k: v[0] if len(v) == 1 else v for k, v in query_params.items()}
 
@@ -125,11 +112,7 @@ class DatabaseConnection(Connection):
 
     async def connect(self) -> Database:
         # Load the actual connection URL and validate it
-        url_str = load_connection(self.url)
-        url = make_url(url_str) if isinstance(url_str, str) else url_str
-
-        if not isinstance(url, URL):
-            raise ValueError(f"Invalid URL: {url}")
+        url: URL = make_url(load_connection(self.url))
 
         drivername = url.drivername
         if drivername not in db_map:

@@ -10,6 +10,12 @@ class HTTPMethod(str, Enum):
     """Valid HTTP methods."""
 
     GET = "GET"
+    POST = "POST"
+    PUT = "PUT"
+    DELETE = "DELETE"
+    PATCH = "PATCH"
+    HEAD = "HEAD"
+    OPTIONS = "OPTIONS"
 
 
 class SearchMode(str, Enum):

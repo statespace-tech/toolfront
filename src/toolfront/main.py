@@ -74,7 +74,7 @@ async def get_mcp(urls: tuple[str, ...], api_key: str | None = None) -> FastMCP:
 @click.argument("urls", nargs=-1)
 def main(api_key: str | None = None, transport: Literal["stdio", "sse"] = "stdio", urls: tuple[str, ...] = ()) -> None:
     """ToolFront CLI - Run the MCP server"""
-    logger.info("Starting MCP server with urls: %s", urls)
+    logger.info("Starting MCP server with urls: \n\t%s", "\n\t".join(urls))
     mcp_instance = asyncio.run(get_mcp(urls, api_key))
     mcp_instance.run(transport=transport)
 

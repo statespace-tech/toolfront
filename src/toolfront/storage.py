@@ -10,7 +10,7 @@ import httpx
 import jsonref
 from sqlalchemy.engine.url import make_url
 
-logger = logging.getLogger("toolfront.storage")
+logger = logging.getLogger("toolfront")
 _cache = diskcache.Cache(".toolfront_cache")
 
 
