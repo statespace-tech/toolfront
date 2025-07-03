@@ -32,38 +32,9 @@ def _get_context_field(field: str, ctx: Context) -> Any:
     return getattr(getattr(getattr(ctx, "request_context", None), "lifespan_context", None), field, None)
 
 
-def _get_url_objects(ctx: Context) -> list:
+def _get_url_datasources(ctx: Context) -> list:
     """Get the list of URL objects from context."""
-    return _get_context_field("url_objects", ctx) or []
-
-
-def _get_metadata_map(ctx: Context) -> dict:
-    """Get the metadata map from context."""
-    return _get_context_field("metadata_map", ctx) or {}
-
-
-async def _resolve_connection_if_needed(
-    connection: DatabaseConnection | APIConnection, ctx: Context
-) -> DatabaseConnection | APIConnection:
-    """Resolve display URLs back to actual connection objects if needed."""
-    # Always try to resolve by matching display strings to original URLs
-    display_str = str(connection.url)
-    url_objects = _get_url_objects(ctx)
-    metadata_map = _get_metadata_map(ctx)
-
-    for url_obj in url_objects:
-        if url_obj.matches_display_string(display_str):
-            if isinstance(connection, DatabaseConnection):
-                return DatabaseConnection(url=url_obj)
-            elif isinstance(connection, APIConnection):
-                # For API connections, we need to pass the OpenAPI spec too
-                api_connection = APIConnection(url=url_obj)
-                # Store metadata for later use by the API object
-                metadata = metadata_map.get(str(url_obj), {})
-                api_connection._metadata = metadata  # Store metadata on the connection
-                return api_connection
-
-    return connection
+    return _get_context_field("datasources", ctx) or []
 
 
 async def discover(ctx: Context) -> dict[str, list[dict]]:
@@ -75,19 +46,18 @@ async def discover(ctx: Context) -> dict[str, list[dict]]:
     2. Passwords and secrets are obfuscated in the URL for security, but you can use the URLs as-is in other tools.
     """
     try:
-        url_objects = _get_url_objects(ctx)
-        if url_objects is None:
-            return {"datasources": ["ERROR: url_objects is None"]}
-        if hasattr(url_objects, "__iter__"):
-            return {"datasources": [str(url_obj) for url_obj in url_objects]}
+        datasources = _get_url_datasources(ctx)
+        if datasources is None:
+            return {"datasources": ["ERROR: datasources is None"]}
+        if hasattr(datasources, "__iter__"):
+            return {"datasources": [str(url) for url in datasources]}
         else:
-            return {"datasources": [f"ERROR: url_objects is not iterable, type: {type(url_objects)}"]}
+            return {"datasources": [f"ERROR: datasources is not iterable, type: {type(datasources)}"]}
     except Exception as e:
         return {"datasources": [f"ERROR: {e}"]}
 
 
 async def inspect_table(
-    ctx: Context,
     table: Table = Field(..., description="Database table to inspect."),
 ) -> dict[str, Any]:
     """
@@ -102,17 +72,13 @@ async def inspect_table(
     3. Always inspect tables before writing queries to understand their structure and prevent errors
     """
     try:
-        # Resolve display URL if needed
-        resolved_connection = await _resolve_connection_if_needed(table.connection, ctx)
-        table.connection = resolved_connection
-        db = await table.connection.connect(url_map={})
+        db = await table.connection.connect()
         return serialize_response(await db.inspect_table(table.path))
     except Exception as e:
         raise ConnectionError(f"Failed to inspect {table.connection.url} table {table.path}: {str(e)}")
 
 
 async def inspect_endpoint(
-    ctx: Context,
     endpoint: Endpoint = Field(..., description="API endpoint to inspect."),
 ) -> dict[str, Any]:
     """
@@ -127,16 +93,13 @@ async def inspect_endpoint(
     3. Always inspect endpoints before writing queries to understand their structure and prevent errors
     """
     try:
-        # Resolve display URL if needed
-        resolved_connection = await _resolve_connection_if_needed(endpoint.connection, ctx)
-        api = await resolved_connection.connect(url_map={})
+        api = await endpoint.connection.connect()
         return serialize_response(await api.inspect_endpoint(**endpoint.model_dump(exclude={"connection"})))
     except Exception as e:
-        raise ConnectionError(f"Failed to inspect {resolved_connection.url} endpoint {endpoint.path}: {str(e)}")
+        raise ConnectionError(f"Failed to inspect {endpoint.connection.url} endpoint {endpoint.path}: {str(e)}")
 
 
 async def sample_table(
-    ctx: Context,
     table: Table = Field(..., description="Database table to sample."),
     n: int = Field(5, description="Number of rows to sample", ge=1, le=MAX_DATA_ROWS),
 ) -> dict[str, Any]:
@@ -152,10 +115,7 @@ async def sample_table(
     3. Always sample tables before writing queries to understand their structure and prevent errors.
     """
     try:
-        # Resolve display URL if needed
-        resolved_connection = await _resolve_connection_if_needed(table.connection, ctx)
-        table.connection = resolved_connection
-        db = await table.connection.connect(url_map={})
+        db = await table.connection.connect()
         return serialize_response(await db.sample_table(table.path, n=n))
     except Exception as e:
         raise ConnectionError(f"Failed to sample table in {table.connection.url} table {table.path}: {str(e)}")
@@ -195,10 +155,7 @@ async def query_database(
             raise HTTPStatusError(f"HTTP error: {e.response.text}", request=e.request, response=e.response)
 
     try:
-        # Resolve display URL if needed
-        resolved_connection = await _resolve_connection_if_needed(query.connection, ctx)
-        query.connection = resolved_connection
-        db = await query.connection.connect(url_map={})
+        db = await query.connection.connect()
         result = await db.query(**query.model_dump(exclude={"connection", "description"}))
         asyncio.create_task(remember_query(success=True))
         return serialize_response(result)
@@ -224,19 +181,16 @@ async def request_api(
         3. When a request fails or returns unexpected results, examine the endpoint to diagnose the issue and then retry.
     """
     try:
-        # Resolve display URL if needed
-        resolved_connection = await _resolve_connection_if_needed(request.connection, ctx)
-        api = await resolved_connection.connect(url_map={})
+        api = await request.connection.connect()
         result = await api.request(**request.model_dump(exclude={"connection", "description"}))
         return serialize_response(result)
     except Exception as e:
         if "DEBUG INFO" in str(e):
             raise e
-        raise ConnectionError(f"Failed to request {resolved_connection.url} endpoint {request.path}: {str(e)}")
+        raise ConnectionError(f"Failed to request {request.connection.url} endpoint {request.path}: {str(e)}")
 
 
 async def search_tables(
-    ctx: Context,
     connection: DatabaseConnection = Field(..., description="Database connection to search."),
     pattern: str = Field(..., description="Pattern to search for. "),
     mode: SearchMode = Field(default=SearchMode.BM25, description="Search mode to use."),
@@ -267,10 +221,7 @@ async def search_tables(
     logger.debug(f"Searching tables with pattern '{pattern}', mode '{mode}'")
 
     try:
-        # Resolve display URL if needed
-        resolved_connection = await _resolve_connection_if_needed(connection, ctx)
-        connection = resolved_connection
-        db = await connection.connect(url_map={})
+        db = await connection.connect()
         result = await db.search_tables(pattern=pattern, limit=NUM_TABLE_SEARCH_ITEMS, mode=mode)
 
         return {"tables": result}  # Return as dict with key
@@ -318,9 +269,7 @@ async def search_endpoints(
     logger.debug(f"Searching endpoints with pattern '{pattern}', mode '{mode}'")
 
     try:
-        # Resolve display URL if needed
-        resolved_connection = await _resolve_connection_if_needed(connection, ctx)
-        api = await resolved_connection.connect(url_map={})
+        api = await connection.connect()
         result = await api.search_endpoints(pattern=pattern, mode=mode, limit=NUM_ENDPOINT_SEARCH_ITEMS)
 
         return {"endpoints": result}  # Return as dict with key
@@ -328,12 +277,12 @@ async def search_endpoints(
         logger.error(f"Failed to search endpoints: {e}", exc_info=True)
         if "pattern" in str(e).lower() and mode == SearchMode.REGEX:
             raise ConnectionError(
-                f"Failed to search {resolved_connection.url} - Invalid regex pattern: {pattern}. Please try a different pattern or use a different search mode."
+                f"Failed to search {connection.url} - Invalid regex pattern: {pattern}. Please try a different pattern or use a different search mode."
             )
         elif "connection" in str(e).lower() or "connect" in str(e).lower():
-            raise ConnectionError(f"Failed to connect to {resolved_connection.url} - {str(e)}")
+            raise ConnectionError(f"Failed to connect to {connection.url} - {str(e)}")
         else:
-            raise ConnectionError(f"Failed to search endpoints in {resolved_connection.url} - {str(e)}")
+            raise ConnectionError(f"Failed to search endpoints in {connection.url} - {str(e)}")
 
 
 async def search_queries(

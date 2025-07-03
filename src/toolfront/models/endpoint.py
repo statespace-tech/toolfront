@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 from toolfront.models.connection import APIConnection
-from toolfront.utils import HTTPMethod
+from toolfront.types import HTTPMethod
 
 
 class Endpoint(BaseModel):
