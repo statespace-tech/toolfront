@@ -167,7 +167,6 @@ async def query_database(
 
 
 async def request_api(
-    ctx: Context,
     request: Request = Field(..., description="The request to make."),
 ) -> dict[str, Any]:
     """
