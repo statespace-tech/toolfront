@@ -4,12 +4,12 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import pandas as pd
-from async_lru import alru_cache
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
-from toolfront.config import ALRU_CACHE_TTL
+from toolfront.config import CACHE_TTL
 from toolfront.models.database import ConnectionResult, Database, DatabaseError
+from toolfront.storage import cache
 
 # BigQuery-specific concurrency limits
 # BigQuery API can handle ~100 concurrent requests per project, but we want to be conservative
@@ -52,7 +52,7 @@ class BigQuery(Database):
         query_job = self.client.query(code)
         return query_job.to_dataframe()
 
-    @alru_cache(maxsize=None, ttl=ALRU_CACHE_TTL)
+    @cache(expire=CACHE_TTL)
     async def get_tables(self) -> list[str]:
         """
         List all tables from BigQuery datasets in parallel with controlled concurrency.

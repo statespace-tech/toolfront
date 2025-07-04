@@ -5,12 +5,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
-from async_lru import _LRUCacheWrapper
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.exc import InvalidRequestError, StatementError
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.util import immutabledict
 
 from toolfront.types import ConnectionResult, SearchMode
 from toolfront.utils import search_items_bm25, search_items_jaro_winkler, search_items_regex
@@ -153,7 +153,7 @@ class Database(BaseModel, ABC):
     """Abstract base class for all databases."""
 
     url: URL = Field(description="URL of the database")
-    model_config = ConfigDict(ignored_types=(_LRUCacheWrapper,), arbitrary_types_allowed=True, frozen=True)
+    model_config = ConfigDict(ignored_types=(immutabledict,), arbitrary_types_allowed=True, frozen=True)
 
     @field_validator("url", mode="before")
     def validate_url(cls, v: Any) -> URL:

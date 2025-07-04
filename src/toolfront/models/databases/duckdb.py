@@ -67,7 +67,8 @@ class DuckDB(FileMixin, Database):
 
         for ext in EXTENSIONS:
             matching_files = list(Path().rglob(f"*.{ext}"))
-            all_files.extend([str(f) for f in matching_files if not exclude_hidden or not str(f).startswith(".")])
+            all_files.extend(
+                [str(f) for f in matching_files if not exclude_hidden or not str(f).startswith(".")])
 
         return all_files
 

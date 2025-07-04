@@ -1,8 +1,8 @@
 import pandas as pd
-from async_lru import alru_cache
 
-from toolfront.config import ALRU_CACHE_TTL
+from toolfront.config import CACHE_TTL
 from toolfront.models.database import Database, SQLAlchemyMixin
+from toolfront.storage import cache
 
 
 class PostgreSQL(SQLAlchemyMixin, Database):
@@ -11,7 +11,7 @@ class PostgreSQL(SQLAlchemyMixin, Database):
     def initialize_session(self) -> str:
         return "SET TRANSACTION READ ONLY"
 
-    @alru_cache(maxsize=None, ttl=ALRU_CACHE_TTL)
+    @cache(expire=CACHE_TTL)
     async def get_tables(self) -> list[str]:
         code = """
             SELECT table_schema, table_name 
