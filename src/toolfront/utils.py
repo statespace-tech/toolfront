@@ -29,8 +29,7 @@ def search_items_regex(item_names: list[str], pattern: str, limit: int) -> list[
 def search_items_jaro_winkler(item_names: list[str], pattern: str, limit: int) -> list[str]:
     """Search items using Jaro-Winkler similarity."""
     tokenized_pattern = " ".join(tokenize(pattern))
-    similarities = [(name, jaro_winkler_similarity(
-        " ".join(tokenize(name)), tokenized_pattern)) for name in item_names]
+    similarities = [(name, jaro_winkler_similarity(" ".join(tokenize(name)), tokenized_pattern)) for name in item_names]
     return [name for name, _ in sorted(similarities, key=lambda x: x[1], reverse=True)][:limit]
 
 
@@ -96,7 +95,7 @@ def serialize_response(response: Any) -> dict[str, Any]:
             json_str = truncated_df.to_csv(index=False)
             return {
                 "data": json_str,
-                "truncation_message": f"Showing {MAX_DATA_ROWS:,} rows of {len(response):,} total rows"
+                "truncation_message": f"Showing {MAX_DATA_ROWS:,} rows of {len(response):,} total rows",
             }
 
         # Convert to JSON string
@@ -112,10 +111,10 @@ def serialize_response(response: Any) -> dict[str, Any]:
 
     # Handle truncation
     if len(json_str) > MAX_DATA_CHARS:
-        truncated_str = json_str[:MAX_DATA_CHARS-3] + "..."
+        truncated_str = json_str[: MAX_DATA_CHARS - 3] + "..."
         return {
             "data": truncated_str,
-            "truncation_message": f"Showing {len(truncated_str):,} characters of {len(json_str):,} total characters"
+            "truncation_message": f"Showing {len(truncated_str):,} characters of {len(json_str):,} total characters",
         }
 
     return {"data": serialized}

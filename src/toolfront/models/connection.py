@@ -21,9 +21,15 @@ class Connection(BaseModel):
         """Connect to the data source."""
         raise NotImplementedError("Subclasses must implement connect")
 
-    async def test_connection(self, url: str) -> ConnectionResult:
+    @classmethod
+    async def test_connection(cls, url: str) -> ConnectionResult:
         """Test the connection to the data source."""
-        raise NotImplementedError("Subclasses must implement test_connection")
+        try:
+            connection = cls(url=url)
+            connection = await connection.connect()
+            return await connection.test_connection()
+        except Exception as e:
+            return ConnectionResult(connected=False, message=str(e))
 
 
 class APIConnection(Connection):
@@ -96,16 +102,6 @@ class APIConnection(Connection):
             url=clean_url, auth_headers=auth_headers, auth_query_params=auth_query_params, openapi_spec=openapi_spec
         )
 
-    @classmethod
-    async def test_connection(cls, url: str) -> ConnectionResult:
-        """Test database connection"""
-        try:
-            connection = cls(url=url)
-            api = await connection.connect()
-            return await api.test_connection()
-        except ImportError as e:
-            return ConnectionResult(connected=False, message=str(e))
-
 
 class DatabaseConnection(Connection):
     url: str = Field(..., description="Full database URL.")
@@ -146,13 +142,3 @@ class DatabaseConnection(Connection):
         module = importlib.import_module(f"toolfront.models.databases.{db_type.value}")
         db_class = getattr(module, db_class_name)
         return db_class(url=url)
-
-    @classmethod
-    async def test_connection(cls, url: str) -> ConnectionResult:
-        """Test database connection"""
-        try:
-            connection = cls(url=url)
-            db = await connection.connect()
-            return await db.test_connection()
-        except ImportError as e:
-            return ConnectionResult(connected=False, message=str(e))
