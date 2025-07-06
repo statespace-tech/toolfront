@@ -21,12 +21,10 @@ class Snowflake(SQLAlchemyMixin, Database):
             combined_data = pd.DataFrame()
 
             if tables_data is not None and not tables_data.empty:
-                combined_data = pd.concat(
-                    [combined_data, tables_data], ignore_index=True)
+                combined_data = pd.concat([combined_data, tables_data], ignore_index=True)
 
             if views_data is not None and not views_data.empty:
-                combined_data = pd.concat(
-                    [combined_data, views_data], ignore_index=True)
+                combined_data = pd.concat([combined_data, views_data], ignore_index=True)
 
             if combined_data.empty:
                 return []
@@ -35,8 +33,7 @@ class Snowflake(SQLAlchemyMixin, Database):
                 lambda x: f"{x['database_name']}.{x['schema_name']}.{x['name']}", axis=1
             ).tolist()
         except Exception as e:
-            raise DatabaseError(
-                f"Failed to get tables and views from Snowflake: {e}") from e
+            raise DatabaseError(f"Failed to get tables and views from Snowflake: {e}") from e
 
     async def inspect_table(self, table_path: str) -> pd.DataFrame:
         return await self.query(f"DESCRIBE TABLE {table_path}")
