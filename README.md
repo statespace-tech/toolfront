@@ -108,7 +108,7 @@ Then, add as many database and API URLs to the MCP configuration as you need:
 You're all set! You can now ask your AI agents about your data.
 
 > [!TIP]
-> By default, `uvx toolfront[all]` installs all package extras. For a lighter setup, you can directly install the extras you need e.g. `uvx toolfront[postgres,mysql]`. See [Databases](#databases) for the full list of extras.
+> **Installation Options:** By default, `uvx toolfront[all]` installs all package extras. For a lighter setup, you can directly install the extras you need e.g. `uvx toolfront[postgres,mysql]`. See [Databases](#databases) for the full list of extras.
 
 ### Run directly
 
@@ -122,10 +122,13 @@ uvx "toolfront[postgres]" "postgres://user:pass@host:port/db" "https://api.com/s
 docker run -i antidmg/toolfront "postgres://user:pass@host:port/db" "https://api.com/spec.json?token=my_token" --transport stdio
 ```
 
-Optionally, activate self-improving AI by passing your learning API key with the `--api-key "YOUR-API-KEY"` flag.
+To enable self-improving AI, you can provide your learning API key with the `--api-key "YOUR-API-KEY"` flag.
 
 > [!TIP]
 > **Version control**: To pin specific versions of ToolFront, use `"toolfront[all]==0.1.x"` for UV or `antidmg/toolfront:0.1.x` for Docker.
+
+> [!TIP]
+> **Localhost databases**: When connecting to localhost databases with Docker (like `duckdb` or `postgresql://user:pass@localhost:5432/db)`, add `--network HOST` before the image name. Remote databases (cloud, external servers) work without this flag.
 
 
 ## Data Sources
