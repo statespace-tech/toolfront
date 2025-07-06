@@ -30,8 +30,7 @@ class SQLServer(SQLAlchemyMixin, Database):
         splits = table_path.split(".")
 
         if not len(splits) == 2:
-            raise ValueError(
-                f"Invalid table path: {table_path}. Expected format: schema.table")
+            raise ValueError(f"Invalid table path: {table_path}. Expected format: schema.table")
 
         table_schema, table_name = splits
 
@@ -54,22 +53,19 @@ class SQLServer(SQLAlchemyMixin, Database):
 
             result = await self.query(code=code)
             if result.empty:
-                raise ValueError(
-                    f"Table or view '{table_path}' not found or has no columns")
+                raise ValueError(f"Table or view '{table_path}' not found or has no columns")
 
             return result
 
         except Exception as e:
-            raise ValueError(
-                f"Failed to inspect table '{table_path}': {str(e)}") from e
+            raise ValueError(f"Failed to inspect table '{table_path}': {str(e)}") from e
 
     async def sample_table(self, table_path: str, n: int = 5) -> pd.DataFrame:
         """Sample data from a table or view using SQL Server TOP syntax."""
         splits = table_path.split(".")
 
         if not len(splits) == 2:
-            raise ValueError(
-                f"Invalid table path: {table_path}. Expected format: schema.table")
+            raise ValueError(f"Invalid table path: {table_path}. Expected format: schema.table")
 
         if n <= 0:
             raise ValueError(f"Sample size must be positive, got {n}")
@@ -77,5 +73,4 @@ class SQLServer(SQLAlchemyMixin, Database):
         try:
             return await self.query(code=f"SELECT TOP {n} * FROM [{splits[0]}].[{splits[1]}]")
         except Exception as e:
-            raise ValueError(
-                f"Failed to sample table '{table_path}': {str(e)}") from e
+            raise ValueError(f"Failed to sample table '{table_path}': {str(e)}") from e
