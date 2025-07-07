@@ -2338,7 +2338,7 @@ wheels = [
 
 [[package]]
 name = "toolfront"
-version = "0.1.6"
+version = "0.1.8"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
@@ -2353,6 +2353,7 @@ dependencies = [
     { name = "numpy" },
     { name = "openapi-spec-validator" },
     { name = "pandas" },
+    { name = "platformdirs" },
     { name = "pyarrow" },
     { name = "pydantic" },
     { name = "pytest" },
@@ -2451,6 +2452,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "openapi-spec-validator", specifier = ">=0.7.2" },
     { name = "pandas", specifier = ">=2.2.3" },
+    { name = "platformdirs", specifier = ">=4.3.8" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.0.0" },
     { name = "psycopg2-binary", marker = "extra == 'postgres'", specifier = ">=2.9.9" },
     { name = "psycopg2-binary", marker = "extra == 'postgresql'", specifier = ">=2.9.9" },

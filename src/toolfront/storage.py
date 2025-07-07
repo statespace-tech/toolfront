@@ -6,12 +6,16 @@ from urllib.parse import urlparse
 import diskcache
 import httpx
 import jsonref
+from platformdirs import user_cache_dir
 from sqlalchemy.engine.url import make_url
 
 from toolfront.config import API_KEY_HEADER
 
 logger = logging.getLogger("toolfront")
-_cache = diskcache.Cache(".toolfront_cache")
+
+cache_dir = user_cache_dir("toolfront")
+
+_cache = diskcache.Cache(cache_dir)
 
 
 def save_api_key(api_key: str) -> None:
@@ -43,7 +47,8 @@ def _get_or_download_openapi_spec(spec_url: str) -> dict | None:
 
             # Cache the downloaded spec
             save_openapi_spec_config(spec_url, parsed_spec)
-            logger.info(f"Successfully downloaded and cached OpenAPI spec from {spec_url}")
+            logger.info(
+                f"Successfully downloaded and cached OpenAPI spec from {spec_url}")
             return parsed_spec
     except Exception as e:
         logger.warning(f"Failed to download OpenAPI spec from {spec_url}: {e}")
@@ -65,10 +70,12 @@ async def save_connection(url: str) -> str:
         openapi_spec = _get_or_download_openapi_spec(url)
 
         if openapi_spec is None:
-            raise ConnectionError(f"Failed to download OpenAPI spec from {url}")
+            raise ConnectionError(
+                f"Failed to download OpenAPI spec from {url}")
 
         # Extract base URL from OpenAPI spec
-        base_url = openapi_spec.get("servers", [])[0].get("url", None) if openapi_spec else None
+        base_url = openapi_spec.get("servers", [])[0].get(
+            "url", None) if openapi_spec else None
         if base_url is None:
             raise ConnectionError("No servers found in OpenAPI spec")
 
@@ -86,7 +93,8 @@ async def save_connection(url: str) -> str:
             return clean_url
         else:
             logger.error(f"Failed to connect to {url}: {result.message}")
-            raise ConnectionError(f"Failed to connect to {url}: {result.message}")
+            raise ConnectionError(
+                f"Failed to connect to {url}: {result.message}")
     else:
         # Handle database URLs
         from toolfront.models.connection import DatabaseConnection
@@ -106,7 +114,8 @@ async def save_connection(url: str) -> str:
             return obfuscated_url
         else:
             logger.error(f"Failed to connect to {url}: {result.message}")
-            raise ConnectionError(f"Failed to connect to {url}: {result.message}")
+            raise ConnectionError(
+                f"Failed to connect to {url}: {result.message}")
 
 
 def save_clean_url_to_spec_url_mapping(clean_url: str, spec_url: str) -> None:
@@ -168,7 +177,8 @@ def cache(expire: int = None):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             # Create cache key - includes instance (self) automatically
-            cache_key = (func.__qualname__, args, tuple(sorted(kwargs.items())))
+            cache_key = (func.__qualname__, args,
+                         tuple(sorted(kwargs.items())))
 
             result = _cache.get(cache_key)
             if result is not None:
