@@ -35,10 +35,11 @@
 - **🌊 Seamless**: Connect AI to all your databases, warehouses, and APIs.
 - **⚡ Instant**: Get up and running in seconds with a single command.
 - **🧩 Pluggable**: Works with any LLM, agent framework, and IDE that supports MCP.
-- **🧠 Self-improving**: Your AI learns from experience, becoming smarter and faster over time.
+- **🧠 Scalable**: ToolFront automatically evaluates your AI agents and helps them improve.
 - **🔒 Secure**: Your data stays local, private, and under your control.
 
-> You need relevant data to make AI fast and accurate. ToolFront's learning API (🧠) automatically gathers structural information about your databases and APIs to help your AI get better over time. This feature is in beta, and we'd love your feedback!
+
+>AI needs to be accurate and stay relevant. ToolFront’s continuous evaluation & learning (CE/CL) API automatically monitors your AI agents and improves their performance over time. This feature is in beta, and we’d love your feedback!
 
 
 ## Quickstart
@@ -49,7 +50,7 @@ ToolFront runs on your computer through an **[MCP server](https://modelcontextpr
 
 - **[uv](https://docs.astral.sh/uv/)** or **[Docker](https://www.docker.com/)** to run the MCP server (we recommend **uv**)
 - **URLs** of your databases and APIs - [see below](#data-sources)
-- **API key** (optional) to activate self-improving AI with the learning API
+- **API key** (optional) to automatically improve your AI agents with the CE/CL API
 
 
 ### Run inside your AI Framework or IDE
@@ -75,7 +76,7 @@ Then, add as many database and API URLs to the MCP configuration as you need:
       "postgresql://user:pass@host:port/db",
       "https://api.com/openapi.json?api_key=key",
       "...",
-      "--api-key", "YOUR-API-KEY" // Optional: learning API
+      "--api-key", "YOUR-API-KEY" // Optional: CE/CL API
     ]
   }
 }
@@ -96,7 +97,7 @@ Then, add as many database and API URLs to the MCP configuration as you need:
       "antidmg/toolfront",
       "postgresql://user:pass@host:port/db",
       "https://api.com/openapi.json?token=my_token",
-      "--api-key", "YOUR-API-KEY" // Optional: learning API
+      "--api-key", "YOUR-API-KEY" // Optional: CE/CL API
     ]
   }
 }
@@ -122,7 +123,7 @@ uvx "toolfront[postgres]" "postgres://user:pass@host:port/db" "https://api.com/s
 docker run -i antidmg/toolfront "postgres://user:pass@host:port/db" "https://api.com/spec.json?token=my_token" --transport stdio
 ```
 
-To enable self-improving AI, you can provide your learning API key with the `--api-key "YOUR-API-KEY"` flag.
+To enable self-improving AI, you can provide your CE/CL API key with the `--api-key "YOUR-API-KEY"` flag.
 
 > [!TIP]
 > **Version control**: To pin specific versions of ToolFront, use `"toolfront[all]==0.1.x"` for UV or `antidmg/toolfront:0.1.x` for Docker.
@@ -198,17 +199,17 @@ ToolFront stands out with *multi-database* support, *self-improving* AI, and a *
 
 **Multi-database**: Instead of being limited to a single database, ToolFront connects all your databases and APIs in one place.
 
-**Self-improving**: ToolFront learning API helps your AI agents get smarter and faster over time.
+**Self-improving**: ToolFront's CE/CL API monitors your AI agents and improves their performance over time
 
 **Local-first**: Cloud solutions compromise your data and rack up egress fees. ToolFront keeps everything local.
 
 </details>
 
 <details>
-<summary><strong>How does the learning API work?</strong></summary>
+<summary><strong>How does the CE/CL API work?</strong></summary>
 <br>
 
-The learning API uses [in-context learning](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html#in-context-learning-key-concept), a novel training-free learning framework pioneered by OpenAI. By augmenting your LLM's context query and request samples, your agents can reason by analogy over your databases and APIs to quickly arrive at the correct answer.
+The CE/CL API uses [in-context learning](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html#in-context-learning-key-concept), a novel training-free learning framework pioneered by OpenAI. By augmenting your LLM's context with relevant samples, your agents can reason by analogy over your databases and APIs to quickly arrive at the correct answer.
 
 </details>
 
