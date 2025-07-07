@@ -1,6 +1,6 @@
 [project]
 name = "toolfront"
-version = "0.1.8"
+version = "0.1.9"
 description = "A lightweight MCP server for databases."
 readme = "README.md"
 authors = [
