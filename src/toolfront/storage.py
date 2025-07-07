@@ -6,12 +6,16 @@ from urllib.parse import urlparse
 import diskcache
 import httpx
 import jsonref
+from platformdirs import user_cache_dir
 from sqlalchemy.engine.url import make_url
 
 from toolfront.config import API_KEY_HEADER
 
 logger = logging.getLogger("toolfront")
-_cache = diskcache.Cache(".toolfront_cache")
+
+cache_dir = user_cache_dir("toolfront")
+
+_cache = diskcache.Cache(cache_dir)
 
 
 def save_api_key(api_key: str) -> None:

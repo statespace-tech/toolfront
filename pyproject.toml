@@ -36,6 +36,7 @@ dependencies = [
     "diskcache>=5.6.3",
     "openapi-spec-validator>=0.7.2",
     "jsonref>=1.1.0",
+    "platformdirs>=4.3.8",
 ]
 
 [project.scripts]
