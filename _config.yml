@@ -1,5 +1,0 @@
-plugins:
-    - jekyll-readme-index
-markdown: kramdown
-kramdown:
-    input: GFM
