@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from toolfront.models.connection import APIConnection
+from toolfront.models.connections.api import APIConnection
 from toolfront.types import HTTPMethod
 
 

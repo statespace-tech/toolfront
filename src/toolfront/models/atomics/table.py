@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from toolfront.models.connection import DatabaseConnection
+from toolfront.models.connections.database import DatabaseConnection
 
 
 class Table(BaseModel):

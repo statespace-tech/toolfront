@@ -92,6 +92,15 @@ sqlserver = [
 mssql = [
     "pyodbc>=5.0.0",
 ]
+document = [
+    "pypdf>=5.2.1",           # PDF documents
+    "python-docx>=1.2.0",     # Word documents
+    "python-pptx>=0.6.23",    # PowerPoint presentations
+    "PyYAML>=6.0.1",          # YAML files
+    "striprtf>=0.0.26",       # RTF files
+    "openpyxl>=3.1.5",        # Excel files (pandas backend)
+]
+
 all = [
     "toolfront[bigquery]",
     "toolfront[databricks]",
@@ -101,6 +110,7 @@ all = [
     "toolfront[snowflake]",
     "toolfront[sqlite]",
     "toolfront[sqlserver]",
+    "toolfront[document]",
 ]
 
 [build-system]

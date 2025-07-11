@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.util import immutabledict
 
 from toolfront.types import ConnectionResult, SearchMode
-from toolfront.utils import search_items_bm25, search_items_jaro_winkler, search_items_regex
+from toolfront.utils import search_items
 
 try:
     from sqlalchemy.exc import MissingGreenlet
@@ -194,12 +194,7 @@ class Database(BaseModel, ABC):
             return []
 
         try:
-            if mode == SearchMode.REGEX:
-                return search_items_regex(table_names, pattern, limit)
-            elif mode == SearchMode.JARO_WINKLER:
-                return search_items_jaro_winkler(table_names, pattern, limit)
-            elif mode == SearchMode.BM25:
-                return search_items_bm25(table_names, pattern, limit)
+            return search_items(table_names, pattern, mode, limit)
         except re.error as e:
             raise DatabaseError(f"Invalid regex pattern '{pattern}': {e}")
         except Exception as e:

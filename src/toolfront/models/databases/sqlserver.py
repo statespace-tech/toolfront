@@ -1,8 +1,8 @@
 import pandas as pd
 
+from toolfront.cache import cache
 from toolfront.config import CACHE_TTL
 from toolfront.models.database import Database, SQLAlchemyMixin
-from toolfront.storage import cache
 
 
 class SQLServer(SQLAlchemyMixin, Database):

@@ -7,9 +7,9 @@ import pandas as pd
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
+from toolfront.cache import cache
 from toolfront.config import CACHE_TTL
 from toolfront.models.database import ConnectionResult, Database, DatabaseError
-from toolfront.storage import cache
 
 # BigQuery-specific concurrency limits
 # BigQuery API can handle ~100 concurrent requests per project, but we want to be conservative

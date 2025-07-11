@@ -118,6 +118,9 @@ dmypy.json
 # pytype static analyzer
 .pytype/
 
+# Pyright type checker
+pyrightconfig.json
+
 # Cython debug symbols
 cython_debug/
 
@@ -132,3 +135,6 @@ CLAUDE.md
 # Cache and test files
 .toolfront_cache/
 test.db
+
+# Data directory
+data/

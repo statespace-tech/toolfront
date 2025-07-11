@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from sqlalchemy.engine.url import make_url
 
-from toolfront.models.connection import DatabaseConnection
+from toolfront.models.connections.database import DatabaseConnection
 
 
 class TestConnectionDriverSelection:

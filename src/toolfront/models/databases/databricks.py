@@ -4,9 +4,9 @@ import logging
 
 import pandas as pd
 
+from toolfront.cache import cache
 from toolfront.config import CACHE_TTL
 from toolfront.models.database import ConnectionResult, Database, DatabaseError
-from toolfront.storage import cache
 
 logger = logging.getLogger("toolfront")
 

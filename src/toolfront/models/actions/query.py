@@ -3,7 +3,7 @@ from urllib.parse import unquote
 from pydantic import BaseModel, Field
 from sqlalchemy.engine.url import make_url
 
-from toolfront.models.connection import DatabaseConnection
+from toolfront.models.connections.database import DatabaseConnection
 
 
 class Query(BaseModel):

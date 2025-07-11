@@ -55,7 +55,10 @@ def search_items_bm25(item_names: list[str], pattern: str, limit: int) -> list[s
 
     return [
         name
-        for name, _ in sorted(zip([n for n, _ in valid_items], scores, strict=False), key=lambda x: x[1], reverse=True)
+        for name, score in sorted(
+            zip([n for n, _ in valid_items], scores, strict=False), key=lambda x: x[1], reverse=True
+        )
+        if score > 0
     ][:limit]
 
 
