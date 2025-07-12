@@ -103,6 +103,24 @@ Then, add as many database and API URLs to the MCP configuration as you need:
 }
 ```
 
+**With local file access:**
+```json
+{
+  "toolfront-docker": {
+    "command": "docker",
+    "args": [
+      "run",
+      "-i",
+      "-v", "/Users/you/Documents:/app/docs",
+      "antidmg/toolfront",
+      "postgresql://user:pass@host:port/db",
+      "file:///app/docs",
+      "--api-key", "YOUR-API-KEY"
+    ]
+  }
+}
+```
+
 </details>
 <br>
 
