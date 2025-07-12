@@ -22,7 +22,7 @@
 
 </div>
 
-> It's hard to ask AI about your data. Out-of-the-box models struggle to understand large databases and APIs, while fine-tuned models are expensive and brittle. ToolFront solves this by helping AI models discover and learn about your data on the fly, so they can quickly answer your questions.
+> It's hard to ask AI about your data. Out-of-the-box models struggle to understand large databases, APIs, and documents, while fine-tuned models are expensive and brittle. ToolFront solves this by helping AI models discover and learn about your data on the fly, so they can quickly answer your questions.
 
 <br>
 <div align="center">
@@ -32,7 +32,7 @@
 
 ## Features
 
-- **🌊 Seamless**: Connect AI to all your databases, warehouses, and APIs.
+- **🌊 Seamless**: Connect AI to all your databases, warehouses, APIs, and documents.
 - **⚡ Instant**: Get up and running in seconds with a single command.
 - **🧩 Pluggable**: Works with any LLM, agent framework, and IDE that supports MCP.
 - **🧠 Scalable**: ToolFront automatically evaluates your AI agents and helps them improve.
@@ -109,7 +109,7 @@ Then, add as many database and API URLs to the MCP configuration as you need:
 You're all set! You can now ask your AI agents about your data.
 
 > [!TIP]
-> **Installation Options:** By default, `uvx toolfront[all]` installs all package extras. For a lighter setup, you can directly install the extras you need e.g. `uvx toolfront[postgres,mysql]`. See [Databases](#databases) for the full list of extras.
+> **Installation Options:** By default, `uvx toolfront[all]` installs all package extras. For a lighter setup, you can directly install the extras you need e.g. `uvx toolfront[postgres,mysql,document]`. See [Databases](#databases) and [Document Libraries](#document-libraries) for the full list of extras.
 
 ### Run directly
 
@@ -134,7 +134,7 @@ To enable self-improving AI, you can provide your CE/CL API key with the `--api-
 
 ## Data Sources
 
-ToolFront supports both databases and APIs:
+ToolFront supports databases, APIs, and document libraries:
 
 ### Databases
 
@@ -172,13 +172,37 @@ ToolFronts supports virtually **all** APIs that have an [OpenAPI](https://www.op
 > [!NOTE]
 > **Authentication**: For APIs that require authentication, append your API key or token to the specification URL (e.g., `https://api.com/openapi.json?token=YOUR-API-TOKEN`). ToolFront will automatically detect and use the authentication parameters in the appropriate places.
 
+### Document Libraries
+
+ToolFront can search and read documents from local file systems, enabling AI agents to work with unstructured data alongside databases and APIs.
+
+| Document Types | Extras | URL Format |
+|----------------|--------|------------|
+| PDF, Word, PowerPoint, Excel, JSON, Markdown, TXT, XML, YAML, RTF | `document` | `file:///path/to/your/documents` |
+
+**Usage:**
+```json
+{
+  "toolfront": {
+    "command": "uvx", 
+    "args": [
+      "toolfront[all]",
+      "file:///path/to/your/documents",
+      "postgresql://user:pass@host:port/db"
+    ]
+  }
+}
+```
+
 ## Tools
 
-MCP tools are functions that AI agents can call to interact with external systems. ToolFront comes with ten database tools:
+MCP tools are functions that AI agents can call to interact with external systems. ToolFront comes with tools for databases, APIs, and documents:
 
 | Tool                | Description                                                      | Requires API Key |
 |---------------------|------------------------------------------------------------------|------------------|
-| `discover`          | List all configured databases and APIs                           | ✗                |
+| `discover`          | List all configured databases, APIs, and document libraries     | ✗                |
+| `search_documents`  | Search documents by name pattern or similarity                   | ✗                |
+| `read_document`     | Read document contents with smart pagination                     | ✗                |
 | `search_endpoints`  | Search API endpoints by pattern or similarity                    | ✗                |
 | `search_tables`     | Search database tables by pattern or similarity                  | ✗                |
 | `sample_table`      | Get sample rows from a database table                            | ✗                |
