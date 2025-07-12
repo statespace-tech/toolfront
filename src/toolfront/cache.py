@@ -89,6 +89,9 @@ async def save_connections(urls: list[str] | str) -> list[str] | str:
         spec = Spec.from_spec_url(spec_url)
         api_url = spec.url
 
+        # Cache the spec using the api_url as key (not spec_url) so APIConnection can find it
+        save_to_cache(api_url, spec.model_dump())
+
         result = await APIConnection.test_connection(api_url)
         if result.connected:
             return api_url
