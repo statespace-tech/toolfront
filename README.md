@@ -121,9 +121,15 @@ uvx "toolfront[postgres]" "postgres://user:pass@host:port/db" "https://api.com/s
 
 # Using Docker and stdio
 docker run -i antidmg/toolfront "postgres://user:pass@host:port/db" "https://api.com/spec.json?token=my_token" --transport stdio
+
+# Using Docker with local file access (requires volume mount)
+docker run -i -v "/path/to/local/docs:/app/docs" antidmg/toolfront "file:///app/docs" --transport stdio
 ```
 
 To enable self-improving AI, you can provide your CE/CL API key with the `--api-key "YOUR-API-KEY"` flag.
+
+> [!NOTE]
+> **Docker & Local Files**: When using Docker with `file://` URLs, you must mount local directories as volumes. Use `-v "/local/path:/container/path"` and reference the container path in your file URL.
 
 > [!TIP]
 > **Version control**: To pin specific versions of ToolFront, use `"toolfront[all]==0.1.x"` for UV or `antidmg/toolfront:0.1.x` for Docker.
