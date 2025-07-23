@@ -1,7 +1,7 @@
 [project]
 name = "toolfront"
-version = "0.1.11"
-description = "A lightweight MCP server for databases."
+version = "0.2.0"
+description = "ToolFront helps you retrieve information from large databases, APIs, and documents with AI."
 readme = "README.md"
 authors = [
     {name = "Esteban Safranchik", email = "esteban@kruskal.ai"},
