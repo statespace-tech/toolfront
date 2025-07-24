@@ -13,7 +13,9 @@ RUN chown appuser:appgroup /app
 # Install system dependencies and uv (as root, before switching user)
 RUN apt-get update && apt-get install -y \
     build-essential \
+    pkg-config \
     libpq-dev \
+    default-libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir uv==0.5.2
 
