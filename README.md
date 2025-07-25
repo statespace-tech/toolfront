@@ -677,7 +677,22 @@ answer: float = data.ask("What's AAPL's current stock price?", stream=True)
 
 ToolFront supports documents for reading various file formats including PDF, DOCX, PPTX, Excel, HTML, Markdown, TXT, JSON, XML, YAML, and RTF.
 
-Install with `pip install toolfront[document]`, then run:
+**Install options:**
+```bash
+# PDF processing only
+pip install toolfront[document-pdf]
+
+# Office documents (Word, PowerPoint, Excel)  
+pip install toolfront[document-office]
+
+# Cloud document intelligence
+pip install toolfront[document-cloud]
+
+# All document formats
+pip install toolfront[document-all]
+```
+
+Then run:
 
 ```python
 from toolfront import Document
