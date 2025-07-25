@@ -96,6 +96,21 @@ trino = [
     "ibis-framework[trino]>=10.6.0",
 ]
 document = [
+    "markitdown>=0.1.2",
+]
+document-pdf = [
+    "markitdown[pdf]>=0.1.2",
+]
+document-office = [
+    "markitdown[docx,pptx,xlsx,xls]>=0.1.2",
+]
+document-cloud = [
+    "markitdown[az-doc-intel]>=0.1.2",
+]
+document-audio = [
+    "markitdown[audio-transcription]>=0.1.2",
+]
+document-all = [
     "markitdown[all]>=0.1.2",
 ]
 
@@ -113,7 +128,7 @@ all = [
     "toolfront[snowflake]",
     "toolfront[sqlite]",
     "toolfront[trino]",
-    "toolfront[document]",
+    "toolfront[document-all]",
 ]
 
 [build-system]
@@ -128,11 +143,9 @@ dev = [
 ]
 
 [tool.ruff]
-# Same as Black.
 line-length = 120
 indent-width = 4
 
-# Assume Python 3.11+
 target-version = "py311"
 
 [tool.ruff.lint]
@@ -171,16 +184,12 @@ unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.format]
-# Like Black, use double quotes for strings.
 quote-style = "double"
 
-# Like Black, indent with spaces, rather than tabs.
 indent-style = "space"
 
-# Like Black, respect magic trailing commas.
 skip-magic-trailing-comma = false
 
-# Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
 
 [tool.pytest.ini_options]

@@ -38,10 +38,10 @@ from toolfront.utils import (
 logger = logging.getLogger("toolfront")
 console = Console()
 
-# Type alias for cleaner return type annotation
+# Type aliases for AI response types
 BasicTypes = str | bool | int | float
-Collections = list | set | tuple | dict
-AskReturnType = BasicTypes | Collections | BaseModel | pd.DataFrame
+Collections = list[Any] | set[Any] | tuple[Any, ...] | dict[str, Any]
+AIResponse = dict[str, Any] | BasicTypes | Collections | BaseModel | pd.DataFrame
 
 # Context variable to store datasources for the current context
 _context_datasources: ContextVar[dict[str, "DataSource"] | None] = ContextVar("context_datasources", default=None)
@@ -107,7 +107,7 @@ class DataSource(BaseModel, ABC):
         model: models.Model | models.KnownModelName | str | None = None,
         context: str | None = None,
         stream: bool = False,
-    ) -> AskReturnType:
+    ) -> AIResponse:
         """
         Ask the datasource a question and return the result.
 
@@ -130,7 +130,7 @@ class DataSource(BaseModel, ABC):
 
         Returns
         -------
-        AskReturnType
+        AIResponse
             The response from the datasource, which can be a string, dict, list, DataFrame, or Pydantic model.
         """
 
@@ -138,7 +138,7 @@ class DataSource(BaseModel, ABC):
             model = get_default_model()
 
         # Get caller context and add it to the system prompt
-        output_type = get_output_type_hint() or str
+        output_type = get_output_type_hint() or dict[str, Any]
         if output_type:
             output_type = self._preprocess(output_type)
 
@@ -192,7 +192,7 @@ class DataSource(BaseModel, ABC):
         prompt: str,
         agent: Agent,
         stream: bool = False,
-    ) -> AskReturnType:
+    ) -> AIResponse:
         """
         Run the agent and optionally stream the response with live updating display.
         Returns the final result from the agent.

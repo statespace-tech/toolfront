@@ -99,9 +99,13 @@ That's it! ToolFront returns results in the format you need.
 
 ## 📁 Examples
 
-Check out the [`examples/`](examples/) directory for complete working examples:
+Explore complete workflows in the [`examples/`](examples/) directory:
 
-- [`basic.py`](examples/basic.py) - Simple database connection and querying example
+- **[Basic Database Query](examples/basic.py)** - Simple natural language SQL
+- **[PDF Invoice Extraction](examples/pdf_extraction.py)** - Extract structured data from documents  
+- **[Complete Invoice Workflow](examples/invoice_processing_workflow.py)** - Production-ready batch processing pipeline
+
+[→ See all examples with setup instructions](examples/)
 
 ## 🤖 AI Model Configuration
 
