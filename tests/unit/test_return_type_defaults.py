@@ -33,10 +33,7 @@ class TestReturnTypeDefaults:
         """Test that basic types are still part of AIResponse."""
         import typing
 
-        if hasattr(AIResponse, "__args__"):
-            types = AIResponse.__args__
-        else:
-            types = typing.get_args(AIResponse)
+        types = AIResponse.__args__ if hasattr(AIResponse, "__args__") else typing.get_args(AIResponse)
 
         # Check that str, bool, int, float are still supported
         assert str in types, "str should still be supported"
@@ -77,25 +74,23 @@ class TestDefaultBehaviorChangeConsistency:
         """Test the fallback logic when no type hint is provided."""
         # This is testing pure logic without external dependencies
         from toolfront.utils import get_output_type_hint
-
-        # When called without context, should return None
+        
+        # When called without context, should return None 
         # (this is the current behavior we're testing)
         result = get_output_type_hint()
-
-        # The actual fallback to dict[str, Any] happens in the ask() method
+        
+        # The actual fallback to str happens in the ask() method
         # This test documents the current behavior
         assert result is None, "get_output_type_hint() should return None when no context"
-
-    def test_dict_str_any_type_construction(self):
-        """Test that dict[str, Any] can be constructed properly."""
-        from typing import Any
-
+    
+    def test_str_default_type_construction(self):
+        """Test that str default can be used properly."""
         # Test that the default type we're using is valid
-        default_type = dict[str, Any]
-
+        default_type = str
+        
         # Should be able to create an instance
-        example = {"key": "value", "number": 42, "bool": True}
-
+        example = "example response"
+        
         # This is a basic type validation
-        assert isinstance(example, dict)
-        assert all(isinstance(k, str) for k in example.keys())
+        assert isinstance(example, str)
+        assert isinstance(example, default_type)

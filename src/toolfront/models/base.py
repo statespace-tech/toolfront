@@ -138,7 +138,7 @@ class DataSource(BaseModel, ABC):
             model = get_default_model()
 
         # Get caller context and add it to the system prompt
-        output_type = get_output_type_hint() or dict[str, Any]
+        output_type = get_output_type_hint() or str
         if output_type:
             output_type = self._preprocess(output_type)
 

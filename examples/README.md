@@ -77,7 +77,7 @@ python examples/pdf_extraction.py
 **ToolFront uses Python type annotations to determine return types:**
 
 ```python
-# Returns dict by default (new in v0.2.0)
+# Returns string by default
 result = doc.ask("Extract data")
 
 # Returns validated Pydantic model
