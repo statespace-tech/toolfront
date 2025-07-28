@@ -68,15 +68,6 @@ fi
 
 uv publish --token "$PYPI_API_TOKEN"
 
-# Build and push Docker image
-echo "Building Docker image..."
-docker build -t antidmg/toolfront:$NEW_VERSION .
-docker build -t antidmg/toolfront:latest .
-
-echo "Pushing Docker image..."
-docker push antidmg/toolfront:$NEW_VERSION
-docker push antidmg/toolfront:latest
-
 # Push commit
 git push
 
