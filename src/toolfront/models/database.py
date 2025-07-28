@@ -3,7 +3,7 @@ import re
 import warnings
 from abc import ABC
 from contextlib import closing
-from typing import Any
+from typing import Any, get_args, get_origin
 from urllib.parse import urlparse
 
 import ibis
@@ -164,18 +164,26 @@ class Database(DataSource, ABC):
             except re.error as e:
                 raise ValueError(f"Invalid regex pattern for tables: {self.match} - {str(e)}")
 
-        # Discover all available tables in the database
-        catalog = self._connection.current_catalog
-        databases = self._connection.list_databases(catalog=catalog)
-
-        all_tables = []
-        for db in databases:
-            tables = self._connection.list_tables(like=self.match, database=(catalog, db))
-            prefix = f"{catalog}." if catalog else ""
-            all_tables.extend([f"{prefix}{db}.{table}" for table in tables])
+        try:
+            catalog = getattr(self._connection, "current_catalog", None)
+            if catalog:
+                databases = self._connection.list_databases(catalog=catalog)
+                all_tables = []
+                for db in databases:
+                    tables = self._connection.list_tables(like=self.match, database=(catalog, db))
+                    prefix = f"{catalog}." if catalog else ""
+                    all_tables.extend([f"{prefix}{db}.{table}" for table in tables])
+            else:
+                all_tables = self._connection.list_tables(like=self.match)
+        except Exception as e:
+            logger.warning(f"Could not discover tables automatically: {e}")
+            try:
+                all_tables = self._connection.list_tables(like=self.match)
+            except Exception:
+                all_tables = []
 
         if not len(all_tables):
-            raise ValueError("No tables found in the database")
+            logger.warning("No tables found in the database - this may be expected for empty databases")
 
         self._tables = all_tables
 
@@ -257,10 +265,34 @@ class Database(DataSource, ABC):
 
         with closing(self._connection.raw_sql(query.code)) as cursor:
             columns = [col[0] for col in cursor.description]
-            return pd.DataFrame(cursor.fetchall(), columns=columns)
+            df = pd.DataFrame(cursor.fetchall(), columns=columns)
+            return serialize_response(df)
 
     def _preprocess(self, var_type: Any) -> Any:
-        return Query if isinstance(var_type, pd.DataFrame) else var_type
+        if var_type == pd.DataFrame:
+            return Query
+
+        origin = get_origin(var_type)
+        if origin is not None:
+            args = get_args(var_type)
+            if pd.DataFrame in args:
+                return Query | None if type(None) in args else Query
+
+        return var_type
+
+    def query_raw(self, query: Query) -> pd.DataFrame:
+        """Execute query and return raw DataFrame without truncation."""
+        if not query.is_read_only_query():
+            raise ValueError("Only read-only queries are allowed")
+
+        if not hasattr(self._connection, "raw_sql"):
+            raise ValueError("Database does not support raw sql queries")
+
+        with closing(self._connection.raw_sql(query.code)) as cursor:
+            columns = [col[0] for col in cursor.description]
+            return pd.DataFrame(cursor.fetchall(), columns=columns)
 
     def _postprocess(self, result: Any) -> Any:
-        return self.query(result) if isinstance(result, Query) else result
+        if isinstance(result, Query):
+            return self.query_raw(result)
+        return result

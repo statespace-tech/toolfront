@@ -102,6 +102,8 @@ That's it! ToolFront returns results in the format you need.
 Explore complete workflows in the [`examples/`](examples/) directory:
 
 - **[Basic Database Query](examples/basic.py)** - Simple natural language SQL
+- **[Large Dataset Export](examples/large_dataset_export.py)** - Export 50k+ rows with zero token consumption
+- **[Natural Language Demo](examples/natural_language_sqlite_demo.py)** - Complete DataFrame workflow example
 - **[PDF Invoice Extraction](examples/pdf_extraction.py)** - Extract structured data from documents  
 - **[Complete Invoice Workflow](examples/invoice_processing_workflow.py)** - Production-ready batch processing pipeline
 
@@ -247,15 +249,16 @@ customers: Customer = data.ask("Who's our fastest grpwomg customer?", stream=Tru
 # Customer(name='TechCorp Inc.', revenue=50000)
 ```
 
-**DataFrames** for tabular data analysis:
+**DataFrames** for raw data exports (bypasses LLM token limits):
 
 ```python
-sales: pd.DataFrame = data.ask("Daily sales last week", stream=True)
-# Output:
-#         date  amount
-# 0 2024-01-15   12500
-# 1 2024-01-16   15200
-# 2 2024-01-17   13800
+# Using pd.DataFrame type hint returns raw data instead of LLM summary
+sales: pd.DataFrame = data.ask("Get all sales transactions", stream=True)
+
+# Result: Raw DataFrame with potentially 50k+ rows (zero additional tokens!)
+sales.to_csv("export.csv")         # Export any size dataset
+sales.to_excel("report.xlsx")      # All exports consume zero tokens
+filtered = sales[sales > 1000]     # Process data locally for free
 ```
 
 **Union types** for flexible responses:
