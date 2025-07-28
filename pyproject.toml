@@ -1,6 +1,6 @@
 [project]
 name = "toolfront"
-version = "0.2.0"
+version = "0.2.1"
 description = "ToolFront helps you retrieve information from large databases, APIs, and documents with AI."
 readme = "README.md"
 authors = [
