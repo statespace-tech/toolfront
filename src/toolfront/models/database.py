@@ -29,16 +29,30 @@ class Query(BaseModel):
 
     def is_read_only_query(self) -> bool:
         """Check if SQL contains only read operations"""
-        # Remove comments and normalize whitespace
-        clean_sql = re.sub(r"--.*?$|/\*.*?\*/", "", self.code, flags=re.MULTILINE | re.DOTALL)
-        clean_sql = re.sub(r"\s+", " ", clean_sql).strip().upper()
+        # Define write operations that make a query non-read-only
+        write_operations = [
+            "INSERT",
+            "UPDATE",
+            "DELETE",
+            "DROP",
+            "CREATE",
+            "ALTER",
+            "TRUNCATE",
+            "REPLACE",
+            "MERGE",
+            "UPSERT",
+            "GRANT",
+            "REVOKE",
+            "EXEC",
+            "EXECUTE",
+            "CALL",
+        ]
 
-        # Split on semicolons to handle multiple statements
-        statements = [s.strip() for s in clean_sql.split(";") if s.strip()]
+        # Create regex pattern that matches any write operation as a complete word
+        pattern = r"\b(?:" + "|".join(write_operations) + r")\b"
 
-        read_only_patterns = [r"^SELECT\b", r"^WITH\b", r"^SHOW\b", r"^DESCRIBE\b", r"^DESC\b", r"^EXPLAIN\b"]
-
-        return all(any(re.match(pattern, stmt) for pattern in read_only_patterns) for stmt in statements)
+        # Return True if NO write operations are found (case insensitive)
+        return not bool(re.search(pattern, self.code, re.IGNORECASE))
 
 
 class Database(DataSource, ABC):
@@ -74,23 +88,6 @@ class Database(DataSource, ABC):
         self._connection_kwargs = kwargs
         super().__init__(url=url, match=match)
 
-        # Add database-specific dialect hints to the query method's docstring if we have any.
-        dialect_hints = self._get_dialect_hints()
-        if dialect_hints:
-            base_docstring = """
-            This tool allows you to run read-only SQL queries against a database.
-
-            ALWAYS ENCLOSE IDENTIFIERS (TABLE NAMES, COLUMN NAMES) IN QUOTES TO PRESERVE CASE SENSITIVITY AND AVOID RESERVED WORD CONFLICTS AND SYNTAX ERRORS.
-
-            1. ONLY write read-only queries for tables that have been explicitly discovered or referenced.
-            2. Before writing queries, make sure you understand the schema of the tables you are querying.
-            3. ALWAYS use the correct dialect for the database.
-            4. NEVER use aliases in queries unless strictly necessary.
-            5. When a query fails or returns unexpected results, try to diagnose the issue and then retry.
-            """
-
-            self.query.__func__.__doc__ = base_docstring + dialect_hints
-
     def __getitem__(self, name: str) -> "ibis.Table":
         parts = name.split(".")
         if not 1 <= len(parts) <= 3:
@@ -115,38 +112,6 @@ class Database(DataSource, ABC):
         }
 
         return scheme_mapping.get(scheme, scheme)
-
-    def _get_dialect_hints(self) -> str:
-        """Get database-specific SQL dialect hints."""
-        hints = {
-            "snowflake": """
-        Snowflake-specific SQL functions:
-        - Use TO_TIMESTAMP(epoch_seconds) or TO_TIMESTAMP(epoch_millis/1000) for timestamp conversion
-        - Use DATEADD(timepart, value, date_expr) for date arithmetic  
-        - Use TO_DATE() for date conversion
-        - Microsecond timestamps: divide by 1000000 before TO_TIMESTAMP()
-        """,
-            "postgresql": """
-        PostgreSQL-specific SQL functions:
-        - Use to_timestamp(epoch_seconds) for timestamp conversion
-        - Use INTERVAL for date arithmetic (e.g., date_column + INTERVAL '1 day')
-        - Use EXTRACT() for date parts
-        """,
-            "mysql": """
-        MySQL-specific SQL functions:
-        - Use FROM_UNIXTIME(unix_timestamp) for timestamp conversion
-        - Use DATE_ADD() and DATE_SUB() for date arithmetic
-        - Use UNIX_TIMESTAMP() to convert to epoch
-        """,
-            "bigquery": """
-        BigQuery-specific SQL functions:
-        - Use TIMESTAMP_SECONDS(epoch_seconds) for timestamp conversion
-        - Use TIMESTAMP_MILLIS(epoch_millis) for millisecond timestamps
-        - Use DATE_ADD() for date arithmetic
-        """,
-        }
-
-        return hints.get(self.database_type, "")
 
     @model_validator(mode="after")
     def model_validator(self) -> "Database":
@@ -234,7 +199,7 @@ class Database(DataSource, ABC):
             logger.debug(f"Inspecting table: {self.url} {table.path}")
             table = self[table.path]
             return {
-                "schema": serialize_response(table.info().to_pandas()),
+                "schema": serialize_response(table.info()[["name", "type", "nullable"]].to_pandas()),
                 "samples": serialize_response(table.head(5).to_pandas()),
             }
         except Exception as e:

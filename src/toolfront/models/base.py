@@ -2,13 +2,12 @@ import asyncio
 import json
 import logging
 from abc import ABC, abstractmethod
-from contextvars import ContextVar
 from importlib.resources import files
 from typing import Any, Self
 
 import pandas as pd
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from pydantic_ai import Agent, Tool, UnexpectedModelBehavior, models
 from pydantic_ai.messages import (
     FunctionToolCallEvent,
@@ -43,17 +42,6 @@ BasicTypes = str | bool | int | float
 Collections = list[Any] | set[Any] | tuple[Any, ...] | dict[str, Any]
 AIResponse = dict[str, Any] | BasicTypes | Collections | BaseModel | pd.DataFrame
 
-# Context variable to store datasources for the current context
-_context_datasources: ContextVar[dict[str, "DataSource"] | None] = ContextVar("context_datasources", default=None)
-
-
-class CallerContext(BaseModel):
-    """Context information about the caller of a method."""
-
-    var_name: str | None = Field(None, description="The name of the variable that will be assigned the response")
-    var_type: Any = Field(None, description="The type of the variable that will be assigned the response")
-    context: str | None = Field(None, description="Formatted caller context string")
-
 
 class DataSource(BaseModel, ABC):
     """Abstract base class for all datasources."""
@@ -85,17 +73,6 @@ class DataSource(BaseModel, ABC):
             from toolfront.models.database import Database
 
             return Database(url=url)
-
-    @classmethod
-    def load_from_sanitized_url(cls, sanitized_url: str) -> Self:
-        context_cache = _context_datasources.get() or {}
-        if sanitized_url not in context_cache:
-            raise ValueError(f"Datasource {sanitized_url} not found")
-
-        obj = context_cache[sanitized_url]
-        if not isinstance(obj, cls):
-            raise ValueError(f"Datasource {sanitized_url} is not a {cls.__name__}")
-        return obj
 
     @abstractmethod
     def tools(self) -> list[callable]:

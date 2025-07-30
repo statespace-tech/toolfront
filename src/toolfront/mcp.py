@@ -14,16 +14,16 @@ logger.setLevel(logging.INFO)
 async def get_mcp(url: str) -> FastMCP:
     datasource = DataSource.from_url(url)
 
-    async def prompt() -> dict:
+    async def context() -> dict:
         """
-        ALWAYS CALL THIS FIRST TO RETRIEVE THE PROMPT.
-        THEN, USE THE PROMPT IN SUBSEQUENT TASKS.
+        ALWAYS CALL THIS FIRST TO RETRIEVE THE CONTEXT FOR THE TASK.
+        THEN, FOLLOW THE INSTRUCTIONS IN THE CONTEXT TO COMPLETE THE TASK.
         """
-        return datasource.prompt()
+        return datasource.context()
 
     mcp = FastMCP("ToolFront MCP server")
 
-    mcp.add_tool(prompt)
+    mcp.add_tool(context)
 
     for tool in datasource.tools():
         mcp.add_tool(tool, description=tool.__doc__)
