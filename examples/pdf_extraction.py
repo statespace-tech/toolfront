@@ -7,6 +7,7 @@ It has NOT been tested for complex scenarios like:
 - Finding every person mentioned across a large document
 - Processing scanned or low-quality PDFs
 """
+
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -19,6 +20,7 @@ load_dotenv()
 
 class Invoice(BaseModel):
     """Structured invoice data model."""
+
     invoice_number: str = Field(description="Invoice number (e.g., INV-001)")
     vendor_name: str = Field(description="Company/person who sent the invoice")
     client_name: str = Field(description="Company/person being billed")
@@ -30,9 +32,11 @@ class Invoice(BaseModel):
 
 def extract_invoice_data(pdf_path: str) -> Invoice:
     """Extract structured invoice data from PDF."""
-    doc = Document(filepath=pdf_path)
-    
-    invoice: Invoice = doc.ask("Extract all invoice information from this PDF", model="anthropic:claude-3-5-sonnet-latest")
+    doc = Document(source=pdf_path)
+
+    invoice: Invoice = doc.ask(
+        "Extract all invoice information from this PDF", model="anthropic:claude-3-5-sonnet-latest"
+    )
 
     return invoice
 
@@ -43,6 +47,7 @@ if __name__ == "__main__":
     if not sample_pdf.exists():
         print("Downloading sample invoice PDF...")
         import requests
+
         url = "https://github.com/excid3/receipts/raw/main/examples/invoice.pdf"
         response = requests.get(url, timeout=30)
         response.raise_for_status()
@@ -50,7 +55,7 @@ if __name__ == "__main__":
         print(f"✓ Downloaded sample to {sample_pdf}\n")
 
     print("🧾 Processing invoice PDF...")
-    
+
     try:
         invoice = extract_invoice_data(str(sample_pdf))
         print("✅ Invoice processed successfully!")

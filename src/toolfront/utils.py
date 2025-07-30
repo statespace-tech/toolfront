@@ -6,6 +6,7 @@ import logging
 import os
 from collections.abc import Callable
 from typing import Any, get_args, get_origin
+import executing
 
 import pandas as pd
 from pydantic import TypeAdapter
@@ -203,11 +204,6 @@ def get_output_type_hint() -> Any:
     Returns:
         The type annotation or None if not found
     """
-    try:
-        import executing
-    except ImportError:
-        logger.debug("executing library not available")
-        return None
 
     def _contains_node(tree: ast.AST | None, target: ast.AST) -> bool:
         """Check if target node is anywhere in the tree."""

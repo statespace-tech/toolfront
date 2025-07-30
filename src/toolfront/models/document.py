@@ -11,57 +11,57 @@ from toolfront.models.base import DataSource
 class Document(DataSource):
     """Abstract base class for document libraries."""
 
-    filepath: str | None = Field(
+    source: str | None = Field(
         default=None,
-        description="Document path content. If None, the document content is provided directly. Mutually exclusive with text.",
+        description="Path to a local document file. If None, the document content must provided directly via text parameter. Mutually exclusive with text.",
     )
     text: str = Field(
-        description="Document content. If None, the document path is provided directly. Mutually exclusive with filepath.",
+        description="Document content as text. If None, the document source path must be provided directly via the source parameter. Mutually exclusive with source.",
         exclude=True,
     )
 
-    def __init__(self, filepath: str | None = None, text: str | None = None, **kwargs: Any) -> None:
-        super().__init__(filepath=filepath, text=text, **kwargs)
+    def __init__(self, source: str | None = None, text: str | None = None, **kwargs: Any) -> None:
+        super().__init__(source=source, text=text, **kwargs)
 
     @model_validator(mode="before")
     def validate_model(cls, v: Any) -> Any:
-        filepath_value = v.get("filepath")
+        source_value = v.get("source")
         text_value = v.get("text")
 
         # Validate mutual exclusivity
-        if filepath_value is not None and text_value is not None:
-            raise ValueError("filepath and text cannot be provided together.")
+        if source_value is not None and text_value is not None:
+            raise ValueError("source and text cannot be provided together.")
 
-        if filepath_value is None and text_value is None:
-            raise ValueError("Either filepath or text must be provided.")
+        if source_value is None and text_value is None:
+            raise ValueError("Either source or text must be provided.")
 
         # If text is provided, we're done
-        if filepath_value is None:
+        if source_value is None:
             return v
 
-        # Process filepath
-        filepath = Path(filepath_value)
-        if not filepath.exists():
-            raise ValueError(f"Document path does not exist: {filepath}")
+        # Process source
+        source_path = Path(source_value)
+        if not source_path.exists():
+            raise ValueError(f"Document path does not exist: {source_path}")
 
         # Extract file extension (without the dot)
-        document_type = filepath.suffix[1:].lower() if filepath.suffix else ""
+        document_type = source_path.suffix[1:].lower() if source_path.suffix else ""
 
         # Read document based on type
-        document_content = cls._read_document_content(filepath, document_type)
+        document_content = cls._read_document_content(source_path, document_type)
         v["text"] = document_content
 
         return v
 
     @classmethod
-    def _read_document_content(cls, filepath: Path, document_type: str) -> str:
+    def _read_document_content(cls, source_path: Path, document_type: str) -> str:
         """Read document content based on file type."""
         if document_type in MARKITDOWN_TYPES:
             md = MarkItDown()
-            result = md.convert(filepath)
+            result = md.convert(source_path)
             return result.markdown
         elif document_type in TEXT_TYPES:
-            return filepath.read_text(encoding="utf-8")
+            return source_path.read_text(encoding="utf-8")
         else:
             raise ValueError(f"Unsupported document type: {document_type}")
 
