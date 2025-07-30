@@ -126,7 +126,7 @@ class DataSource(BaseModel, ABC):
         )
 
         result = asyncio.run(self._ask_async(prompt, agent, stream))
-        
+
         return self._postprocess(result)
 
     def _preprocess(self, var_type: Any) -> Any:
