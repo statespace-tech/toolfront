@@ -701,7 +701,7 @@ Then run:
 from toolfront import Document
 
 # Read from file path
-data = Document(filepath="/path/to/document.pdf")
+data = Document(source="/path/to/document.pdf")
 
 # Or provide text content directly
 data = Document(text="Your document content here")
@@ -710,8 +710,8 @@ answer: list[float] = data.ask("What are the payment amounts in this documetn?",
 ```
 
 **Parameters**:
-  - `filepath`: Path to the document file (mutually exclusive with text)
-  - `text`: Document content as text (mutually exclusive with filepath)
+  - `source`: Path to the document file (mutually exclusive with text)
+  - `text`: Document content as text (mutually exclusive with source)
 
 > [!TIP]
 > **Installation Options:** Use `toolfront[all]` for all database support, or install specific extras using comma-separated values e.g. `toolfront[postgres,mysql,document]`.
