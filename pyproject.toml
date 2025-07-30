@@ -1,6 +1,6 @@
 [project]
 name = "toolfront"
-version = "0.2.2"
+version = "0.2.3"
 description = "ToolFront helps you retrieve information from large databases, APIs, and documents with AI."
 readme = "README.md"
 authors = [
@@ -35,8 +35,6 @@ dependencies = [
     "ibis-framework>=10.6.0",
     "pyarrow<19.0.0",
     "executing>=2.2.0",
-    "docling>=2.43.0",
-    "markitdown[docx,pdf,pptx,xls,xlsx]>=0.1.2",
 ]
 
 [project.scripts]
@@ -97,7 +95,8 @@ trino = [
     "ibis-framework[trino]>=10.6.0",
 ]
 document = [
-    "markitdown[pdf,docx,pptx,xlsx,xls]>=0.1.2",
+    "docling>=2.43.0",
+    "markitdown[docx,pdf,pptx,xls,xlsx]>=0.1.2",
 ]
 
 all = [
