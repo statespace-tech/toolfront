@@ -652,11 +652,17 @@ data = Database(url=f"trino://user@localhost:8080/{catalog}/{schema}", **extra_p
 Don't see your database? [Submit an issue](https://github.com/kruskal-labs/toolfront/issues) or pull request, or let us know in our [Discord](https://discord.gg/rRyM7zkZTf)!
 
 > [!TIP]
-> **Table Filtering**: Use the `match` parameter to filter which database tables to query using regex patterns.
+> **Filtering**: Use `match_schema` and `match_tables` parameters to filter schemas/databases and table names using regex patterns.
 > 
 > ```python
-> # Only query tables starting with 'sales_'
-> Database("postgresql://...", match="^sales_.*")
+> # Only query tables starting with 'sales_' from schemas containing 'prod'
+> Database("postgresql://...", match_schema=".*prod.*", match_tables="^sales_.*")
+> 
+> # Filter only table names (any schema/database)
+> Database("postgresql://...", match_tables="^user_.*")
+> 
+> # Filter only schemas/databases (any table names)
+> Database("postgresql://...", match_schema="^analytics_.*")
 > ```
 
 ### APIs
