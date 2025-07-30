@@ -37,11 +37,6 @@ from toolfront.utils import (
 logger = logging.getLogger("toolfront")
 console = Console()
 
-# Type aliases for AI response types
-BasicTypes = str | bool | int | float
-Collections = list[Any] | set[Any] | tuple[Any, ...] | dict[str, Any]
-AIResponse = dict[str, Any] | BasicTypes | Collections | BaseModel | pd.DataFrame
-
 
 class DataSource(BaseModel, ABC):
     """Abstract base class for all datasources."""
@@ -68,7 +63,7 @@ class DataSource(BaseModel, ABC):
             else:
                 from toolfront.models.document import Document
 
-                return Document(filepath=url)
+                return Document(source=url)
         else:
             from toolfront.models.database import Database
 
@@ -84,7 +79,7 @@ class DataSource(BaseModel, ABC):
         model: models.Model | models.KnownModelName | str | None = None,
         context: str | None = None,
         stream: bool = False,
-    ) -> AIResponse:
+    ) -> Any:
         """
         Ask the datasource a question and return the result.
 
@@ -107,8 +102,8 @@ class DataSource(BaseModel, ABC):
 
         Returns
         -------
-        AIResponse
-            The response from the datasource, which can be a string, dict, list, DataFrame, or Pydantic model.
+        ANY
+            The response from the datasource.
         """
 
         if model is None:
@@ -169,7 +164,7 @@ class DataSource(BaseModel, ABC):
         prompt: str,
         agent: Agent,
         stream: bool = False,
-    ) -> AIResponse:
+    ) -> Any:
         """
         Run the agent and optionally stream the response with live updating display.
         Returns the final result from the agent.
