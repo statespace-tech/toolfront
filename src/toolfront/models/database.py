@@ -62,8 +62,10 @@ class Database(DataSource, ABC):
     ----------
     url : str
         Database URL for connection.
-    match : str, optional
-        Regex pattern to match tables. If None, all tables will be used.
+    match_schema : str, optional
+        Regex pattern to filter schemas/databases. Passed to list_databases' like parameter.
+    match_tables : str, optional
+        Regex pattern to filter table names. Passed to list_tables' like parameter.
 
     Attributes
     ----------
@@ -75,8 +77,15 @@ class Database(DataSource, ABC):
 
     url: str = Field(description="Database URL.")
 
-    match: str | None = Field(
-        description="Regex pattern to filter tables. If None, all tables will be used.",
+    match_schema: str | None = Field(
+        default=None,
+        description="Regex pattern to filter schemas/databases. Passed to list_databases' like parameter.",
+        exclude=True,
+    )
+
+    match_tables: str | None = Field(
+        default=None,
+        description="Regex pattern to filter table names. Passed to list_tables' like parameter.",
         exclude=True,
     )
 
@@ -84,9 +93,11 @@ class Database(DataSource, ABC):
     _connection: BaseBackend | None = PrivateAttr(default=None)
     _connection_kwargs: dict[str, Any] = PrivateAttr(default_factory=dict)
 
-    def __init__(self, url: str, match: str | None = None, **kwargs: Any) -> None:
+    def __init__(
+        self, url: str, match_schema: str | None = None, match_tables: str | None = None, **kwargs: Any
+    ) -> None:
         self._connection_kwargs = kwargs
-        super().__init__(url=url, match=match)
+        super().__init__(url=url, match_schema=match_schema, match_tables=match_tables)
 
     def __getitem__(self, name: str) -> "ibis.Table":
         parts = name.split(".")
@@ -119,33 +130,37 @@ class Database(DataSource, ABC):
             warnings.filterwarnings("ignore", "Unable to create Ibis UDFs", UserWarning)
             self._connection = ibis.connect(self.url, **self._connection_kwargs)
 
-        # Handle tables parameter: None (all), string (regex), or list (exact names)
-        if self.match:
-            if not isinstance(self.match, str):
-                raise ValueError(f"Match must be a string, got {type(self.match)}")
-
+        # Validate regex patterns
+        if self.match_schema:
+            if not isinstance(self.match_schema, str):
+                raise ValueError(f"match_schema must be a string, got {type(self.match_schema)}")
             try:
-                re.compile(self.match)
+                re.compile(self.match_schema)
             except re.error as e:
-                raise ValueError(f"Invalid regex pattern for tables: {self.match} - {str(e)}")
+                raise ValueError(f"Invalid regex pattern for match_schema: {self.match_schema} - {str(e)}")
+
+        if self.match_tables:
+            if not isinstance(self.match_tables, str):
+                raise ValueError(f"match_tables must be a string, got {type(self.match_tables)}")
+            try:
+                re.compile(self.match_tables)
+            except re.error as e:
+                raise ValueError(f"Invalid regex pattern for match_tables: {self.match_tables} - {str(e)}")
 
         try:
             catalog = getattr(self._connection, "current_catalog", None)
             if catalog:
-                databases = self._connection.list_databases(catalog=catalog)
+                databases = self._connection.list_databases(catalog=catalog, like=self.match_schema)
                 all_tables = []
                 for db in databases:
-                    tables = self._connection.list_tables(like=self.match, database=(catalog, db))
+                    tables = self._connection.list_tables(like=self.match_tables, database=(catalog, db))
                     prefix = f"{catalog}." if catalog else ""
                     all_tables.extend([f"{prefix}{db}.{table}" for table in tables])
             else:
-                all_tables = self._connection.list_tables(like=self.match)
+                all_tables = self._connection.list_tables(like=self.match_tables)
         except Exception as e:
-            logger.warning(f"Could not discover tables automatically: {e}")
-            try:
-                all_tables = self._connection.list_tables(like=self.match)
-            except Exception:
-                all_tables = []
+            logger.error(f"Failed to discover tables automatically: {e}")
+            raise RuntimeError(f"Could not list tables from database: {str(e)}") from e
 
         if not len(all_tables):
             logger.warning("No tables found in the database - this may be expected for empty databases")
