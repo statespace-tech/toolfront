@@ -1,37 +1,40 @@
 #!/bin/bash
 set -e
 
-# Check if we have uncommitted changes
 if ! git diff-index --quiet HEAD --; then
     echo "Error: You have uncommitted changes. Please commit or stash them first."
     exit 1
 fi
 
-# Get current version
 CURRENT_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
 echo "Current version: $CURRENT_VERSION"
 
-# Check if version was provided as argument
 if [ -n "$1" ]; then
     NEW_VERSION="$1"
     echo "Using provided version: $NEW_VERSION"
     
-    # Validate version format
     if ! [[ "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         echo "Error: Invalid version format. Please use X.Y.Z format (e.g., 0.2.0)"
         exit 1
     fi
     
-    # Check if version is already set
     if [ "$CURRENT_VERSION" == "$NEW_VERSION" ]; then
         echo "Version is already set to $NEW_VERSION, skipping version bump commit"
     else
-        # Update version in pyproject.toml
         sed -i "" "s/version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
         
-        # Commit version bump
         git add pyproject.toml
-        git commit --no-verify -m "bump version to $NEW_VERSION"
+
+        # don't run the linter
+        echo "About to commit version bump. Continue? [y/N]"
+        read -r response
+        if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+            git commit --no-verify -m "bump version to $NEW_VERSION"
+        else
+            echo "Commit cancelled. Exiting."
+            git reset HEAD pyproject.toml
+            exit 1
+        fi
     fi
 else
     # Auto-increment patch version
@@ -44,22 +47,26 @@ else
     
     echo "Auto-bumping patch version to: $NEW_VERSION"
     
-    # Update version in pyproject.toml
     sed -i "" "s/version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
     
     # Commit version bump
     git add pyproject.toml
-    git commit -m "bump version to $NEW_VERSION"
+    echo "About to commit version bump. Continue? [y/N]"
+    read -r response
+    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+        git commit --no-verify -m "bump version to $NEW_VERSION"
+    else
+        echo "Commit cancelled. Exiting."
+        git reset HEAD pyproject.toml
+        exit 1
+    fi
 fi
 
-# Clean dist directory
 rm -rf dist/*
 
-# Build
 echo "Building package..."
 uv build
 
-# Publish
 echo "Publishing to PyPI..."
 if [ -z "$PYPI_API_TOKEN" ]; then
     echo "Error: PYPI_API_TOKEN environment variable not set"
@@ -68,11 +75,23 @@ fi
 
 uv publish --token "$PYPI_API_TOKEN"
 
-# Push commit
-git push
+echo "About to push commits to remote. Continue? [y/N]"
+read -r response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    git push
+else
+    echo "Push cancelled. Exiting."
+    exit 1
+fi
 
-# Create and push tag
 git tag "v$NEW_VERSION"
-git push origin "v$NEW_VERSION"
+echo "About to push tag v$NEW_VERSION to remote. Continue? [y/N]"
+read -r response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    git push origin "v$NEW_VERSION"
+else
+    echo "Tag push cancelled. Tag created locally but not pushed."
+    exit 1
+fi
 
 echo "Successfully released version $NEW_VERSION"
