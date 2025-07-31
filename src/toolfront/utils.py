@@ -6,8 +6,8 @@ import logging
 import os
 from collections.abc import Callable
 from typing import Any, get_args, get_origin
-import executing
 
+import executing
 import pandas as pd
 from pydantic import TypeAdapter
 from pydantic_ai import ModelRetry
