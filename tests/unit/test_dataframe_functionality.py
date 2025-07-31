@@ -1,7 +1,8 @@
 """Unit tests for DataFrame type hint functionality."""
 
 import pandas as pd
-from toolfront.models.database import Query, Database
+
+from toolfront.models.database import Database, Query
 
 
 class TestDataFrameTypeHints:
@@ -20,9 +21,7 @@ class TestDataFrameTypeHints:
         db = object.__new__(Database)
 
         # Optional[pd.DataFrame]
-        from typing import Optional
-
-        optional_df_type = Optional[pd.DataFrame]
+        optional_df_type = pd.DataFrame | None
         result = db._preprocess(optional_df_type)
 
         # Should return Query | None
@@ -34,9 +33,9 @@ class TestDataFrameTypeHints:
         """Test that non-DataFrame types pass through unchanged."""
         db = object.__new__(Database)
 
-        assert db._preprocess(str) == str
-        assert db._preprocess(dict) == dict
-        assert db._preprocess(list) == list
+        assert db._preprocess(str) is str
+        assert db._preprocess(dict) is dict
+        assert db._preprocess(list) is list
 
     def test_postprocess_query(self):
         """Test that Query objects are executed via query_raw."""

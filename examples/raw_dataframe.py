@@ -6,18 +6,17 @@ Demonstrates the DataFrame type hint workflow:
 """
 
 import os
-import sys
-import time
 import sqlite3
 import tempfile
-from dotenv import load_dotenv
-
-load_dotenv()
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+import time
+from pathlib import Path
 
 import pandas as pd
+from dotenv import load_dotenv
+
 from toolfront import Database
+
+load_dotenv()
 
 
 def setup_sqlite_database(db_path: str, num_rows: int = 50000):
@@ -113,17 +112,18 @@ def demo():
         print(f"   Columns: {len(data.columns)}, Memory: {data.memory_usage(deep=True).sum() / 1024 / 1024:.1f} MB")
 
         print("\n2. Export to CSV:")
-        output_dir = os.path.join(os.path.dirname(__file__), "output")
-        os.makedirs(output_dir, exist_ok=True)
-        csv_file = os.path.join(output_dir, "large_export.csv")
+        output_dir = Path(__file__).parent / "output"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        csv_file = output_dir / "large_export.csv"
 
         data.to_csv(csv_file, index=False)
-        file_size = os.path.getsize(csv_file)
+        file_size = csv_file.stat().st_size
         print(f"✅ Exported {len(data):,} rows to CSV ({file_size / 1024 / 1024:.1f} MB)")
 
     finally:
-        if os.path.exists(db_path):
-            os.unlink(db_path)
+        db_path = Path(db_path)
+        if db_path.exists():
+            db_path.unlink()
 
 
 if __name__ == "__main__":
