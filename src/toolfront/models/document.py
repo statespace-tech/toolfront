@@ -2,10 +2,14 @@ from pathlib import Path
 from typing import Any
 
 from markitdown import MarkItDown
-from pydantic import Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from toolfront.config import CHUNK_SIZE, MARKITDOWN_TYPES, TEXT_TYPES
 from toolfront.models.base import DataSource
+
+
+class Pagination(BaseModel):
+    value: int | float = Field(..., description="Section navigation: 0.0-0.99 for percentile, >=1 for section number.")
 
 
 class Document(DataSource):
@@ -66,13 +70,11 @@ class Document(DataSource):
             raise ValueError(f"Unsupported document type: {document_type}")
 
     def tools(self) -> list[callable]:
-        return [self.read_document]
+        return [self.read]
 
-    async def read_document(
+    async def read(
         self,
-        pagination: int | float = Field(
-            ..., description="Section navigation: 0.0-0.99 for percentile, >=1 for section number."
-        ),
+        pagination: Pagination,
     ) -> str:
         """
         Read the contents of a library's document with automatic chunking.
@@ -110,3 +112,7 @@ class Document(DataSource):
         start_idx = section_index * CHUNK_SIZE
         end_idx = min(start_idx + CHUNK_SIZE, len(document_content))
         return f"Section {section_index + 1} of {total_sections}:\n\n{document_content[start_idx:end_idx]}"
+
+    def retrieve(self, prompt: str, **kwargs: Any) -> str:
+        pagination: Pagination = self.ask(prompt, **kwargs)
+        return self.read(pagination.value)
