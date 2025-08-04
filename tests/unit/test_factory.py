@@ -53,7 +53,8 @@ class TestQueryValidation:
         assert query.is_read_only_query() is True
 
         # Multiple statements where one is not read-only
-        query = Query(code="SELECT * FROM users; DELETE FROM users WHERE id = 1")
+        query = Query(
+            code="SELECT * FROM users; DELETE FROM users WHERE id = 1")
         assert query.is_read_only_query() is False
 
     def test_case_insensitive_keywords(self):
