@@ -3,18 +3,22 @@ import re
 import warnings
 from abc import ABC
 from contextlib import closing
-from typing import Any, get_args, get_origin
+from pathlib import Path
+from typing import Any, Generic, TypeVar
 from urllib.parse import urlparse
 
 import ibis
 import pandas as pd
+import yaml
 from ibis import BaseBackend
 from pydantic import BaseModel, Field, PrivateAttr, computed_field, field_serializer, model_validator
 
 from toolfront.models.base import DataSource
-from toolfront.utils import sanitize_url, serialize_response
+from toolfront.utils import sanitize_url
 
 logger = logging.getLogger("toolfront")
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class Table(BaseModel):
@@ -162,7 +166,7 @@ class Database(DataSource, ABC):
             logger.error(f"Failed to discover tables automatically: {e}")
             raise RuntimeError(f"Could not list tables from database: {str(e)}") from e
 
-        if not len(all_tables):
+        if not all_tables:
             logger.warning("No tables found in the database - this may be expected for empty databases")
 
         self._tables = all_tables
@@ -183,7 +187,11 @@ class Database(DataSource, ABC):
         str
             Sanitized URL with sensitive information removed.
         """
-        return sanitize_url(value)
+        return self.sanitized_url
+
+    @property
+    def sanitized_url(self) -> str:
+        return sanitize_url(self.url)
 
     @computed_field
     @property
@@ -214,8 +222,8 @@ class Database(DataSource, ABC):
             logger.debug(f"Inspecting table: {self.url} {table.path}")
             table = self[table.path]
             return {
-                "schema": serialize_response(table.info()[["name", "type", "nullable"]].to_pandas()),
-                "samples": serialize_response(table.head(5).to_pandas()),
+                "schema": table.info()[["name", "type", "nullable"]].to_pandas(),
+                "samples": table.head(5).to_pandas(),
             }
         except Exception as e:
             logger.error(f"Failed to inspect table: {e}", exc_info=True)
@@ -230,49 +238,116 @@ class Database(DataSource, ABC):
 
         ALWAYS ENCLOSE IDENTIFIERS (TABLE NAMES, COLUMN NAMES) IN QUOTES TO PRESERVE CASE SENSITIVITY AND AVOID RESERVED WORD CONFLICTS AND SYNTAX ERRORS.
 
-        1. ONLY write read-only queries for tables that have been explicitly discovered or referenced.
+        1. ONLY write read-only queries for tables that have been explicitly discovered or referenced, using the correct dialect for the database.
         2. Before writing queries, make sure you understand the schema of the tables you are querying.
-        3. ALWAYS use the correct dialect for the database.
-        4. NEVER use aliases in queries unless strictly necessary.
-        5. When a query fails or returns unexpected results, try to diagnose the issue and then retry.
+        3. When a query fails or returns unexpected results, try to diagnose the issue and then retry.
         """
-        logger.debug(f"Querying database: {self.url} {query.code}")
-        if not query.is_read_only_query():
-            raise ValueError("Only read-only queries are allowed")
+        try:
+            logger.debug(f"Querying database: {self.url} {query.code}")
+            if not query.is_read_only_query():
+                raise ValueError("Only read-only queries are allowed")
 
-        if not hasattr(self._connection, "raw_sql"):
-            raise ValueError("Database does not support raw sql queries")
+            if not hasattr(self._connection, "raw_sql"):
+                raise ValueError("Database does not support raw sql queries")
 
-        with closing(self._connection.raw_sql(query.code)) as cursor:
-            columns = [col[0] for col in cursor.description]
-            df = pd.DataFrame(cursor.fetchall(), columns=columns)
-            return serialize_response(df)
+            with closing(self._connection.raw_sql(query.code)) as cursor:
+                columns = [col[0] for col in cursor.description]
+                return pd.DataFrame(cursor.fetchall(), columns=columns)
+        except Exception as e:
+            logger.error(f"Failed to query database: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to query database {self.url} - {str(e)}") from e
 
-    def _preprocess(self, var_type: Any) -> Any:
-        if var_type == pd.DataFrame:
-            return Query
+    def _query_sync(self, query: Query) -> pd.DataFrame:
+        """Synchronous version of query method for internal use."""
+        try:
+            logger.debug(f"Querying database: {self.url} {query.code}")
+            if not query.is_read_only_query():
+                raise ValueError("Only read-only queries are allowed")
 
-        origin = get_origin(var_type)
-        if origin is not None:
-            args = get_args(var_type)
-            if pd.DataFrame in args:
-                return Query | None if type(None) in args else Query
+            if not hasattr(self._connection, "raw_sql"):
+                raise ValueError("Database does not support raw sql queries")
 
-        return var_type
+            with closing(self._connection.raw_sql(query.code)) as cursor:
+                columns = [col[0] for col in cursor.description]
+                return pd.DataFrame(cursor.fetchall(), columns=columns)
+        except Exception as e:
+            logger.error(f"Failed to query database: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to query database {self.url} - {str(e)}") from e
 
-    def query_raw(self, query: Query) -> pd.DataFrame:
-        """Execute query and return raw DataFrame without truncation."""
-        if not query.is_read_only_query():
-            raise ValueError("Only read-only queries are allowed")
+    @property
+    def Table(self) -> type:
+        db = self
 
-        if not hasattr(self._connection, "raw_sql"):
-            raise ValueError("Database does not support raw sql queries")
+        class Table(BaseModel, Generic[T]):
+            """A table that validates and structures query results according to a Pydantic model."""
 
-        with closing(self._connection.raw_sql(query.code)) as cursor:
-            columns = [col[0] for col in cursor.description]
-            return pd.DataFrame(cursor.fetchall(), columns=columns)
+            query: Query = Field(..., description="Query to execute.")
+            _data: pd.DataFrame = PrivateAttr(default_factory=pd.DataFrame)
+            _row_type: type[T] = PrivateAttr()
 
-    def _postprocess(self, result: Any) -> Any:
-        if isinstance(result, Query):
-            return self.query_raw(result)
-        return result
+            def __class_getitem__(cls, item):
+                """Capture the generic type parameter and create a new class with _model_type set."""
+                # Read the query instructions template
+                instructions_path = Path("src/toolfront/instructions/query.txt")
+                base_instructions = instructions_path.read_text()
+
+                # Generate field descriptions from the model as YAML dict
+                fields_dict = {}
+                for field_name, field_info in item.model_fields.items():
+                    field_type = field_info.annotation
+                    type_name = field_type.__name__ if hasattr(field_type, "__name__") else str(field_type)
+                    fields_dict[field_name] = type_name
+
+                fields_yaml = yaml.dump(fields_dict, default_flow_style=False)
+                query_description = f"{base_instructions}\n{fields_yaml}"
+
+                class ParameterizedTable(cls):
+                    _row_type: type[T] = PrivateAttr(default=item)
+                    query: Query = Field(..., description=query_description)
+
+                ParameterizedTable.__name__ = f"Table[{item.__name__}]"
+                return ParameterizedTable
+
+            @model_validator(mode="after")
+            def validate_query_results(self) -> "Table":
+                """Validate datasource and query results."""
+                # Validate query is read-only
+                if not self.query.is_read_only_query():
+                    raise ValueError("Only read-only queries are allowed")
+
+                data = db._query_sync(self.query)
+
+                if self._row_type:
+                    self._validate_fields(data.columns)
+                    self._data = data[list(self._row_type.model_fields.keys())]
+                else:
+                    self._data = data
+                return self
+
+            def _validate_fields(self, actual_columns: list[str]) -> None:
+                """Validate field names match exactly."""
+                expected = set(self._row_type.model_fields.keys())
+                actual = set(actual_columns)
+
+                if expected != actual:
+                    missing = expected - actual
+                    extra = actual - expected
+                    errors = []
+                    if missing:
+                        errors.append(f"Missing: {missing}")
+                    if extra:
+                        errors.append(f"Extra: {extra}")
+                    raise ValueError(f"Field mismatch. {', '.join(errors)}")
+
+            def to_dataframe(self) -> pd.DataFrame:
+                """Return the underlying DataFrame."""
+                return self._data
+
+            def __len__(self) -> int:
+                return len(self._data)
+
+            def __iter__(self):
+                for _, row in self._data.iterrows():
+                    yield self._row_type(**row.to_dict())
+
+        return Table
