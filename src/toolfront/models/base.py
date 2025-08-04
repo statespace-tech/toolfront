@@ -50,20 +50,20 @@ class DataSource(BaseModel, ABC):
     @classmethod
     def from_url(cls, url: str) -> Self:
         if url.startswith("http"):
-            from toolfront.datasources.api import API
+            from toolfront import API
 
             return API(spec=url)
         elif url.startswith("file"):
             if url.endswith(".json") or url.endswith(".yaml") or url.endswith(".yml"):
-                from toolfront.datasources.api import API
+                from toolfront import API
 
                 return API(spec=url)
             else:
-                from toolfront.datasources.document import Document
+                from toolfront import Document
 
                 return Document(source=url)
         else:
-            from toolfront.datasources.database import Database
+            from toolfront import Database
 
             return Database(url=url)
 
@@ -118,15 +118,7 @@ class DataSource(BaseModel, ABC):
             output_type=output_type,
         )
 
-        try:
-            return asyncio.run(self._ask_async(prompt, agent, stream))
-        finally:
-            # Clean up thread-local storage
-            import threading
-
-            current_thread = threading.current_thread()
-            if hasattr(current_thread, "toolfront_datasource"):
-                delattr(current_thread, "toolfront_datasource")
+        return asyncio.run(self._ask_async(prompt, agent, stream))
 
     def instructions(self, context: str | None = None) -> str:
         """
