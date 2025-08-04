@@ -181,3 +181,17 @@ class API(DataSource, ABC):
             )
             response.raise_for_status()
             return response.json()
+
+    def retrieve(self, prompt: str, **kwargs: Any) -> Any:
+        """Retrieve data from the API."""
+        request: Request = self.ask(prompt, **kwargs)
+        with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
+            response = client.request(
+                method=request.endpoint.method.upper(),
+                url=f"{self.url}{request.endpoint.path.format(**(request.path_params or {}))}",
+                json=request.body,
+                params={**(request.params or {}), **(self.params or {})},
+                headers={**(request.headers or {}), **(self.headers or {})},
+            )
+            response.raise_for_status()
+            return response.json()

@@ -45,6 +45,8 @@ def prepare_tool_for_pydantic_ai(func: Callable[..., Any]) -> Callable[..., Any]
     async def wrapper(*args, **kwargs):
         try:
             result = await func(*args, **kwargs)
+            if isinstance(result, dict):
+                return {k: serialize_response(v) for k, v in result.items()}
             return serialize_response(result)
         except Exception as e:
             logger.error(f"Tool {func.__name__} failed: {e}", exc_info=True)

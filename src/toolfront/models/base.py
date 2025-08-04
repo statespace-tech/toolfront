@@ -50,20 +50,20 @@ class DataSource(BaseModel, ABC):
     @classmethod
     def from_url(cls, url: str) -> Self:
         if url.startswith("http"):
-            from toolfront.models.api import API
+            from toolfront.datasources.api import API
 
             return API(spec=url)
         elif url.startswith("file"):
             if url.endswith(".json") or url.endswith(".yaml") or url.endswith(".yml"):
-                from toolfront.models.api import API
+                from toolfront.datasources.api import API
 
                 return API(spec=url)
             else:
-                from toolfront.models.document import Document
+                from toolfront.datasources.document import Document
 
                 return Document(source=url)
         else:
-            from toolfront.models.database import Database
+            from toolfront.datasources.database import Database
 
             return Database(url=url)
 
@@ -76,6 +76,7 @@ class DataSource(BaseModel, ABC):
         prompt: str,
         model: models.Model | models.KnownModelName | str | None = None,
         context: str | None = None,
+        output_type: BaseModel | None = None,
         stream: bool = False,
     ) -> Any:
         """
@@ -89,18 +90,14 @@ class DataSource(BaseModel, ABC):
             The model to use. If None, uses the default model.
         context : str | None, optional
             Additional context to provide to the model.
+        output_type : BaseModel | None, optional
+            The output type to use. If None, uses the default output type. Mutually exclusive with type hints.
         stream : bool, optional
             Whether to display live streaming output in the terminal. Defaults to False.
 
-            **Why streaming is off by default:**
-            - SDKs should be "quiet by default" - they shouldn't print to stdout unless explicitly requested
-            - Prevents unexpected output in production/automation environments
-            - Follows the principle of least surprise for programmatic use
-            - Users can easily enable streaming when desired for debugging or interactive exploration
-
         Returns
         -------
-        ANY
+        Any
             The response from the datasource.
         """
 
@@ -108,9 +105,7 @@ class DataSource(BaseModel, ABC):
             model = get_default_model()
 
         # Get caller context and add it to the system prompt
-        output_type = get_output_type_hint() or str
-        if output_type:
-            output_type = self._preprocess(output_type)
+        output_type = get_output_type_hint() or output_type or str
 
         system_prompt = self.instructions(context=context)
         tools = [Tool(prepare_tool_for_pydantic_ai(tool), max_retries=MAX_RETRIES) for tool in self.tools()]
@@ -123,15 +118,15 @@ class DataSource(BaseModel, ABC):
             output_type=output_type,
         )
 
-        result = asyncio.run(self._ask_async(prompt, agent, stream))
+        try:
+            return asyncio.run(self._ask_async(prompt, agent, stream))
+        finally:
+            # Clean up thread-local storage
+            import threading
 
-        return self._postprocess(result)
-
-    def _preprocess(self, var_type: Any) -> Any:
-        return var_type
-
-    def _postprocess(self, result: Any) -> Any:
-        return result
+            current_thread = threading.current_thread()
+            if hasattr(current_thread, "toolfront_datasource"):
+                delattr(current_thread, "toolfront_datasource")
 
     def instructions(self, context: str | None = None) -> str:
         """

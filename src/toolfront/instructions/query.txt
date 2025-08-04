@@ -1,0 +1,7 @@
+IMPORTANT: Output a read-only SQL query that returns data with these exact column names, using the query tool to validate your results before providing the final working query.
+
+The returned query must return columns matching these exact names (case-sensitive). Use aliases and casting to transform database columns into this format.
+
+ALWAYS ENCLOSE IDENTIFIERS (TABLE NAMES, COLUMN NAMES) IN QUOTES TO PRESERVE CASE SENSITIVITY AND AVOID RESERVED WORD CONFLICTS AND SYNTAX ERRORS.
+
+Required fields:
