@@ -275,7 +275,7 @@ class Database(DataSource, ABC):
             raise RuntimeError(f"Failed to query database {self.url} - {str(e)}") from e
 
     @property
-    def Table(self) -> type:
+    def table(self) -> type:
         db = self
 
         class Table(BaseModel, Generic[T]):
