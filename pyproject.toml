@@ -54,9 +54,9 @@ test = [
 dev = [
     "pre-commit>=3.0.0",
     "ruff>=0.1.0",
-]
-athena = [
-    "ibis-framework[athena]>=10.6.0",
+    "mkdocs-material[imaging]>=9.6.16",
+    "mkdocstrings[python]>=0.30.0",
+    "markitdown[docx,pdf,pptx,xls,xlsx]>=0.1.2",    
 ]
 bigquery = [
     "ibis-framework[bigquery]>=10.6.0",
@@ -73,6 +73,9 @@ druid = [
 duckdb = [
     "ibis-framework[duckdb]>=10.6.0",
 ]
+flink = [
+    "ibis-framework[flink]>=10.6.0",
+]
 mssql = [
     "ibis-framework[mssql]>=10.6.0",
 ]
@@ -85,6 +88,9 @@ oracle = [
 postgres = [
     "ibis-framework[postgres]>=10.6.0",
 ]
+risingwave = [
+    "ibis-framework[risingwave]>=10.6.0",
+]
 snowflake = [
     "ibis-framework[snowflake]>=10.6.0",
 ]
@@ -94,13 +100,11 @@ sqlite = [
 trino = [
     "ibis-framework[trino]>=10.6.0",
 ]
-document = [
-    "docling>=2.43.0",
-    "markitdown[docx,pdf,pptx,xls,xlsx]>=0.1.2",
+pyspark = [
+    "ibis-framework[pyspark]>=10.6.0",
 ]
 
 all = [
-    "toolfront[athena]",
     "toolfront[bigquery]",
     "toolfront[clickhouse]",
     "toolfront[databricks]",
@@ -110,6 +114,8 @@ all = [
     "toolfront[mysql]",
     "toolfront[oracle]",
     "toolfront[postgres]",
+    "toolfront[pyspark]",
+    "toolfront[risingwave]",
     "toolfront[snowflake]",
     "toolfront[sqlite]",
     "toolfront[trino]",
