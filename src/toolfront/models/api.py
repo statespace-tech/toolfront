@@ -70,7 +70,17 @@ class Request(BaseModel):
 
 
 class API(DataSource, ABC):
-    """Abstract base class for OpenAPI/Swagger-based APIs."""
+    """Natural language interface for OpenAPI/Swagger APIs.
+
+    Parameters
+    ----------
+    spec : dict | str
+        OpenAPI specification as URL, file path, or dictionary.
+    headers : dict[str, str], optional
+        HTTP headers for authentication.
+    params : dict[str, str], optional
+        Query parameters for all requests.
+    """
 
     spec: dict | str = Field(..., description="API specification config.", exclude=True)
     endpoints: list[str] = Field(..., description="List of available endpoints.")
@@ -137,15 +147,21 @@ class API(DataSource, ABC):
         return ""
 
     def tools(self) -> list[callable]:
+        """Available tool methods for API operations.
+
+        Returns
+        -------
+        list[callable]
+            Methods for endpoint inspection and request execution.
+        """
         return [self.inspect_endpoint, self.request]
 
     async def inspect_endpoint(self, endpoint: Endpoint) -> dict[str, Any]:
-        """
-        Inspect the structure of an API endpoint.
+        """Inspect the structure of an API endpoint.
 
         TO PREVENT ERRORS, ALWAYS ENSURE THE ENDPOINT EXISTS BEFORE INSPECTING IT.
 
-        Inspect Instructions:
+        Instructions:
         1. Use this tool to understand endpoint structure like request parameters and response schema
         2. Inspecting endpoints helps understand the structure of the data
         3. Always inspect endpoints before writing queries to understand their structure and prevent errors
@@ -159,16 +175,15 @@ class API(DataSource, ABC):
         self,
         request: Request,
     ) -> Any:
-        """
-        Request an API endpoint.
+        """Make a request to an API endpoint.
 
-            TO PREVENT ERRORS, ALWAYS ENSURE ENDPOINTS EXIST AND YOU ARE USING THE CORRECT METHOD, PATH, AND PARAMETERS.
+        TO PREVENT ERRORS, ALWAYS ENSURE ENDPOINTS EXIST AND YOU ARE USING THE CORRECT METHOD, PATH, AND PARAMETERS.
         NEVER PASS API KEYS OR SECRETS TO THIS TOOL. SECRETS AND API KEYS WILL BE AUTOMATICALLY INJECTED INTO THE REQUEST.
 
-        Request API Instructions:
-            1. Only make requests to endpoints that have been explicitly discovered, searched for, or referenced in the conversation.
-            2. Before making requests, inspect the underlying endpoints to understand their config and prevent errors.
-            3. When a request fails or returns unexpected results, examine the endpoint to diagnose the issue and then retry.
+        Instructions:
+        1. Only make requests to endpoints that have been explicitly discovered, searched for, or referenced in the conversation.
+        2. Before making requests, inspect the underlying endpoints to understand their config and prevent errors.
+        3. When a request fails or returns unexpected results, examine the endpoint to diagnose the issue and then retry.
         """
 
         async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:

@@ -60,23 +60,18 @@ class Query(BaseModel):
 
 
 class Database(DataSource, ABC):
-    """Abstract base class for all databases.
+    """Natural language interface for databases.
+
+    Supports 15+ database types including PostgreSQL, MySQL, SQLite, Snowflake, BigQuery.
 
     Parameters
     ----------
     url : str
-        Database URL for connection.
+        Database connection URL (e.g., 'postgresql://user:pass@host/db')
     match_schema : str, optional
-        Regex pattern to filter schemas/databases. Passed to list_databases' like parameter.
+        Regex pattern to filter schemas. Mutually exclusive with match_tables.
     match_tables : str, optional
-        Regex pattern to filter table names. Passed to list_tables' like parameter.
-
-    Attributes
-    ----------
-    _connection : BaseBackend or None
-        Ibis backend connection to the database.
-    _connection_kwargs : dict[str, Any]
-        Additional keyword arguments for database connection.
+        Regex pattern to filter tables. Mutually exclusive with match_schema.
     """
 
     url: str = Field(description="Database URL.")
@@ -130,6 +125,9 @@ class Database(DataSource, ABC):
 
     @model_validator(mode="after")
     def model_validator(self) -> "Database":
+        if "://" not in self.url:
+            self.url = f"{self.url}://"
+
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", "Unable to create Ibis UDFs", UserWarning)
             self._connection = ibis.connect(self.url, **self._connection_kwargs)
@@ -198,13 +196,870 @@ class Database(DataSource, ABC):
     def tables(self) -> list[str]:
         return self._tables
 
+    @classmethod
+    def from_druid(
+        cls,
+        host: str,
+        port: int,
+        path: str | None = None,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        host : str
+            Hostname or IP address of the Druid broker node.
+        port : int
+            Port number for the Druid broker node.
+        path : str, optional
+            Path to the Druid endpoint (if needed).
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional arguments passed to the DBAPI connection call.
+        """
+        connection_kwargs = {
+            "host": host,
+            "port": port,
+            **kwargs,
+        }
+
+        if path is not None:
+            connection_kwargs["path"] = path
+
+        return cls(
+            url="druid://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_duckdb(
+        cls,
+        database: str | None = ":memory:",
+        read_only: bool = False,
+        extensions: list[str] | None = None,
+        config: dict[str, Any] | None = None,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        database : str, optional
+            Path to a duckdb database.
+            Default is ':memory:'.
+        read_only : bool, optional
+            Whether the database is read-only.
+            Default is False.
+        extensions : list[str], optional
+            A list of duckdb extensions to install/load upon connection.
+        config : dict[str, Any], optional
+            DuckDB configuration parameters. See the DuckDB configuration documentation for possible configuration values.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional arguments passed to the DBAPI connection call.
+        """
+        connection_kwargs = {
+            "database": database,
+            "read_only": read_only,
+            **kwargs,
+        }
+
+        if extensions is not None:
+            connection_kwargs["extensions"] = extensions
+        if config is not None:
+            connection_kwargs["config"] = config
+
+        return cls(
+            url="duckdb://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_flink(
+        cls,
+        table_env,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        table_env : TableEnvironment
+            PyFlink TableEnvironment instance.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional arguments passed to the DBAPI connection call.
+        """
+        connection_kwargs = {
+            "table_env": table_env,
+            **kwargs,
+        }
+
+        return cls(
+            url="flink://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_mssql(
+        cls,
+        host: str = "localhost",
+        user: str | None = None,
+        password: str | None = None,
+        port: int = 1433,
+        database: str | None = None,
+        driver: str | None = None,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        host : str, optional
+            Address of MSSQL server to connect to.
+            Default is 'localhost'.
+        user : str, optional
+            Username. Leave blank to use Integrated Authentication.
+        password : str, optional
+            Password. Leave blank to use Integrated Authentication.
+        port : int, optional
+            Port of MSSQL server to connect to.
+            Default is 1433.
+        database : str, optional
+            The MSSQL database to connect to.
+        driver : str, optional
+            ODBC Driver to use. On Mac and Linux this is usually 'FreeTDS'. On Windows, it is usually one of: - ODBC Driver 11 for SQL Server - ODBC Driver 13 for SQL Server (for both 13 and 13.1) - ODBC Driver 17 for SQL Server - ODBC Driver 18 for SQL Server See https://learn.microsoft.com/en-us/sql/connect/odbc/windows/system-requirements-installation-and-driver-files
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional keyword arguments to pass to PyODBC.
+        """
+        connection_kwargs = {
+            "host": host,
+            "port": port,
+            **kwargs,
+        }
+
+        if user is not None:
+            connection_kwargs["user"] = user
+        if password is not None:
+            connection_kwargs["password"] = password
+        if database is not None:
+            connection_kwargs["database"] = database
+        if driver is not None:
+            connection_kwargs["driver"] = driver
+
+        return cls(
+            url="mssql://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_bigquery(
+        cls,
+        project_id: str | None = None,
+        dataset_id: str = "",
+        credentials=None,
+        application_name: str | None = None,
+        auth_local_webserver: bool = True,
+        auth_external_data: bool = False,
+        auth_cache: str = "default",
+        partition_column: str | None = "PARTITIONTIME",
+        client=None,
+        storage_client=None,
+        location: str | None = None,
+        generate_job_id_prefix=None,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        project_id : str, optional
+            A BigQuery project id.
+        dataset_id : str, optional
+            A dataset id that lives inside of the project indicated by project_id.
+            Default is ''.
+        credentials : google.auth.credentials.Credentials, optional
+            Optional credentials.
+        application_name : str, optional
+            A string identifying your application to Google API endpoints.
+        auth_local_webserver : bool, optional
+            Use a local webserver for the user authentication. Binds a webserver to an open port on localhost between 8080 and 8089, inclusive, to receive authentication token. If not set, defaults to False, which requests a token via the console.
+            Default is True.
+        auth_external_data : bool, optional
+            Authenticate using additional scopes required to query external data sources, such as Google Sheets, files in Google Cloud Storage, or files in Google Drive. If not set, defaults to False, which requests the default BigQuery scopes.
+            Default is False.
+        auth_cache : str, optional
+            Selects the behavior of the credentials cache. 'default' - Reads credentials from disk if available, otherwise authenticates and caches credentials to disk. 'reauth' - Authenticates and caches credentials to disk. 'none' - Authenticates and does not cache credentials.
+            Default is 'default'.
+        partition_column : str, optional
+            Identifier to use instead of default _PARTITIONTIME partition column.
+            Default is 'PARTITIONTIME'.
+        client : bq.Client, optional
+            A Client from the google.cloud.bigquery package. If not set, one is created using the project_id and credentials.
+        storage_client : bqstorage.BigQueryReadClient, optional
+            A BigQueryReadClient from the google.cloud.bigquery_storage_v1 package. If not set, one is created using the project_id and credentials.
+        location : str, optional
+            Default location for BigQuery objects.
+        generate_job_id_prefix : Callable[[], str | None], optional
+            Optional callable that generates a bigquery job ID prefix. If specified, for any query job, jobs will always be created rather than optionally created by BigQuery's Client.query_and_wait.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional arguments passed to the DBAPI connection call.
+
+
+        """
+        connection_kwargs = {
+            "dataset_id": dataset_id,
+            "auth_local_webserver": auth_local_webserver,
+            "auth_external_data": auth_external_data,
+            "auth_cache": auth_cache,
+            "partition_column": partition_column,
+            **kwargs,
+        }
+
+        if project_id is not None:
+            connection_kwargs["project_id"] = project_id
+        if credentials is not None:
+            connection_kwargs["credentials"] = credentials
+        if application_name is not None:
+            connection_kwargs["application_name"] = application_name
+        if client is not None:
+            connection_kwargs["client"] = client
+        if storage_client is not None:
+            connection_kwargs["storage_client"] = storage_client
+        if location is not None:
+            connection_kwargs["location"] = location
+        if generate_job_id_prefix is not None:
+            connection_kwargs["generate_job_id_prefix"] = generate_job_id_prefix
+
+        return cls(
+            url="bigquery://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_clickhouse(
+        cls,
+        host: str = "localhost",
+        port: int | None = None,
+        database: str = "default",
+        user: str = "default",
+        password: str = "",
+        client_name: str = "ibis",
+        secure: bool | None = None,
+        compression: str | bool = True,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        host : str, optional
+            Host name of the ClickHouse server.
+            Default is 'localhost'.
+        port : int, optional
+            ClickHouse HTTP server's port. If not passed, the value depends on whether secure is True or False.
+        database : str, optional
+            Default database when executing queries.
+            Default is 'default'.
+        user : str, optional
+            User to authenticate with.
+            Default is 'default'.
+        password : str, optional
+            Password to authenticate with.
+            Default is ''.
+        client_name : str, optional
+            Name of client that will appear in ClickHouse server logs.
+            Default is 'ibis'.
+        secure : bool, optional
+            Whether or not to use an authenticated endpoint.
+        compression : str or bool, optional
+            The kind of compression to use for requests. See ClickHouse Python Compression Docs for more information.
+            Default is True.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Client specific keyword arguments.
+        """
+        connection_kwargs = {
+            "host": host,
+            "database": database,
+            "user": user,
+            "password": password,
+            "client_name": client_name,
+            "compression": compression,
+            **kwargs,
+        }
+
+        if port is not None:
+            connection_kwargs["port"] = port
+        if secure is not None:
+            connection_kwargs["secure"] = secure
+
+        return cls(
+            url="clickhouse://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_databricks(
+        cls,
+        server_hostname: str,
+        http_path: str,
+        access_token: str,
+        catalog: str | None = None,
+        schema: str | None = None,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        server_hostname : str
+            Databricks workspace hostname.
+        http_path : str
+            HTTP path to the Databricks warehouse.
+        access_token : str
+            Personal access token for authentication.
+        catalog : str, optional
+            Name of the catalog to use.
+        schema : str, optional
+            Name of the schema to use.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional arguments passed to the DBAPI connection call.
+        """
+        connection_kwargs = {
+            "server_hostname": server_hostname,
+            "http_path": http_path,
+            "access_token": access_token,
+            **kwargs,
+        }
+
+        if catalog is not None:
+            connection_kwargs["catalog"] = catalog
+        if schema is not None:
+            connection_kwargs["schema"] = schema
+
+        return cls(
+            url="databricks://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_mysql(
+        cls,
+        host: str = "localhost",
+        user: str | None = None,
+        password: str | None = None,
+        port: int = 3306,
+        database: str | None = None,
+        autocommit: bool = True,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        host : str, optional
+            Hostname.
+            Default is 'localhost'.
+        user : str, optional
+            Username.
+        password : str, optional
+            Password.
+        port : int, optional
+            Port.
+            Default is 3306.
+        database : str, optional
+            Database name.
+        autocommit : bool, optional
+            Autocommit mode.
+            Default is True.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional keyword arguments passed to MySQLdb.connect.
+        """
+        connection_kwargs = {
+            "host": host,
+            "port": port,
+            "autocommit": autocommit,
+            **kwargs,
+        }
+
+        if user is not None:
+            connection_kwargs["user"] = user
+        if password is not None:
+            connection_kwargs["password"] = password
+        if database is not None:
+            connection_kwargs["database"] = database
+
+        return cls(
+            url="mysql://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_oracle(
+        cls,
+        user: str,
+        password: str,
+        host: str = "localhost",
+        port: int = 1521,
+        database: str | None = None,
+        sid: str | None = None,
+        service_name: str | None = None,
+        dsn: str | None = None,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        user : str
+            Username.
+        password : str
+            Password.
+        host : str, optional
+            Hostname.
+            Default is 'localhost'.
+        port : int, optional
+            Port.
+            Default is 1521.
+        database : str, optional
+            Used as an Oracle service name if provided.
+        sid : str, optional
+            Unique name of an Oracle Instance, used to construct a DSN if provided.
+        service_name : str, optional
+            Oracle service name, used to construct a DSN if provided. Only one of database and service_name should be provided.
+        dsn : str, optional
+            An Oracle Data Source Name. If provided, overrides all other connection arguments except username and password.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional arguments passed to the DBAPI connection call.
+        """
+        connection_kwargs = {
+            "user": user,
+            "password": password,
+            "host": host,
+            "port": port,
+            **kwargs,
+        }
+
+        if database is not None:
+            connection_kwargs["database"] = database
+        if sid is not None:
+            connection_kwargs["sid"] = sid
+        if service_name is not None:
+            connection_kwargs["service_name"] = service_name
+        if dsn is not None:
+            connection_kwargs["dsn"] = dsn
+
+        return cls(
+            url="oracle://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_postgresql(
+        cls,
+        host: str | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        port: int = 5432,
+        database: str | None = None,
+        schema: str | None = None,
+        autocommit: bool = True,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        host : str, optional
+            Hostname.
+        user : str, optional
+            Username.
+        password : str, optional
+            Password.
+        port : int, optional
+            Port number.
+            Default is 5432.
+        database : str, optional
+            Database to connect to.
+        schema : str, optional
+            PostgreSQL schema to use. If None, use the default search_path.
+        autocommit : bool, optional
+            Whether or not to autocommit.
+            Default is True.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional keyword arguments to pass to the backend client connection.
+        """
+        connection_kwargs = {
+            "port": port,
+            "autocommit": autocommit,
+            **kwargs,
+        }
+
+        if host is not None:
+            connection_kwargs["host"] = host
+        if user is not None:
+            connection_kwargs["user"] = user
+        if password is not None:
+            connection_kwargs["password"] = password
+        if database is not None:
+            connection_kwargs["database"] = database
+        if schema is not None:
+            connection_kwargs["schema"] = schema
+
+        return cls(
+            url="postgres://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_pyspark(
+        cls,
+        session=None,
+        mode: str = "batch",
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        session : SparkSession, optional
+            A SparkSession instance.
+        mode : str, optional
+            Can be either "batch" or "streaming". If "batch", every source, sink, and query executed within this connection will be interpreted as a batch workload. If "streaming", every source, sink, and query executed within this connection will be interpreted as a streaming workload.
+            Default is 'batch'.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional keyword arguments used to configure the SparkSession.
+        """
+        connection_kwargs = {
+            "mode": mode,
+            **kwargs,
+        }
+
+        if session is not None:
+            connection_kwargs["session"] = session
+
+        return cls(
+            url="pyspark://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_risingwave(
+        cls,
+        host: str | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        port: int = 5432,
+        database: str | None = None,
+        schema: str | None = None,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        host : str, optional
+            Hostname.
+        user : str, optional
+            Username.
+        password : str, optional
+            Password.
+        port : int, optional
+            Port number.
+            Default is 5432.
+        database : str, optional
+            Database to connect to.
+        schema : str, optional
+            RisingWave schema to use. If None, use the default search_path.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional arguments passed to the DBAPI connection call.
+        """
+        connection_kwargs = {
+            "port": port,
+            **kwargs,
+        }
+
+        if host is not None:
+            connection_kwargs["host"] = host
+        if user is not None:
+            connection_kwargs["user"] = user
+        if password is not None:
+            connection_kwargs["password"] = password
+        if database is not None:
+            connection_kwargs["database"] = database
+        if schema is not None:
+            connection_kwargs["schema"] = schema
+
+        return cls(
+            url="risingwave://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_sqlite(
+        cls,
+        database: str | None = None,
+        type_map: dict[str, str] | None = None,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        database : str, optional
+            File path to the SQLite database file. If None, creates an in-memory transient database and you can use attach() to add more files.
+        type_map : dict[str, str], optional
+            An optional mapping from a string name of a SQLite "type" to the corresponding Ibis DataType that it represents. This can be used to override schema inference for a given SQLite database.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional arguments passed to the DBAPI connection call.
+        """
+        connection_kwargs = {
+            **kwargs,
+        }
+
+        if database is not None:
+            connection_kwargs["database"] = database
+        if type_map is not None:
+            connection_kwargs["type_map"] = type_map
+
+        return cls(
+            url="sqlite://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_trino(
+        cls,
+        user: str = "user",
+        password: str | None = None,
+        host: str = "localhost",
+        port: int = 8080,
+        database: str | None = None,
+        schema: str | None = None,
+        source: str | None = None,
+        timezone: str = "UTC",
+        auth: str | None = None,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        user : str, optional
+            Username to connect with.
+            Default is 'user'.
+        password : str, optional
+            Password to connect with. Mutually exclusive with auth.
+        host : str, optional
+            Hostname of the Trino server.
+            Default is 'localhost'.
+        port : int, optional
+            Port of the Trino server.
+            Default is 8080.
+        database : str, optional
+            Catalog to use on the Trino server.
+        schema : str, optional
+            Schema to use on the Trino server.
+        source : str, optional
+            Application name passed to Trino.
+        timezone : str, optional
+            Timezone to use for the connection.
+            Default is 'UTC'.
+        auth : str, optional
+            Authentication method to use for the connection. Mutually exclusive with password.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional keyword arguments passed directly to the trino.dbapi.connect API.
+        """
+        connection_kwargs = {
+            "user": user,
+            "host": host,
+            "port": port,
+            "timezone": timezone,
+            **kwargs,
+        }
+
+        if password is not None:
+            connection_kwargs["password"] = password
+        if database is not None:
+            connection_kwargs["database"] = database
+        if schema is not None:
+            connection_kwargs["schema"] = schema
+        if source is not None:
+            connection_kwargs["source"] = source
+        if auth is not None:
+            connection_kwargs["auth"] = auth
+
+        return cls(
+            url="trino://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
+    @classmethod
+    def from_snowflake(
+        cls,
+        user: str,
+        account: str,
+        database: str,
+        password: str | None = None,
+        authenticator: str | None = None,
+        create_object_udfs: bool = True,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
+    ) -> "Database":
+        """
+        Parameters
+        ----------
+        user : str
+            Username
+        account : str
+            A Snowflake organization ID and a Snowflake user ID, separated by a hyphen.
+            Note that a Snowflake user ID is a separate identifier from a username.
+            See https://docs.snowflake.com/en/user-guide/admin-account-identifier for details
+        database : str
+            A Snowflake database and a Snowflake schema, separated by a /.
+            See https://docs.snowflake.com/en/sql-reference/ddl-database for details
+        password : str, optional
+            Password. If empty or None then authenticator must be passed.
+        authenticator : str, optional
+            String indicating authentication method.
+            See https://docs.snowflake.com/en/developer-guide/python-connector/python-connector-example#connecting-with-oauth for details.
+            Note that the authentication flow will not take place until a database connection is made.
+            This means that connection can succeed, while subsequent API calls fail if the authentication fails for any reason.
+        create_object_udfs : bool, optional
+            Enable object UDF extensions defined on the first connection to the database.
+            Default is True.
+        match_schema : str, optional
+            Regex pattern to filter schemas. Mutually exclusive with match_tables.
+        match_tables : str, optional
+            Regex pattern to filter tables. Mutually exclusive with match_schema.
+        **kwargs : Any
+            Additional arguments passed to the DBAPI connection call.
+        """
+        connection_kwargs = {
+            "user": user,
+            "account": account,
+            "database": database,
+            "create_object_udfs": create_object_udfs,
+            **kwargs,
+        }
+
+        if password is not None:
+            connection_kwargs["password"] = password
+
+        if authenticator is not None:
+            connection_kwargs["authenticator"] = authenticator
+
+        return cls(
+            url="snowflake://",
+            match_schema=match_schema,
+            match_tables=match_tables,
+            **connection_kwargs,
+        )
+
     def tools(self) -> list[callable]:
-        """Return list of available tool methods.
+        """Available tool methods for database operations.
 
         Returns
         -------
         list[callable]
-            List containing inspect_table and query methods.
+            Methods for table inspection and query execution.
         """
         return [self.inspect_table, self.query]
 
@@ -214,6 +1069,7 @@ class Database(DataSource, ABC):
     ) -> dict[str, Any]:
         """Inspect the schema of database table and get sample data.
 
+        Instructions:
         1. Use this tool to understand table structure like column names, data types, and constraints
         2. Inspecting tables helps understand the structure of the data
         3. ALWAYS inspect unfamiliar tables first to learn their columns and data types before querying
@@ -233,11 +1089,11 @@ class Database(DataSource, ABC):
         self,
         query: Query = Field(..., description="Read-only SQL query to execute."),
     ) -> dict[str, Any]:
-        """
-        This tool allows you to run read-only SQL queries against a database.
+        """Run read-only SQL queries against a database.
 
         ALWAYS ENCLOSE IDENTIFIERS (TABLE NAMES, COLUMN NAMES) IN QUOTES TO PRESERVE CASE SENSITIVITY AND AVOID RESERVED WORD CONFLICTS AND SYNTAX ERRORS.
 
+        Instructions:
         1. ONLY write read-only queries for tables that have been explicitly discovered or referenced, using the correct dialect for the database.
         2. Before writing queries, make sure you understand the schema of the tables you are querying.
         3. When a query fails or returns unexpected results, try to diagnose the issue and then retry.
@@ -348,6 +1204,9 @@ class Database(DataSource, ABC):
 
             def __iter__(self):
                 for _, row in self._data.iterrows():
-                    yield self._row_type(**row.to_dict())
+                    if self._row_type is not None:
+                        yield self._row_type(**row.to_dict())
+                    else:
+                        yield row.to_dict()
 
         return Table

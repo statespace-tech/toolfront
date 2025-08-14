@@ -71,6 +71,33 @@ class DataSource(BaseModel, ABC):
     def tools(self) -> list[callable]:
         raise NotImplementedError("Subclasses must implement tools")
 
+    def instructions(self, context: str | None = None) -> str:
+        """Generate system instructions for AI agents.
+
+        Parameters
+        ----------
+        context : str, optional
+            Additional business context to include in instructions.
+
+        Returns
+        -------
+        str
+            System instructions for AI interaction with this datasource.
+        """
+        instruction_file = files("toolfront") / "instructions" / "ask.txt"
+
+        with instruction_file.open() as f:
+            agent_instruction = f.read()
+
+        if context:
+            agent_instruction += f"\n\nThe user has provided the following information:\n\n{context}"
+
+        return (
+            f"{agent_instruction}\n\n"
+            f"Use the following information about the user's data to guide your response:\n\n"
+            f"{yaml.dump(self.model_dump())}"
+        )
+
     def ask(
         self,
         prompt: str,
@@ -79,28 +106,26 @@ class DataSource(BaseModel, ABC):
         output_type: BaseModel | None = None,
         stream: bool = False,
     ) -> Any:
-        """
-        Ask the datasource a question and return the result.
+        """Ask natural language questions and get structured responses.
 
         Parameters
         ----------
         prompt : str
-            The question or instruction to ask the datasource.
-        model : models.Model | models.KnownModelName | str | None, optional
-            The model to use. If None, uses the default model.
-        context : str | None, optional
-            Additional context to provide to the model.
-        output_type : BaseModel | None, optional
-            The output type to use. If None, uses the default output type. Mutually exclusive with type hints.
+            Natural language question or instruction.
+        model : str, optional
+            AI model to use (e.g., 'openai:gpt-4', 'anthropic:claude-3-5-sonnet').
+        context : str, optional
+            Additional business context for better responses.
+        output_type : BaseModel, optional
+            Pydantic model for structured responses.
         stream : bool, optional
-            Whether to display live streaming output in the terminal. Defaults to False.
+            Show live AI reasoning in terminal.
 
         Returns
         -------
         Any
-            The response from the datasource.
+            Response matching the requested output type.
         """
-
         if model is None:
             model = get_default_model()
 
@@ -119,24 +144,6 @@ class DataSource(BaseModel, ABC):
         )
 
         return asyncio.run(self._ask_async(prompt, agent, stream))
-
-    def instructions(self, context: str | None = None) -> str:
-        """
-        Get the context for the datasource.
-        """
-        instruction_file = files("toolfront") / "instructions" / "ask.txt"
-
-        with instruction_file.open() as f:
-            agent_instruction = f.read()
-
-        if context:
-            agent_instruction += f"\n\nThe user has provided the following information:\n\n{context}"
-
-        return (
-            f"{agent_instruction}\n\n"
-            f"Use the following information about the user's data to guide your response:\n\n"
-            f"{yaml.dump(self.model_dump())}"
-        )
 
     async def _ask_async(
         self,

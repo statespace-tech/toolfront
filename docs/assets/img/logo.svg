@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 214 214">
+  <defs>
+    <style>
+      .cls-1, .cls-2, .cls-3, .cls-4 {
+        fill: #fff;
+      }
+
+      .cls-2 {
+        filter: url(#drop-shadow-1);
+      }
+
+      .cls-3 {
+        filter: url(#drop-shadow-3);
+      }
+
+      .cls-4 {
+        filter: url(#drop-shadow-2);
+      }
+    </style>
+    <filter id="drop-shadow-1" x="127" y="60" width="87" height="116" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur" stdDeviation="10"/>
+      <feFlood flood-color="#000" flood-opacity=".5"/>
+      <feComposite in2="blur" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+    <filter id="drop-shadow-2" x="0" y="0" width="214" height="214" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur-2" stdDeviation="10"/>
+      <feFlood flood-color="#000" flood-opacity=".5"/>
+      <feComposite in2="blur-2" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+    <filter id="drop-shadow-3" x="93" y="85" width="121" height="128" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur-3" stdDeviation="10"/>
+      <feFlood flood-color="#000" flood-opacity=".5"/>
+      <feComposite in2="blur-3" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <path class="cls-1" d="M157.991251231,90.25h-30.4583333333c-1.956008489,0-3.5416666667,1.5856581777-3.5416666667,3.5416666667v18.4166666667c0,1.956008489,1.5856581777,3.5416666667,3.5416666667,3.5416666667h30.4583333333v-25.5Z"/>
+      <path class="cls-2" d="M157.9913088753,90.25h-.0000576443v55.25h25.5v-29.7500576443c-9.9583435059-9.9583435059-15.5415988498-15.5415988498-25.4999423557-25.4999423557Z"/>
+      <polygon class="cls-1" points="98.4911935867 183.75 98.491251231 183.75 98.491251231 149.75 98.4911935867 183.75"/>
+      <path class="cls-4" d="M183.491251231,35.4722222222c0-2.6080113186-2.1142109036-4.7222222222-4.7222222222-4.7222222222H35.2134734532c-2.6080113187,0-4.7222222222,2.1142109036-4.7222222222,4.7222222222v24.5555555556c0,2.6080113187,2.1142109036,4.7222222222,4.7222222222,4.7222222222h24.5555555555c2.6080113187,0,4.7222222222,2.1142109036,4.7222222222,4.7222222222v80.2778117778c13.2778126417,13.2778126417,20.7221533583,20.7221533583,33.999966,33.999966h.000034v-114.2777777778c0-2.6080113186,2.1142109036-4.7222222222,4.7222222222-4.7222222222h75.5555555555c2.6080113187,0,4.7222222222-2.1142109036,4.7222222222-4.7222222222v-24.5555555556Z"/>
+      <path class="cls-3" d="M123.991251231,148.1922488742v33.9999423557c34.4847886827-4.3326331245,59.4998847114-17.2185295953,59.5-32.4423641629v-33.999827067c0,15.2237769233-25.0150960287,28.1096733941-59.5,32.4422488742Z"/>
+    </g>
+  </g>
+</svg>

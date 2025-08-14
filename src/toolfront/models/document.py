@@ -13,7 +13,18 @@ class Pagination(BaseModel):
 
 
 class Document(DataSource):
-    """Abstract base class for document libraries."""
+    """Natural language interface for documents.
+
+    Supports PDF, DOCX, PPTX, XLSX, HTML, JSON, MD, TXT, XML, YAML, RTF formats.
+    Documents are automatically chunked for efficient processing.
+
+    Parameters
+    ----------
+    source : str, optional
+        Path to document file. Mutually exclusive with text.
+    text : str, optional
+        Document content as text. Mutually exclusive with source.
+    """
 
     source: str | None = Field(
         default=None,
@@ -70,22 +81,28 @@ class Document(DataSource):
             raise ValueError(f"Unsupported document type: {document_type}")
 
     def tools(self) -> list[callable]:
+        """Available tool methods for document operations.
+
+        Returns
+        -------
+        list[callable]
+            Methods for document reading with intelligent chunking.
+        """
         return [self.read]
 
     async def read(
         self,
         pagination: Pagination,
     ) -> str:
-        """
-        Read the contents of a library's document with automatic chunking.
+        """Read the contents of a library's document with automatic chunking.
 
         All documents are automatically chunked into sections of 10,000 characters each for easier navigation.
 
-        Library Read Instructions:
+        Instructions:
         1. Documents are split into 10k character chunks for all file types (PDF, DOCX, PPTX, Excel, JSON, MD, TXT, XML, YAML, RTF, HTML).
-        2. Use pagination parameter to navigate through document sections:
-           - 0.0 <= pagination < 1.0: Return section at that percentile (e.g., 0.5 = middle section)
-           - pagination >= 1: Return specific section number (e.g., 1 = first section, 2 = second section)
+        2. Use pagination value parameter to navigate through document sections:
+           - 0.0 <= pagination value < 1.0: Return section at that percentile (e.g., 0.5 = middle section)
+           - pagination value >= 1: Return specific section number (e.g., 1 = first section, 2 = second section)
         3. When searching for specific information in large documents, use a "soft" binary search approach:
            - Start with an educated percentile guess based on document type and target content (e.g., 0.8 for conclusions in academic papers, 0.3 for methodology)
            - Use the context from your initial read to refine your search. If you find related but not target content, adjust percentile accordingly
@@ -103,16 +120,12 @@ class Document(DataSource):
             return document_content
 
         # Determine section index and label based on pagination type
-        if pagination < 1:
+        if pagination.value < 1:
             # Percentile-based: convert to section index
-            section_index = min(int(pagination * total_sections), total_sections - 1)
+            section_index = min(int(pagination.value * total_sections), total_sections - 1)
         else:
-            section_index = min(int(pagination), total_sections) - 1
+            section_index = min(int(pagination.value), total_sections) - 1
 
         start_idx = section_index * CHUNK_SIZE
         end_idx = min(start_idx + CHUNK_SIZE, len(document_content))
         return f"Section {section_index + 1} of {total_sections}:\n\n{document_content[start_idx:end_idx]}"
-
-    def retrieve(self, prompt: str, **kwargs: Any) -> str:
-        pagination: Pagination = self.ask(prompt, **kwargs)
-        return self.read(pagination.value)
