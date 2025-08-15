@@ -146,6 +146,8 @@ extra_css:
   - https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css
 
 extra_javascript:
+  - https://www.googletagmanager.com/gtag/js?id=G-EH352HTY05
+  - assets/js/gtag-init.js
   - https://unpkg.com/aos@2.3.1/dist/aos.js
   - https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js
   - assets/js/marquee.js
