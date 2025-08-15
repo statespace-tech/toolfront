@@ -149,9 +149,13 @@ extra_javascript:
   - https://unpkg.com/aos@2.3.1/dist/aos.js
   - https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js
   - assets/js/marquee.js
+  - assets/js/analytics.js
 
 extra:
   generator: false
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_ID
   social:
     - icon: fontawesome/brands/discord
       link: https://discord.gg/rRyM7zkZTf
