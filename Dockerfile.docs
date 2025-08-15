@@ -1,0 +1,39 @@
+# Use Python 3.11 slim image as base
+FROM python:3.11-slim
+
+# Install system dependencies for Cairo and other image processing
+RUN apt-get update && apt-get install -y \
+    libcairo2 \
+    libcairo2-dev \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+RUN pip install uv
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files
+COPY pyproject.toml uv.lock* ./
+
+# Copy source code (needed for mkdocstrings)
+COPY src ./src
+
+# Install toolfront package and mkdocs dependencies
+RUN uv pip install --system -e . mkdocs-material[imaging] mkdocstrings[python]
+
+# Copy mkdocs configuration and docs
+COPY mkdocs.yml ./
+COPY docs ./docs
+
+# Expose port 8080
+EXPOSE 8080
+
+# Run mkdocs serve
+CMD ["mkdocs", "serve", "--dev-addr", "0.0.0.0:8080"]

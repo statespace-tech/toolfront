@@ -139,3 +139,6 @@ test.db
 # Misc directory
 data/
 output/
+
+.direnv/*
+.envrc
