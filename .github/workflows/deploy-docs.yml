@@ -22,11 +22,6 @@ jobs:
       - name: Setup Fly.io
         uses: superfly/flyctl-actions/setup-flyctl@master
       
-      - name: Verify Fly CLI
-        run: |
-          which fly || (echo "fly command not found in PATH" && exit 1)
-          fly version
-      
       - name: Deploy to Fly.io
         run: |
           cd docs

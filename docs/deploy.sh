@@ -13,7 +13,7 @@ cp ../mkdocs.yml .
 
 # Deploy to Fly
 echo "Deploying to Fly.io..."
-fly deploy
+flyctl deploy
 
 # Clean up copied files
 echo "Cleaning up..."
