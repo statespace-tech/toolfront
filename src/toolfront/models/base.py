@@ -18,6 +18,7 @@ from pydantic_ai.messages import (
     ThinkingPart,
     ThinkingPartDelta,
 )
+from pydantic_ai.settings import ModelSettings
 from rich.console import Console
 from rich.live import Live
 from rich.markdown import Markdown
@@ -141,6 +142,10 @@ class DataSource(BaseModel, ABC):
             system_prompt=system_prompt,
             output_retries=MAX_RETRIES,
             output_type=output_type,
+            retries=MAX_RETRIES,
+            model_settings=ModelSettings(
+                temperature=0.0,
+            ),
         )
 
         return asyncio.run(self._ask_async(prompt, agent, stream))

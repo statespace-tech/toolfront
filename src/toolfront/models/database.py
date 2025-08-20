@@ -2,7 +2,6 @@ import logging
 import re
 import warnings
 from abc import ABC
-from contextlib import closing
 from pathlib import Path
 from typing import Any, Generic, TypeVar
 from urllib.parse import urlparse
@@ -12,6 +11,8 @@ import pandas as pd
 import yaml
 from ibis import BaseBackend
 from pydantic import BaseModel, Field, PrivateAttr, computed_field, field_serializer, model_validator
+from pydantic_ai import ModelRetry
+from sqlglot.optimizer import optimize
 
 from toolfront.models.base import DataSource
 from toolfront.utils import sanitize_url
@@ -58,6 +59,9 @@ class Query(BaseModel):
         # Return True if NO write operations are found (case insensitive)
         return not bool(re.search(pattern, self.code, re.IGNORECASE))
 
+    def optimized_code(self, dialect: str) -> str:
+        return optimize(self.code, dialect=dialect).sql(dialect=dialect)
+
 
 class Database(DataSource, ABC):
     """Natural language interface for databases.
@@ -74,7 +78,10 @@ class Database(DataSource, ABC):
         Regex pattern to filter tables. Mutually exclusive with match_schema.
     """
 
+    model_config = {"arbitrary_types_allowed": True}
+
     url: str = Field(description="Database URL.")
+    connection: BaseBackend = Field(description="Ibis database connection.", exclude=True)
 
     match_schema: str | None = Field(
         default=None,
@@ -89,20 +96,31 @@ class Database(DataSource, ABC):
     )
 
     _tables: list[str] = PrivateAttr(default_factory=list)
-    _connection: BaseBackend | None = PrivateAttr(default=None)
-    _connection_kwargs: dict[str, Any] = PrivateAttr(default_factory=dict)
 
     def __init__(
-        self, url: str, match_schema: str | None = None, match_tables: str | None = None, **kwargs: Any
+        self,
+        url: str,
+        connection: BaseBackend | None = None,
+        match_schema: str | None = None,
+        match_tables: str | None = None,
+        **kwargs: Any,
     ) -> None:
-        self._connection_kwargs = kwargs
-        super().__init__(url=url, match_schema=match_schema, match_tables=match_tables)
+        # Create connection if not provided
+        if connection is None:
+            if "://" not in url:
+                url = f"{url}://"
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "Unable to create Ibis UDFs", UserWarning)
+                connection = ibis.connect(url, **kwargs)
+
+        super().__init__(url=url, connection=connection, match_schema=match_schema, match_tables=match_tables)
 
     def __getitem__(self, name: str) -> "ibis.Table":
         parts = name.split(".")
         if not 1 <= len(parts) <= 3:
             raise ValueError(f"Invalid table name: {name}")
-        return self._connection.table(parts[-1], database=tuple(parts[:-1]) if len(parts) > 1 else None)
+        return self.connection.table(parts[-1], database=tuple(parts[:-1]) if len(parts) > 1 else None)
 
     def __repr__(self) -> str:
         dump = self.model_dump(exclude={"tables"})
@@ -124,14 +142,7 @@ class Database(DataSource, ABC):
         return scheme_mapping.get(scheme, scheme)
 
     @model_validator(mode="after")
-    def model_validator(self) -> "Database":
-        if "://" not in self.url:
-            self.url = f"{self.url}://"
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "Unable to create Ibis UDFs", UserWarning)
-            self._connection = ibis.connect(self.url, **self._connection_kwargs)
-
+    def validate_and_discover_tables(self) -> "Database":
         # Validate regex patterns
         if self.match_schema:
             if not isinstance(self.match_schema, str):
@@ -150,16 +161,16 @@ class Database(DataSource, ABC):
                 raise ValueError(f"Invalid regex pattern for match_tables: {self.match_tables} - {str(e)}")
 
         try:
-            catalog = getattr(self._connection, "current_catalog", None)
+            catalog = getattr(self.connection, "current_catalog", None)
             if catalog:
-                databases = self._connection.list_databases(catalog=catalog, like=self.match_schema)
+                databases = self.connection.list_databases(catalog=catalog, like=self.match_schema)
                 all_tables = []
                 for db in databases:
-                    tables = self._connection.list_tables(like=self.match_tables, database=(catalog, db))
+                    tables = self.connection.list_tables(like=self.match_tables, database=(catalog, db))
                     prefix = f"{catalog}." if catalog else ""
                     all_tables.extend([f"{prefix}{db}.{table}" for table in tables])
             else:
-                all_tables = self._connection.list_tables(like=self.match_tables)
+                all_tables = self.connection.list_tables(like=self.match_tables)
         except Exception as e:
             logger.error(f"Failed to discover tables automatically: {e}")
             raise RuntimeError(f"Could not list tables from database: {str(e)}") from e
@@ -185,11 +196,12 @@ class Database(DataSource, ABC):
         str
             Sanitized URL with sensitive information removed.
         """
-        return self.sanitized_url
+        return sanitize_url(value)
 
-    @property
-    def sanitized_url(self) -> str:
-        return sanitize_url(self.url)
+    @field_serializer("connection")
+    def serialize_connection(self, value: BaseBackend) -> str:
+        """Serialize connection as a string representation."""
+        return f"<{type(value).__name__} connection>"
 
     @computed_field
     @property
@@ -1076,14 +1088,14 @@ class Database(DataSource, ABC):
         """
         try:
             logger.debug(f"Inspecting table: {self.url} {table.path}")
-            table = self[table.path]
+            inspected_table = self[table.path]
             return {
-                "schema": table.info()[["name", "type", "nullable"]].to_pandas(),
-                "samples": table.head(5).to_pandas(),
+                "schema": inspected_table.info()[["name", "type", "nullable"]].to_pandas(),
+                "samples": inspected_table.head(5).to_pandas(),
             }
         except Exception as e:
             logger.error(f"Failed to inspect table: {e}", exc_info=True)
-            raise RuntimeError(f"Failed to inspect table {table.path} in {self.url} - {str(e)}") from e
+            raise ModelRetry(f"Failed to inspect table: {str(e)}") from e
 
     async def query(
         self,
@@ -1091,27 +1103,28 @@ class Database(DataSource, ABC):
     ) -> dict[str, Any]:
         """Run read-only SQL queries against a database.
 
-        ALWAYS ENCLOSE IDENTIFIERS (TABLE NAMES, COLUMN NAMES) IN QUOTES TO PRESERVE CASE SENSITIVITY AND AVOID RESERVED WORD CONFLICTS AND SYNTAX ERRORS.
+        ALWAYS ENCLOSE ALL IDENTIFIERS (TABLE NAMES, COLUMN NAMES) IN QUOTES TO PRESERVE CASE SENSITIVITY AND AVOID RESERVED WORD CONFLICTS AND SYNTAX ERRORS.
 
         Instructions:
-        1. ONLY write read-only queries for tables that have been explicitly discovered or referenced, using the correct dialect for the database.
-        2. Before writing queries, make sure you understand the schema of the tables you are querying.
-        3. When a query fails or returns unexpected results, try to diagnose the issue and then retry.
+        1. ONLY write read-only queries for tables that have been explicitly discovered or referenced
+        2. Always use the exact table and column names as they appear in the schema, respecting case sensitivity
+        3. Before writing queries, make sure you understand the schema of the tables you are querying.
+        4. When a query fails or returns unexpected results, try to diagnose the issue and then retry.
         """
         try:
             logger.debug(f"Querying database: {self.url} {query.code}")
             if not query.is_read_only_query():
                 raise ValueError("Only read-only queries are allowed")
 
-            if not hasattr(self._connection, "raw_sql"):
+            if not hasattr(self.connection, "raw_sql"):
                 raise ValueError("Database does not support raw sql queries")
 
-            with closing(self._connection.raw_sql(query.code)) as cursor:
-                columns = [col[0] for col in cursor.description]
-                return pd.DataFrame(cursor.fetchall(), columns=columns)
+            result = self.connection.sql(query.optimized_code(self.database_type))
+
+            return result.to_pandas()
         except Exception as e:
             logger.error(f"Failed to query database: {e}", exc_info=True)
-            raise RuntimeError(f"Failed to query database {self.url} - {str(e)}") from e
+            raise ModelRetry(f"Failed to query database: {str(e)}") from e
 
     def _query_sync(self, query: Query) -> pd.DataFrame:
         """Synchronous version of query method for internal use."""
@@ -1120,18 +1133,13 @@ class Database(DataSource, ABC):
             if not query.is_read_only_query():
                 raise ValueError("Only read-only queries are allowed")
 
-            if not hasattr(self._connection, "raw_sql"):
-                raise ValueError("Database does not support raw sql queries")
-
-            with closing(self._connection.raw_sql(query.code)) as cursor:
-                columns = [col[0] for col in cursor.description]
-                return pd.DataFrame(cursor.fetchall(), columns=columns)
+            return self.connection.sql(query.optimized_code(self.database_type)).to_pandas()
         except Exception as e:
             logger.error(f"Failed to query database: {e}", exc_info=True)
-            raise RuntimeError(f"Failed to query database {self.url} - {str(e)}") from e
+            raise RuntimeError(f"Failed to query database:{str(e)}") from e
 
     @property
-    def table(self) -> type:
+    def Table(self) -> type:  # noqa: N802
         db = self
 
         class Table(BaseModel, Generic[T]):
@@ -1145,7 +1153,7 @@ class Database(DataSource, ABC):
                 """Capture the generic type parameter and create a new class with _model_type set."""
                 # Read the query instructions template
                 instructions_path = Path("src/toolfront/instructions/query.txt")
-                base_instructions = instructions_path.read_text()
+                instructions = instructions_path.read_text()
 
                 # Generate field descriptions from the model as YAML dict
                 fields_dict = {}
@@ -1155,11 +1163,12 @@ class Database(DataSource, ABC):
                     fields_dict[field_name] = type_name
 
                 fields_yaml = yaml.dump(fields_dict, default_flow_style=False)
-                query_description = f"{base_instructions}\n{fields_yaml}"
+
+                instructions += "Required fields:\n" + fields_yaml
 
                 class ParameterizedTable(cls):
                     _row_type: type[T] = PrivateAttr(default=item)
-                    query: Query = Field(..., description=query_description)
+                    query: Query = Field(..., description=instructions)
 
                 ParameterizedTable.__name__ = f"Table[{item.__name__}]"
                 return ParameterizedTable
