@@ -81,8 +81,7 @@ class Database(DataSource, ABC):
     model_config = {"arbitrary_types_allowed": True}
 
     url: str = Field(description="Database URL.")
-    connection: BaseBackend = Field(
-        description="Ibis database connection.", exclude=True)
+    connection: BaseBackend = Field(description="Ibis database connection.", exclude=True)
 
     match_schema: str | None = Field(
         default=None,
@@ -112,12 +111,10 @@ class Database(DataSource, ABC):
                 url = f"{url}://"
 
             with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore", "Unable to create Ibis UDFs", UserWarning)
+                warnings.filterwarnings("ignore", "Unable to create Ibis UDFs", UserWarning)
                 connection = ibis.connect(url, **kwargs)
 
-        super().__init__(url=url, connection=connection,
-                         match_schema=match_schema, match_tables=match_tables)
+        super().__init__(url=url, connection=connection, match_schema=match_schema, match_tables=match_tables)
 
     def __getitem__(self, name: str) -> "ibis.Table":
         parts = name.split(".")
@@ -149,47 +146,37 @@ class Database(DataSource, ABC):
         # Validate regex patterns
         if self.match_schema:
             if not isinstance(self.match_schema, str):
-                raise ValueError(
-                    f"match_schema must be a string, got {type(self.match_schema)}")
+                raise ValueError(f"match_schema must be a string, got {type(self.match_schema)}")
             try:
                 re.compile(self.match_schema)
             except re.error as e:
-                raise ValueError(
-                    f"Invalid regex pattern for match_schema: {self.match_schema} - {str(e)}")
+                raise ValueError(f"Invalid regex pattern for match_schema: {self.match_schema} - {str(e)}")
 
         if self.match_tables:
             if not isinstance(self.match_tables, str):
-                raise ValueError(
-                    f"match_tables must be a string, got {type(self.match_tables)}")
+                raise ValueError(f"match_tables must be a string, got {type(self.match_tables)}")
             try:
                 re.compile(self.match_tables)
             except re.error as e:
-                raise ValueError(
-                    f"Invalid regex pattern for match_tables: {self.match_tables} - {str(e)}")
+                raise ValueError(f"Invalid regex pattern for match_tables: {self.match_tables} - {str(e)}")
 
         try:
             catalog = getattr(self.connection, "current_catalog", None)
             if catalog:
-                databases = self.connection.list_databases(
-                    catalog=catalog, like=self.match_schema)
+                databases = self.connection.list_databases(catalog=catalog, like=self.match_schema)
                 all_tables = []
                 for db in databases:
-                    tables = self.connection.list_tables(
-                        like=self.match_tables, database=(catalog, db))
+                    tables = self.connection.list_tables(like=self.match_tables, database=(catalog, db))
                     prefix = f"{catalog}." if catalog else ""
-                    all_tables.extend(
-                        [f"{prefix}{db}.{table}" for table in tables])
+                    all_tables.extend([f"{prefix}{db}.{table}" for table in tables])
             else:
-                all_tables = self.connection.list_tables(
-                    like=self.match_tables)
+                all_tables = self.connection.list_tables(like=self.match_tables)
         except Exception as e:
             logger.error(f"Failed to discover tables automatically: {e}")
-            raise RuntimeError(
-                f"Could not list tables from database: {str(e)}") from e
+            raise RuntimeError(f"Could not list tables from database: {str(e)}") from e
 
         if not all_tables:
-            logger.warning(
-                "No tables found in the database - this may be expected for empty databases")
+            logger.warning("No tables found in the database - this may be expected for empty databases")
 
         self._tables = all_tables
 
@@ -1112,8 +1099,7 @@ class Database(DataSource, ABC):
 
     async def query(
         self,
-        query: Query = Field(...,
-                             description="Read-only SQL query to execute."),
+        query: Query = Field(..., description="Read-only SQL query to execute."),
     ) -> dict[str, Any]:
         """Run read-only SQL queries against a database.
 
@@ -1133,8 +1119,7 @@ class Database(DataSource, ABC):
             if not hasattr(self.connection, "raw_sql"):
                 raise ValueError("Database does not support raw sql queries")
 
-            result = self.connection.sql(
-                query.optimized_code(self.database_type))
+            result = self.connection.sql(query.optimized_code(self.database_type))
 
             return result.to_pandas()
         except Exception as e:
@@ -1167,16 +1152,14 @@ class Database(DataSource, ABC):
             def __class_getitem__(cls, item):
                 """Capture the generic type parameter and create a new class with _model_type set."""
                 # Read the query instructions template
-                instructions_path = Path(
-                    "src/toolfront/instructions/query.txt")
+                instructions_path = Path("src/toolfront/instructions/query.txt")
                 instructions = instructions_path.read_text()
 
                 # Generate field descriptions from the model as YAML dict
                 fields_dict = {}
                 for field_name, field_info in item.model_fields.items():
                     field_type = field_info.annotation
-                    type_name = field_type.__name__ if hasattr(
-                        field_type, "__name__") else str(field_type)
+                    type_name = field_type.__name__ if hasattr(field_type, "__name__") else str(field_type)
                     fields_dict[field_name] = type_name
 
                 fields_yaml = yaml.dump(fields_dict, default_flow_style=False)
