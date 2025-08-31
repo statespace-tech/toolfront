@@ -89,7 +89,7 @@ nav:
       - OpenRouter: documentation/ai_models/openrouter.md
       - Ollama: documentation/ai_models/ollama.md
       - Together AI: documentation/ai_models/together.md
-    - Databases:
+    - Databases: 
       - BigQuery: documentation/databases/bigquery.md
       - ClickHouse: documentation/databases/clickhouse.md
       - Databricks: documentation/databases/databricks.md
