@@ -69,7 +69,8 @@ nav:
   - Home: index.md
   - Documentation:
     - Retrieval: documentation/retrieval.md
-    - AI Models:
+    - AI Models: 
+      - documentation/ai_models/index.md
       - OpenAI: documentation/ai_models/openai.md
       - Anthropic: documentation/ai_models/anthropic.md
       - Google: documentation/ai_models/google.md

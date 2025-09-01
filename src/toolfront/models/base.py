@@ -28,7 +28,7 @@ from rich.text import Text
 from toolfront.config import MAX_RETRIES
 from toolfront.utils import (
     deserialize_response,
-    get_default_model,
+    get_model_from_env,
     get_output_type_hint,
     prepare_tool_for_pydantic_ai,
 )
@@ -127,8 +127,7 @@ class DataSource(BaseModel, ABC):
         Any
             Response matching the requested output type.
         """
-        if model is None:
-            model = get_default_model()
+        model = model or get_model_from_env()
 
         # Get caller context and add it to the system prompt
         output_type = get_output_type_hint() or output_type or str
