@@ -2,7 +2,7 @@ import logging
 import re
 import warnings
 from abc import ABC
-from pathlib import Path
+from importlib.resources import files
 from typing import Any, Generic, TypeVar
 from urllib.parse import urlparse
 
@@ -1152,8 +1152,9 @@ class Database(DataSource, ABC):
             def __class_getitem__(cls, item):
                 """Capture the generic type parameter and create a new class with _model_type set."""
                 # Read the query instructions template
-                instructions_path = Path("src/toolfront/instructions/query.txt")
-                instructions = instructions_path.read_text()
+                instruction_file = files("toolfront") / "instructions" / "query.txt"
+                with instruction_file.open() as f:
+                    instructions = f.read()
 
                 # Generate field descriptions from the model as YAML dict
                 fields_dict = {}
