@@ -40,11 +40,15 @@ dependencies = [
 [project.scripts]
 toolfront = "toolfront.mcp:main"
 
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["toolfront*"]
 
+[tool.setuptools.package-data]
+"toolfront" = ["instructions/*.txt"]
 
 [project.optional-dependencies]
 test = [
