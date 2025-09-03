@@ -9,7 +9,6 @@ from urllib import parse
 
 import duckdb
 import httpx
-import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from toolfront.config import TIMEOUT_SECONDS
@@ -20,8 +19,6 @@ from toolfront.utils import (
     url_to_path,
 )
 
-logging.basicConfig(level=logging.INFO)
-
 logger = logging.getLogger("toolfront")
 
 DEFAULT_CACHE_DIR = Path("toolfront_cache")
@@ -30,15 +27,11 @@ DEFAULT_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 class ToolPage(BaseModel):
     url: str = Field(..., description="URL of the page.")
-    markdown: str | None = Field(
-        None, description="Markdown content of the page.")
-    config: dict[str, Any] | None = Field(
-        None, description="Config of the page.")
+    markdown: str | None = Field(None, description="Markdown content of the page.")
+    config: dict[str, Any] | None = Field(None, description="Config of the page.")
 
-    headers: dict[str, str] | None = Field(
-        None, description="HTTP headers for the page.")
-    params: dict[str, str] | None = Field(
-        None, description="Query parameters for the page.")
+    headers: dict[str, str] | None = Field(None, description="HTTP headers for the page.")
+    params: dict[str, str] | None = Field(None, description="Query parameters for the page.")
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -50,15 +43,20 @@ class ToolPage(BaseModel):
     def validate_model_before(cls, data: Any) -> Any:
         """Process raw data before model creation."""
         if isinstance(data, dict) and "url" in data:
+            url = data["url"]
+
+            # Validate URL format
+            parsed = parse.urlparse(url)
+            if not parsed.scheme or not parsed.netloc:
+                raise ValueError(f"Invalid URL: {url}. Must include scheme and netloc.")
+
             data["url"] = data["url"].rstrip("/") + "/"
 
             if "markdown" not in data or "config" not in data:
                 with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
-                    response = client.get(data["url"], params=data.get(
-                        "params", {}), headers=data.get("headers", {}))
+                    response = client.get(data["url"], params=data.get("params", {}), headers=data.get("headers", {}))
                     response.raise_for_status()
-                    data["markdown"], data["config"] = parse_markdown_with_frontmatter(
-                        response.text)
+                    data["markdown"], data["config"] = parse_markdown_with_frontmatter(response.text)
 
         return data
 
@@ -108,61 +106,45 @@ class ToolPage(BaseModel):
         """Return the file paths of the page."""
         return self.config.get("files", [])
 
-    @cached_property
+    @property
     def content(self) -> str:
         """Return the content of the page."""
-        static_content = self.static_content
+
+        markdown = self.markdown
+        # import pdb; pdb.set_trace()
+
+        if queries := self.queries:
+            markdown += "\n\n## SQL\n"
+            for query in queries:
+                markdown += "```sql\n" + query + "\n```\n"
+
+        
         dynamic_content = self.dynamic_content
-        content_dict = {
-            "content": {
-                "static": static_content,
-                "dynamic": dynamic_content,
-            },
-            "queries": self.queries,
-        }
-        return yaml.dump(content_dict, sort_keys=False, default_flow_style=False)
 
-    @cached_property
-    def static_content(self) -> str:
-        """Return a static context for the page."""
-        return self.markdown
+        if dynamic_content:
+            markdown += "\n\n## Additional Content:\n"
+            for content in dynamic_content:
+                markdown += "```\n" + content + "\n```\n"
 
-    @cached_property
+        return markdown
+
+
+    @property
     def dynamic_content(self) -> list[dict]:
         """Return a dynamic context for the page."""
         result = []
         queries = self.queries
+        # import pdb; pdb.set_trace()
 
         with change_dir(self._path_cache):
             for query in queries:
-                try:
-                    # Convert to dict and ensure it's JSON serializable
-                    df_data = self._connection.sql(query).df().to_dict(orient="records")
-                except Exception as e:
-                    # Skip queries that fail (e.g., macro already exists)
-                    if "already exists" in str(e):
-                        logger.debug(f"Skipping query due to existing object: {e}")
-                        continue
-                    else:
-                        logger.warning(f"Query failed: {e}")
-                        continue
-                # Clean the data to ensure it's serializable
-                clean_data = []
-                for record in df_data:
-                    clean_record = {}
-                    for k, v in record.items():
-                        # Convert to basic Python types
-                        if hasattr(v, 'item'):  # numpy types
-                            clean_record[k] = v.item()
-                        elif hasattr(v, 'isoformat'):  # datetime types
-                            clean_record[k] = v.isoformat()
-                        else:
-                            clean_record[k] = v
-                    clean_data.append(clean_record)
-                result.append(clean_data)
+                df_data = self._connection.sql(query)
+                
+                if df_data:
+                    result.append(df_data.df().to_markdown())
         return result
 
-    @cached_property
+    @property
     def queries(self) -> list[str]:
         """Return the queries of the page."""
         result = []
@@ -170,23 +152,18 @@ class ToolPage(BaseModel):
         with change_dir(self._path_cache):
             for query_path in self.query_paths:
                 if Path(query_path).exists() and (query_content := Path(query_path).read_bytes()):
-                    query_sql = query_content.decode("utf-8")
-                    result.append(query_sql)
+                    result.append(query_content.decode("utf-8"))
 
         return result
 
     def query(self, sql: str) -> Any:
         """Execute a DuckDB query from the cached queries."""
         with change_dir(self._path_cache):
-            try:
-                return self._connection.sql(sql).fetchall()
-            except Exception as e:
-                if "already exists" in str(e):
-                    logger.debug(f"Object already exists, continuing: {e}")
-                    # Try to execute again if it was just a creation issue
-                    return self._connection.sql(sql).fetchall()
-                else:
-                    raise
+            result = self._connection.sql(sql)
+            if result:
+                result = result.df().to_markdown()
+            return result
+         
 
     async def _cache_files(self, parsed_url: parse.ParseResult) -> None:
         """Pre-fetch and cache all query and data files asynchronously and in parallel."""
@@ -198,11 +175,9 @@ class ToolPage(BaseModel):
                 if file_path.startswith("/"):
                     file_url = parsed_url._replace(path=file_path)
                 else:
-                    file_url = parsed_url._replace(
-                        path=parsed_url.path.lstrip("/") + file_path)
+                    file_url = parsed_url._replace(path=parsed_url.path.lstrip("/") + file_path)
 
-                tasks.append(asyncio.create_task(
-                    self._fetch_and_cache_file_async(file_url, client)))
+                tasks.append(asyncio.create_task(self._fetch_and_cache_file_async(file_url, client)))
 
             # Execute all tasks in parallel
             if tasks:
@@ -237,10 +212,8 @@ class Browser(DataSource, ABC):
     """
 
     start_url: str = Field(..., description="Starting URL.")
-    headers: dict[str, str] | None = Field(
-        None, description="Additional headers to include in requests.", exclude=True)
-    params: dict[str, str] | None = Field(
-        None, description="Query parameters to include in requests.", exclude=True)
+    headers: dict[str, str] | None = Field(None, description="Additional headers to include in requests.", exclude=True)
+    params: dict[str, str] | None = Field(None, description="Query parameters to include in requests.", exclude=True)
 
     _page: ToolPage | None
 
@@ -269,7 +242,9 @@ class Browser(DataSource, ABC):
             self.navigate,
         ]
 
-    async def execute_macro(self, name: str, args: list[Any] | None = None, kwargs: dict[str, Any] | None = None) -> Any:
+    async def execute_macro(
+        self, name: str, args: list[Any] | None = None, kwargs: dict[str, Any] | None = None
+    ) -> Any:
         """Execute a DuckDB macro from the cached queries.
 
         Instructions:
@@ -282,19 +257,18 @@ class Browser(DataSource, ABC):
 
         # Handle positional arguments
         if args:
-            arg_parts.extend([f"'{v}'" if isinstance(
-                v, str) else str(v) for v in args])
+            arg_parts.extend([f"\"{v}\"" if isinstance(v, str) else str(v) for v in args])
 
         # Handle keyword arguments
         if kwargs:
             for k, v in kwargs.items():
                 if isinstance(v, str):
-                    arg_parts.append(f"{k} := '{v}'")
+                    arg_parts.append(f"{k} := \"{v}\"")
                 else:
-                    arg_parts.append(f"{k} := {v}")
+                    arg_parts.append(f"{k} := {v}") 
 
         arg_str = ", ".join(arg_parts)
-        macro_call = f"SELECT * FROM {name}({arg_str})"
+        macro_call = f"SELECT * FROM {name}({arg_str})"# 
         return self._page.query(macro_call)
 
     async def navigate(
@@ -303,10 +277,12 @@ class Browser(DataSource, ABC):
     ) -> Any:
         """Navigate to a URL.
 
+        ALWAYS PASS THE FULL URL TO THIS TOOL. NEVER PASS A RELATIVE URL OR A URL TO A RESOURCE ON THE CURRENT PAGE.
+
         Instructions:
         1. Only navigate to URLs that have been explicitly discovered, searched for, or referenced in the conversation.
-        2. Before navigating, inspect the underlying URLs to understand their config and prevent errors.
-        3. When a navigation fails or returns unexpected results, examine the URL to diagnose the issue and then retry.
+        2. When a navigation fails or returns unexpected results, examine the URL to diagnose the issue and then retry.
         """
+
         self._page = ToolPage(url=url, headers=self.headers, params=self.params)
         return self._page.content

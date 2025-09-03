@@ -41,6 +41,7 @@ def change_dir(destination):
     finally:
         os.chdir(prev_dir)  # restore original directory
 
+
 def prepare_tool_for_pydantic_ai(func: Callable[..., Any]) -> Callable[..., Any]:
     """
     Decorator that automatically serializes function outputs using serialize_response and handles errors.
@@ -256,12 +257,13 @@ def get_output_type_hint() -> Any:
         logger.debug(f"Could not get caller context: {e}")
         return None
 
+
 def parse_markdown_with_frontmatter(markdown: str) -> tuple[str, dict[str, Any]]:
     """Parse frontmatter from markdown content and return both raw markdown and frontmatter.
-    
+
     Args:
         markdown: Raw markdown content with optional frontmatter
-        
+
     Returns:
         Tuple of (raw_markdown_without_frontmatter, frontmatter_config)
     """
@@ -280,10 +282,10 @@ def parse_markdown_with_frontmatter(markdown: str) -> tuple[str, dict[str, Any]]
         logger.warning(f"Failed to parse frontmatter YAML: {e}")
         return markdown, {}
 
+
 def url_to_path(url: str) -> Path:
     parsed_url = parse.urlparse(url)
     return Path(parsed_url.netloc.rstrip("/")) / parsed_url.path.lstrip("/")
-
 
 
 def parse_jsdoc_type_to_python(jsdoc_type: str) -> type:
