@@ -131,15 +131,7 @@ class Database(DataSource, ABC):
     def database_type(self) -> str:
         """Get the database type from the URL scheme."""
         parsed = urlparse(self.url)
-        scheme = parsed.scheme.lower()
-
-        # Handle some common aliases
-        scheme_mapping = {
-            "postgres": "postgresql",
-            "mssql": "sqlserver",
-        }
-
-        return scheme_mapping.get(scheme, scheme)
+        return parsed.scheme.lower()
 
     @model_validator(mode="after")
     def validate_and_discover_tables(self) -> "Database":
@@ -1089,10 +1081,12 @@ class Database(DataSource, ABC):
         try:
             logger.debug(f"Inspecting table: {self.url} {table.path}")
             inspected_table = self[table.path]
-            return {
-                "schema": inspected_table.info()[["name", "type", "nullable"]].to_pandas(),
-                "samples": inspected_table.head(5).to_pandas(),
-            }
+
+            response = (
+                f"## Schema:\n{inspected_table.info()[['name', 'type', 'nullable']].to_pandas().to_markdown()}\n\n"
+            )
+            response += f"## Samples:\n{inspected_table.head(5).to_pandas().to_markdown()}"
+            return response
         except Exception as e:
             logger.error(f"Failed to inspect table: {e}", exc_info=True)
             raise ModelRetry(f"Failed to inspect table: {str(e)}") from e
@@ -1119,9 +1113,11 @@ class Database(DataSource, ABC):
             if not hasattr(self.connection, "raw_sql"):
                 raise ValueError("Database does not support raw sql queries")
 
-            result = self.connection.sql(query.optimized_code(self.database_type))
+            response = (
+                f"## Result:\n{self.connection.sql(query.optimized_code(self.database_type)).to_pandas().to_markdown()}"
+            )
+            return response
 
-            return result.to_pandas()
         except Exception as e:
             logger.error(f"Failed to query database: {e}", exc_info=True)
             raise ModelRetry(f"Failed to query database: {str(e)}") from e
@@ -1133,7 +1129,7 @@ class Database(DataSource, ABC):
             if not query.is_read_only_query():
                 raise ValueError("Only read-only queries are allowed")
 
-            return self.connection.sql(query.optimized_code(self.database_type)).to_pandas()
+            return self.connection.sql(query.optimized_code(self.database_type)).to_pandas().to_markdown()
         except Exception as e:
             logger.error(f"Failed to query database: {e}", exc_info=True)
             raise RuntimeError(f"Failed to query database:{str(e)}") from e

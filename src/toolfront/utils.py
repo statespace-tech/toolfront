@@ -8,7 +8,7 @@ import re
 from collections.abc import Callable
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Union, get_args, get_origin
+from typing import Any, get_args, get_origin
 from urllib import parse
 
 import executing
@@ -59,10 +59,10 @@ def prepare_tool_for_pydantic_ai(func: Callable[..., Any]) -> Callable[..., Any]
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         try:
-            result = await func(*args, **kwargs)
-            if isinstance(result, dict):
-                return {k: serialize_response(v) for k, v in result.items()}
-            return serialize_response(result)
+            return await func(*args, **kwargs)
+            # if isinstance(result, dict):
+            #     return {k: serialize_response(v) for k, v in result.items()}
+            # return serialize_response(result)
         except Exception as e:
             logger.error(f"Tool {func.__name__} failed: {e}", exc_info=True)
             raise ModelRetry(f"Tool {func.__name__} failed: {str(e)}") from e
@@ -286,51 +286,3 @@ def parse_markdown_with_frontmatter(markdown: str) -> tuple[str, dict[str, Any]]
 def url_to_path(url: str) -> Path:
     parsed_url = parse.urlparse(url)
     return Path(parsed_url.netloc.rstrip("/")) / parsed_url.path.lstrip("/")
-
-
-def parse_jsdoc_type_to_python(jsdoc_type: str) -> type:
-    """Parse JSDoc type annotations into equivalent Python type annotations."""
-    if not jsdoc_type:
-        raise ValueError("Empty JSDoc type")
-
-    # Handle union types like 'Engineering' | 'HR' | 'Marketing'
-    if "|" in jsdoc_type:
-        raw_types = [t.strip() for t in jsdoc_type.split("|")]
-
-        # For literal unions, we'll just return str since we can't create
-        # dynamic Literal types at runtime
-        if all(t.startswith("'") and t.endswith("'") for t in raw_types):
-            return str
-
-        # Map each type in the union
-        types = []
-        for raw_type in raw_types:
-            types.append(_map_single_jsdoc_type(raw_type.strip("'\"")))
-
-        return Union[tuple(types)] if len(types) > 1 else types[0]
-
-    # Handle single types
-    return _map_single_jsdoc_type(jsdoc_type)
-
-
-def _map_single_jsdoc_type(jsdoc_type: str) -> type:
-    """Map a single JSDoc type to its Python equivalent."""
-    # Standard JSDoc to Python type mappings
-    type_mappings = {
-        "string": str,
-        "number": Union[int, float],
-        "int": int,
-        "float": float,
-        "boolean": bool,
-        "void": type(None),
-        "table": Any,
-        "object": dict,
-        "array": list,
-    }
-
-    if jsdoc_type in type_mappings:
-        return type_mappings[jsdoc_type]
-
-    # Handle string literals - return str since we can't create dynamic Literals
-    if jsdoc_type.startswith("'") and jsdoc_type.endswith("'"):
-        return str

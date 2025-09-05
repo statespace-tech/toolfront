@@ -35,15 +35,16 @@ dependencies = [
     "ibis-framework>=10.6.0",
     "pyarrow<19.0.0",
     "executing>=2.2.0",
+    "fastapi>=0.116.1",
 ]
 
 [project.scripts]
-toolfront = "toolfront.mcp:main"
+toolfront = "cli.main:cli"
 
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["toolfront*"]
+include = ["toolfront*", "cli*"]
 
 
 [project.optional-dependencies]

@@ -22,12 +22,9 @@ from pydantic_ai.settings import ModelSettings
 from rich.console import Console
 from rich.live import Live
 from rich.markdown import Markdown
-from rich.panel import Panel
-from rich.text import Text
 
 from toolfront.config import MAX_RETRIES
 from toolfront.utils import (
-    deserialize_response,
     get_default_model,
     get_output_type_hint,
     prepare_tool_for_pydantic_ai,
@@ -105,6 +102,7 @@ class DataSource(BaseModel, ABC):
         model: models.Model | models.KnownModelName | str | None = None,
         context: str | None = None,
         output_type: BaseModel | None = None,
+        temperature: float = 0.0,
         stream: bool = False,
     ) -> Any:
         """Ask natural language questions and get structured responses.
@@ -144,7 +142,7 @@ class DataSource(BaseModel, ABC):
             output_type=output_type,
             retries=MAX_RETRIES,
             model_settings=ModelSettings(
-                temperature=0.0,
+                temperature=temperature,
             ),
         )
 
@@ -161,24 +159,21 @@ class DataSource(BaseModel, ABC):
         Returns the final result from the agent.
         """
 
-        panel_title = f"[bold green]{str(self)}[/bold green]"
+        console = Console()
 
         try:
             if stream:
                 # Streaming mode with Rich Live display
                 with Live(
-                    Panel(
-                        Text("Thinking...", style="dim white"),
-                        title=panel_title,
-                        border_style="green",
-                    ),
-                    refresh_per_second=10,
+                    console=console,
                     vertical_overflow="visible",
+                    auto_refresh=False,
                 ) as live:
                     accumulated_content = ""
 
                     def update_display(content: str):
-                        live.update(Panel(Markdown(content), title=panel_title, border_style="green"))
+                        live.update(Markdown(content))
+                        live.refresh()
 
                     async with agent.iter(prompt) as run:
                         async for node in run:
@@ -205,10 +200,7 @@ class DataSource(BaseModel, ABC):
                                                 accumulated_content += event.part.args
                                             update_display(accumulated_content)
                                         elif isinstance(event, FunctionToolResultEvent):
-                                            tool_result = deserialize_response(event.result.content)
-                                            accumulated_content += (
-                                                f"\n\n>Tool `{event.result.tool_name}` returned:\n\n{tool_result}\n\n"
-                                            )
+                                            accumulated_content += f"\n\n>Tool `{event.result.tool_name}` returned:\n\n{event.result.content}\n\n"
                                             update_display(accumulated_content)
 
                             elif Agent.is_end_node(node):
