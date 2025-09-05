@@ -9,6 +9,7 @@ from urllib import parse
 
 import duckdb
 import httpx
+import sqlparse
 from pydantic import BaseModel, Field, model_validator
 
 from toolfront.config import TIMEOUT_SECONDS
@@ -30,8 +31,8 @@ class ToolPage(BaseModel):
     markdown: str | None = Field(None, description="Markdown content of the page.")
     config: dict[str, Any] | None = Field(None, description="Config of the page.")
 
-    headers: dict[str, str] | None = Field(None, description="HTTP headers for the page.")
-    params: dict[str, str] | None = Field(None, description="Query parameters for the page.")
+    headers: dict[str, str] | None = Field(None, description="HTTP headers for the page.", exclude=True)
+    params: dict[str, str] | None = Field(None, description="Query parameters for the page.", exclude=True)
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -84,24 +85,17 @@ class ToolPage(BaseModel):
                     # No event loop running, safe to use asyncio.run
                     asyncio.run(self._cache_files(parsed_url))
 
-        with change_dir(self._path_cache):
-            if self._connection is None:
-                self._connection = duckdb.connect(":memory:")
-                logger.debug("Created new DuckDB connection")
-            else:
-                logger.debug("Reusing existing DuckDB connection")
-
-    @cached_property
+    @property
     def title(self) -> str:
         """Return the title of the page."""
         return self.config.get("title", "")
 
-    @cached_property
+    @property
     def query_paths(self) -> list[str]:
         """Return the query paths of the page."""
         return self.config.get("queries", [])
 
-    @cached_property
+    @property
     def file_paths(self) -> list[str]:
         """Return the file paths of the page."""
         return self.config.get("files", [])
@@ -110,51 +104,33 @@ class ToolPage(BaseModel):
     def content(self) -> str:
         """Return the content of the page."""
 
-        markdown = self.markdown
-        # import pdb; pdb.set_trace()
+        return self.markdown + self.dynamic_content
 
-        if queries := self.queries:
-            markdown += "\n\n## SQL\n"
-            for query in queries:
-                markdown += "```sql\n" + query + "\n```\n"
-
-        
-        dynamic_content = self.dynamic_content
-
-        if dynamic_content:
-            markdown += "\n\n## Additional Content:\n"
-            for content in dynamic_content:
-                markdown += "```\n" + content + "\n```\n"
-
-        return markdown
-
-
-    @property
+    @cached_property
     def dynamic_content(self) -> list[dict]:
         """Return a dynamic context for the page."""
-        result = []
-        queries = self.queries
-        # import pdb; pdb.set_trace()
+
+        queries = []
+        content = ""
 
         with change_dir(self._path_cache):
-            for query in queries:
-                df_data = self._connection.sql(query)
-                
-                if df_data:
-                    result.append(df_data.df().to_markdown())
-        return result
+            self._connection = duckdb.connect(":memory:")
 
-    @property
-    def queries(self) -> list[str]:
-        """Return the queries of the page."""
-        result = []
-
-        with change_dir(self._path_cache):
             for query_path in self.query_paths:
                 if Path(query_path).exists() and (query_content := Path(query_path).read_bytes()):
-                    result.append(query_content.decode("utf-8"))
+                    queries.append(query_content.decode("utf-8"))
 
-        return result
+            if queries:
+                content += "\n## SQL\n"
+                for query in queries:
+                    query_content = ""
+                    for sub_query in sqlparse.split(query):
+                        if df_data := self._connection.query(sub_query):
+                            query_content += f"\n{df_data.df().to_markdown()}\n"
+
+                    content += f"### Query:\n```sql\n{query}\n```\n"
+                    content += f"### Result:\n{query_content}\n"
+        return content
 
     def query(self, sql: str) -> Any:
         """Execute a DuckDB query from the cached queries."""
@@ -163,7 +139,6 @@ class ToolPage(BaseModel):
             if result:
                 result = result.df().to_markdown()
             return result
-         
 
     async def _cache_files(self, parsed_url: parse.ParseResult) -> None:
         """Pre-fetch and cache all query and data files asynchronously and in parallel."""
@@ -214,8 +189,7 @@ class Browser(DataSource, ABC):
     start_url: str = Field(..., description="Starting URL.")
     headers: dict[str, str] | None = Field(None, description="Additional headers to include in requests.", exclude=True)
     params: dict[str, str] | None = Field(None, description="Query parameters to include in requests.", exclude=True)
-
-    _page: ToolPage | None
+    page: ToolPage | None = Field(None, description="Current page.")
 
     def __init__(
         self,
@@ -226,17 +200,23 @@ class Browser(DataSource, ABC):
     ) -> None:
         super().__init__(start_url=start_url, headers=headers, params=params, **kwargs)
 
+    @model_validator(mode="before")
+    @classmethod
+    def validate_page(cls, data: Any) -> Any:
+        """Validate the page."""
+        if data.get("page") is None:
+            data["page"] = ToolPage(url=data.get("start_url"), headers=data.get("headers"), params=data.get("params"))
+        return data
+
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
+        return f"{self.__class__.__name__}(url='{self.page.url}')"
+
+    def instructions(self, context: str | None = None) -> str:
+        parent_instructions = super().instructions(context=context)
+        return f"{parent_instructions}\n\n{self.page.content}"
 
     def tools(self) -> list[callable]:
-        """Available tool methods for browser operations.
-
-        Returns
-        -------
-        list[callable]
-            Methods for macro execution and HTTP requests.
-        """
+        """Available tool methods for browser operations."""
         return [
             self.execute_macro,
             self.navigate,
@@ -245,37 +225,39 @@ class Browser(DataSource, ABC):
     async def execute_macro(
         self, name: str, args: list[Any] | None = None, kwargs: dict[str, Any] | None = None
     ) -> Any:
-        """Execute a DuckDB macro from the cached queries.
+        """Execute a DuckDB macro.
+
+        ONLY EXECUTE DUCKDB MACROS THAT HAVE BEEN EXPLICITLY DISCOVERED OR REFERENCED IN THE LATEST PAGE. EXECUTING MACROS THAT ARE NOT FOUND IN THE PAGE WILL RETURN AN ERROR.
 
         Instructions:
-        1. Only execute macros that have been explicitly discovered or referenced in the latest URL.
         2. ALWAYS use positional arguments (args) for parameters without default values, in the order they are defined in the macro.
         3. ALWAYS use named arguments (kwargs) when the macro has default parameters defined with := syntax.
-        4. When a macro execution fails or returns unexpected results, examine the macro definition and retry with correct parameters.
+        4. When a macro execution fails or returns unexpected results, examine the macro definition and then retry with correct parameters.
         """
         arg_parts = []
 
         # Handle positional arguments
         if args:
-            arg_parts.extend([f"\"{v}\"" if isinstance(v, str) else str(v) for v in args])
+            arg_parts.extend([f'"{v}"' if isinstance(v, str) else str(v) for v in args])
 
         # Handle keyword arguments
         if kwargs:
             for k, v in kwargs.items():
                 if isinstance(v, str):
-                    arg_parts.append(f"{k} := \"{v}\"")
+                    arg_parts.append(f'{k} := "{v}"')
                 else:
-                    arg_parts.append(f"{k} := {v}") 
+                    arg_parts.append(f"{k} := {v}")
 
         arg_str = ", ".join(arg_parts)
-        macro_call = f"SELECT * FROM {name}({arg_str})"# 
-        return self._page.query(macro_call)
+        macro_call = f"SELECT * FROM {name}({arg_str})"
+
+        return self.page.query(macro_call)
 
     async def navigate(
         self,
         url: str,
     ) -> Any:
-        """Navigate to a URL.
+        """Navigate to a page.
 
         ALWAYS PASS THE FULL URL TO THIS TOOL. NEVER PASS A RELATIVE URL OR A URL TO A RESOURCE ON THE CURRENT PAGE.
 
@@ -284,5 +266,5 @@ class Browser(DataSource, ABC):
         2. When a navigation fails or returns unexpected results, examine the URL to diagnose the issue and then retry.
         """
 
-        self._page = ToolPage(url=url, headers=self.headers, params=self.params)
-        return self._page.content
+        self.page = ToolPage(url=url, headers=self.headers, params=self.params)
+        return self.page.content
