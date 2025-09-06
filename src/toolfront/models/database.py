@@ -131,15 +131,7 @@ class Database(DataSource, ABC):
     def database_type(self) -> str:
         """Get the database type from the URL scheme."""
         parsed = urlparse(self.url)
-        scheme = parsed.scheme.lower()
-
-        # Handle some common aliases
-        scheme_mapping = {
-            "postgres": "postgresql",
-            "mssql": "sqlserver",
-        }
-
-        return scheme_mapping.get(scheme, scheme)
+        return parsed.scheme.lower()
 
     @model_validator(mode="after")
     def validate_and_discover_tables(self) -> "Database":
