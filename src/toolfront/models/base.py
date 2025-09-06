@@ -25,7 +25,7 @@ from rich.markdown import Markdown
 
 from toolfront.config import MAX_RETRIES
 from toolfront.utils import (
-    get_default_model,
+    get_model_from_env,
     get_output_type_hint,
     prepare_tool_for_pydantic_ai,
 )
@@ -125,14 +125,14 @@ class DataSource(BaseModel, ABC):
         Any
             Response matching the requested output type.
         """
-        if model is None:
-            model = get_default_model()
+        model = model or get_model_from_env()
 
         # Get caller context and add it to the system prompt
         output_type = get_output_type_hint() or output_type or str
 
         system_prompt = self.instructions(context=context)
-        tools = [Tool(prepare_tool_for_pydantic_ai(tool), max_retries=MAX_RETRIES) for tool in self.tools()]
+        tools = [Tool(prepare_tool_for_pydantic_ai(tool),
+                      max_retries=MAX_RETRIES) for tool in self.tools()]
 
         agent = Agent(
             model=model,
@@ -183,9 +183,11 @@ class DataSource(BaseModel, ABC):
                                         if isinstance(event, PartStartEvent):
                                             if isinstance(event.part, (TextPart | ThinkingPart)):
                                                 accumulated_content += f"\n{event.part.content}"
-                                                update_display(accumulated_content)
+                                                update_display(
+                                                    accumulated_content)
                                         elif isinstance(event, PartDeltaEvent) and isinstance(
-                                            event.delta, (TextPartDelta | ThinkingPartDelta)
+                                            event.delta, (TextPartDelta |
+                                                          ThinkingPartDelta)
                                         ):
                                             accumulated_content += event.delta.content_delta
                                             update_display(accumulated_content)

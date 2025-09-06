@@ -69,7 +69,8 @@ nav:
   - Home: index.md
   - Documentation:
     - Retrieval: documentation/retrieval.md
-    - AI Models:
+    - AI Models: 
+      - documentation/ai_models/index.md
       - OpenAI: documentation/ai_models/openai.md
       - Anthropic: documentation/ai_models/anthropic.md
       - Google: documentation/ai_models/google.md
@@ -88,7 +89,7 @@ nav:
       - OpenRouter: documentation/ai_models/openrouter.md
       - Ollama: documentation/ai_models/ollama.md
       - Together AI: documentation/ai_models/together.md
-    - Databases:
+    - Databases: 
       - BigQuery: documentation/databases/bigquery.md
       - ClickHouse: documentation/databases/clickhouse.md
       - Databricks: documentation/databases/databricks.md

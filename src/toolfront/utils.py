@@ -199,7 +199,10 @@ def type_allows_none(type_hint: Any) -> bool:
     return False
 
 
-def get_default_model() -> str:
+def get_model_from_env() -> str:
+    if model := os.getenv("TOOLFRONT_MODEL"):
+        return model
+
     """Get the default model to use."""
     if os.getenv("OPENAI_API_KEY"):
         return DEFAULT_OPENAI_MODEL
