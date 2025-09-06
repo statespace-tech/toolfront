@@ -26,7 +26,7 @@ async def serve_file(full_path: str):
         raise HTTPException(status_code=404, detail=f"File not found: {full_path}")
 
     # Serve Markdown as HTML
-    if abs_path.endswith(".md"):
+    if str(abs_path).endswith(".md"):
         md_content = abs_path.read_text(encoding="utf-8")
         return PlainTextResponse(content=md_content)
 
