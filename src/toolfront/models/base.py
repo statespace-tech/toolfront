@@ -131,8 +131,7 @@ class DataSource(BaseModel, ABC):
         output_type = get_output_type_hint() or output_type or str
 
         system_prompt = self.instructions(context=context)
-        tools = [Tool(prepare_tool_for_pydantic_ai(tool),
-                      max_retries=MAX_RETRIES) for tool in self.tools()]
+        tools = [Tool(prepare_tool_for_pydantic_ai(tool), max_retries=MAX_RETRIES) for tool in self.tools()]
 
         agent = Agent(
             model=model,
@@ -183,11 +182,9 @@ class DataSource(BaseModel, ABC):
                                         if isinstance(event, PartStartEvent):
                                             if isinstance(event.part, (TextPart | ThinkingPart)):
                                                 accumulated_content += f"\n{event.part.content}"
-                                                update_display(
-                                                    accumulated_content)
+                                                update_display(accumulated_content)
                                         elif isinstance(event, PartDeltaEvent) and isinstance(
-                                            event.delta, (TextPartDelta |
-                                                          ThinkingPartDelta)
+                                            event.delta, (TextPartDelta | ThinkingPartDelta)
                                         ):
                                             accumulated_content += event.delta.content_delta
                                             update_display(accumulated_content)
