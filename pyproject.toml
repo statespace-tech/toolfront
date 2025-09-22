@@ -4,10 +4,10 @@ version = "0.2.13"
 description = "ToolFront helps you retrieve information from large databases, APIs, and documents with AI."
 readme = "README.md"
 authors = [
-    {name = "Esteban Safranchik", email = "esteban@kruskal.ai"},
-    {name = "Gavin Chan", email = "gavin@kruskal.ai"}
+    { name = "Esteban Safranchik", email = "esteban@kruskal.ai" },
+    { name = "Gavin Chan", email = "gavin@kruskal.ai" }
 ]
-license = {text = "MIT"}
+license = { text = "MIT" }
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
@@ -24,11 +24,7 @@ dependencies = [
     "pandas>=2.2.3",
     "pydantic>=2.11.4",
     "pytest>=8.3.5",
-    "python-decouple>=3.8",
-    "openapi-spec-validator>=0.7.2",
-    "jsonref>=1.1.0",
     "pydantic-ai>=0.4.2",
-    "yarl>=1.20.1",
     "rich>=14.0.0",
     "sqlparse>=0.5.3",
     "tabulate>=0.9.0",
@@ -36,10 +32,12 @@ dependencies = [
     "pyarrow<19.0.0",
     "executing>=2.2.0",
     "fastapi>=0.116.1",
+    "duckdb>=1.3.2",
+    "fsspec>=2025.7.0",
 ]
 
 [project.scripts]
-toolfront = "cli.main:cli"
+toolfront = "toolfront.main:cli"
 
 
 [tool.setuptools]
@@ -47,7 +45,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["toolfront*", "cli*"]
+include = ["toolfront*"]
 
 [tool.setuptools.package-data]
 "toolfront" = ["instructions/*.txt"]
@@ -62,7 +60,6 @@ dev = [
     "ruff>=0.1.0",
     "mkdocs-material[imaging]>=9.6.16",
     "mkdocstrings[python]>=0.30.0",
-    "markitdown[docx,pdf,pptx,xls,xlsx]>=0.1.2",    
 ]
 bigquery = [
     "ibis-framework[bigquery]>=10.6.0",
@@ -147,16 +144,16 @@ target-version = "py311"
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
 select = [
-    "E4",  # Import errors
-    "E7",  # Statement errors  
-    "E9",  # Runtime errors
-    "F",   # Pyflakes
-    "I",   # isort
-    "N",   # pep8-naming
-    "UP",  # pyupgrade
-    "B",   # flake8-bugbear
-    "A",   # flake8-builtins
-    "C4",  # flake8-comprehensions
+    "E4", # Import errors
+    "E7", # Statement errors
+    "E9", # Runtime errors
+    "F", # Pyflakes
+    "I", # isort
+    "N", # pep8-naming
+    "UP", # pyupgrade
+    "B", # flake8-bugbear
+    "A", # flake8-builtins
+    "C4", # flake8-comprehensions
     "T20", # flake8-print
     "SIM", # flake8-simplify
     "PTH", # flake8-use-pathlib
