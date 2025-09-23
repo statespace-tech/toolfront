@@ -100,7 +100,6 @@ class ToolPage(BaseModel):
         return self
 
     async def body(self) -> str:
-        
         body = self._body
         body += "\n\n## Available commands:\n"
 
@@ -220,8 +219,12 @@ class Browser(BaseModel):
         output_type = get_output_type_hint() or output_type or str
 
         server = MCPServerStdio(
-            "uv", args=["run", "toolfront", "browser", "serve", url, "--transport", "stdio"], 
-            env=self.env, max_retries=DEFAULT_MAX_RETRIES, log_level=None, timeout=10
+            "uv",
+            args=["run", "toolfront", "browser", "serve", url, "--transport", "stdio"],
+            env=self.env,
+            max_retries=DEFAULT_MAX_RETRIES,
+            log_level=None,
+            timeout=10,
         )
 
         instruction_file = files("toolfront") / "instructions" / "ask.txt"
