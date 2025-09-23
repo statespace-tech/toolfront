@@ -198,7 +198,7 @@ You can directly use ToolFront Browser as an MCP:
   }
 }
 ```
-do
+
 > **Note**: ToolFront supports OpenAI, Anthropic, Google, xAI, and 14+ AI model providers. See the [documentation](http://docs.toolfront.ai/) for the complete list.
 
 ## Community & Contributing
