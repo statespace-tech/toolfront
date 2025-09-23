@@ -32,7 +32,7 @@ pip install toolfront
 
 ## Quickstart
 
-ToolFront turns markdowns and scripts into navigable sitemaps for your AI agents.
+ToolFront turns markdowns and scripts into navigable environments for your AI agents.
 
 ```bash
 mysite/
@@ -51,22 +51,22 @@ Each `.md` file can have *markdown* instructions and *command* tools.
 
 ```markdown
 ---
-[python3, tool.py]
+[python3, hello.py]
 ---
 
 # My toolsite
 
 You are a business analyst. Your goal is to answer the user's quesiton.
 
-Run `tool.py` to be greeted by a welcome message!
+Run `hello.py` to be greeted by a welcome message!
 
-Go to ./database to find out more about the user's data.
+Go to ./database to find out more about our products.
 ```
 
-AI can browse these sitemaps by following links and executing commands to retrieve data and find answers.
+Your AI agents can browse these environments by following links and executing commands to gather data and answer questions.
 
 ```python
-from toolfront.browser import Browser
+from toolfront import Browser
 
 browser = Browser(model="openai:gpt-4o")
 
@@ -98,7 +98,7 @@ Always answer the user's question using ONLY data explicitly retrieved through t
 
 ## Example 2: Text2SQL Page
 
-Create `./site/database/index.md` with ToolFront's built-in `database` commands:
+Create `./site/database/index.md` with ToolFront's built-in [database commands](./src/toolfront/commands/database.py):
 
 ```markdown
 ---
@@ -120,7 +120,7 @@ Use the inspect-table, list-tables, and query tools to navigate the database.
 
 2. Place the `duckdb.index` file under `./site/database`
 
-3. Create `./site/database/index.md` with ToolFront's built-in `document` commands
+3. Create `./site/database/index.md` with ToolFront's built-in [document commands](./src/toolfront/commands/document.py):
 
 ```markdown
 ---
@@ -174,8 +174,6 @@ View business metrics using a custom Python CLI tool.
 Run cli.py with --metric sales or --metric revenue to see data.
 ```
 
-
-
 ## Browser MCP Server
 
 You can directly use ToolFront Browser as an MCP:
@@ -184,9 +182,8 @@ You can directly use ToolFront Browser as an MCP:
 {
   "mcpServers": {
     "toolfront-browser": {
-      "command": "uv",
+      "command": "uvx",
       "args": [
-        "run", 
         "toolfront", 
         "browser", 
         "serve",
