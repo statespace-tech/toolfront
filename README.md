@@ -6,7 +6,7 @@
 
 <div align="center">
 
-*Simple data retrieval for AI with unmatched control, precision, and speed.*
+*Data retrieval environments for AI agents*
 
 [![Test Suite](https://github.com/kruskal-labs/toolfront/actions/workflows/test.yml/badge.svg)](https://github.com/kruskal-labs/toolfront/actions/workflows/test.yml)
 [![PyPI package](https://img.shields.io/pypi/v/toolfront?color=%2334D058&label=pypi%20package)](https://pypi.org/project/toolfront/)
@@ -14,6 +14,7 @@
 [![X](https://img.shields.io/badge/ToolFront-black?style=flat-square&logo=x&logoColor=white)](https://x.com/toolfront)
 
 </div>
+
 
 ---
 
@@ -29,73 +30,176 @@ Install with `pip` or your favorite PyPI package manager.
 pip install toolfront
 ```
 
-## Example 1: Text2SQL with ChatGPT
+## Quickstart
 
-```python
-from toolfront import Database
+ToolFront turns markdowns and scripts into navigable sitemaps for your AI agents.
 
-db = Database("postgres://user:pass@localhost:5432/mydb", model="openai:gpt-4o")
+```bash
+mysite/
+├── index.md
+├── hello.py
+├── database/
+│   └── index.md
+├── documents/
+│   ├── index.duckdb
+│   └── index.md
+└── analytics/
+    ├── index.md
+    └── cli.py
+```
+Each `.md` file can have *markdown* instructions and *command* tools.
 
-context = "We're an e-commerce company. Sales data is in the `cust_orders` table."
+```markdown
+---
+[python3, tool.py]
+---
 
-# Returns a string
-answer = db.ask("What's our best-selling product?", context=context)
-# >>> "Wireless Headphones Pro"
+# My toolsite
+
+You are a business analyst. Your goal is to answer the user's quesiton.
+
+Run `tool.py` to be greeted by a welcome message!
+
+Go to ./database to find out more about the user's data.
 ```
 
-> **Note**: For databases, install with PyPI extras, e.g.: `pip install "toolfront[postgres]"`. See the [documentation](http://docs.toolfront.ai/) for the complete list of 10+ databases.
-
-## Example 2: API retrieval with Claude
+AI can browse these sitemaps by following links and executing commands to retrieve data and find answers.
 
 ```python
-from toolfront import API
+from toolfront.browser import Browser
 
-api = API("http://localhost:8000/openapi.json", model="anthropic:claude-3-5-sonnet")
+browser = Browser(model="openai:gpt-4o")
 
-# Returns a list of integers
-answer: list[int] = api.ask("Get the last 5 order IDs for user_id=42")
-# >>> [1001, 998, 987, 976, 965]
+response = browser.ask("What's our best-selling product?", url="./mysite")
+```
+## Example 1: Landing Page
+
+Create `./mysite/index.md`:
+
+```markdown
+# My toolsite
+
+You are a business analyst. Your goal is to answer the user's quesiton.
+
+Always answer the user's question using ONLY data explicitly retrieved through the provided tools.
+
+## General Instructions
+* NEVER make assumptions, hallucinate data, or supplement answers with general knowledge
+* Present findings in markdown or the desired output type.
+* Thoroughly try multiple approaches before concluding data cannot be found
+* Handle missing or incomplete data by filtering values before giving up
+* If no relevant data can be found after exhaustive retrieval attempts, clearly explain why
+
+## Available pages:
+- Go to ./database to query and analyze tables
+- Go to ./documents to search through documents
+- Go to ./analytics for custom data analysis
 ```
 
-> **Note**: ToolFront supports any API with an OpenAPI (formerly Swagger) specification. Most common APIs like Slack, Discord, and GitHub have OpenAPI specs. See the [documentation](http://docs.toolfront.ai/) for more details.
+## Example 2: Text2SQL Page
 
+Create `./site/database/index.md` with ToolFront's built-in `database` commands:
 
-## Example 3: Document information extraction with Gemini
+```markdown
+---
+- [toolfront, database, inspect-table]
+- [toolfront, database, list-tables]
+- [toolfront, database, query]
+---
+
+# Instructions
+
+This page allows you to learn about the database: `postgres://user:pass@localhost:5432/mydb`
+
+Use the inspect-table, list-tables, and query tools to navigate the database.
+```
+
+## Example 3: Document RAG page
+
+1. Index a collection of `.txt`. documents by running `toolfront document index /path/to/documents`
+
+2. Place the `duckdb.index` file under `./site/database`
+
+3. Create `./site/database/index.md` with ToolFront's built-in `document` commands
+
+```markdown
+---
+- [toolfront, document, search, './duckdb.index']
+- [toolfront, document, read]
+---
+
+# Document Search
+
+This page allows you to learn about your documents.
+
+Use the search and read tools to find and read relevant documents.
+```
+
+## Example 4: Custom Page
+
+Create a CLI program `./mysite/analytics/cli.py`:
 
 ```python
-from toolfront import Document
-from pydantic import BaseModel, Field
+import click
 
-class CompanyReport(BaseModel):
-    company_name: str = Field(..., description="Name of the company")
-    revenue: int | float = Field(..., description="Annual revenue in USD")
-    is_profitable: bool = Field(..., description="Whether the company is profitable")
+@click.command()
+@click.option('--metric', required=True, help='Metric to analyze: sales or revenue')
+def analyze(metric):
+    """Simple analytics tool"""
 
-doc = Document("/path/annual_report.pdf", model="google:gemini-pro")
+    if metric == 'sales':
+        click.echo("Sales this month: 4,500 units")
+        click.echo("Growth: +15%")
+    elif metric == 'revenue':
+        click.echo("Revenue this month: $125,000")
+        click.echo("Growth: +12%")
+    else:
+        click.echo("Available metrics: sales, revenue")
 
-# Returns a structured Pydantic object
-answer: CompanyReport = doc.ask("Extract the key company information from this report")
-# >>> CompanyReport(company_name="TechCorp Inc.", revenue=2500000, is_profitable=True)
+if __name__ == '__main__':
+    analyze()
 ```
 
-> **Note**: ToolFront supports OpenAI, Anthropic, Google, xAI, and 14+ AI model providers. See the [documentation](http://docs.toolfront.ai/) for the complete list.
+Then, create `./mysite/analytics/index.md`
+
+```markdown
+---
+- [python3, cli.py, --metric]
+---
+
+# Custom Analytics
+
+View business metrics using a custom Python CLI tool.
+
+Run cli.py with --metric sales or --metric revenue to see data.
+```
 
 
-## Example 4: Snowflake MCP Server
+
+## Browser MCP Server
+
+You can directly use ToolFront Browser as an MCP:
 
 ```json
 {
   "mcpServers": {
-    "toolfront": {
-      "command": "uvx",
+    "toolfront-browser": {
+      "command": "uv",
       "args": [
-        "toolfront[snowflake]", 
-        "snowflake://user:pass@account/warehouse/database"
+        "run", 
+        "toolfront", 
+        "browser", 
+        "serve",
+        "./mysite",
+        "--transport", 
+        "stdio"
       ]
     }
   }
 }
 ```
+do
+> **Note**: ToolFront supports OpenAI, Anthropic, Google, xAI, and 14+ AI model providers. See the [documentation](http://docs.toolfront.ai/) for the complete list.
 
 ## Community & Contributing
 
