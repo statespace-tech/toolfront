@@ -8,6 +8,7 @@ from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import yaml
+from markitdown import MarkItDown
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from pydantic_ai import Agent, UnexpectedModelBehavior, models
 from pydantic_ai.mcp import MCPServerStdio
@@ -63,21 +64,25 @@ class ToolPage(BaseModel):
                 parsed_path = Path(urlparse(path).path)
                 self._cwd = parsed_path if is_dir else parsed_path.parent
 
-        # Helper to parse file content
-        def parse_file_content(content: str, is_markdown: bool):
-            if is_markdown:
+        # Helper to parse file content based on file extension
+        def parse_file_content(content: str, file_path: str):
+            if file_path.endswith(".md"):
                 return parse_markdown_with_frontmatter(content)
+            elif file_path.endswith((".html", ".htm")):
+                md = MarkItDown()
+                markdown_content = md.convert(content).text_content
+                return parse_markdown_with_frontmatter(markdown_content)
             return content, []
 
         if self._fs.isdir(self.url):
             self.url = self.url.rstrip("/") + "/"
 
             # Try to find index file
-            for filename, is_md in [("index.md", True), ("index.html", False)]:
+            for filename in ["index.md", "index.html"]:
                 index_path = urljoin(self.url, filename)
                 if self._fs.isfile(index_path):
                     file_content = self._fs.read_text(index_path)
-                    self._body, self._commands = parse_file_content(file_content, is_md)
+                    self._body, self._commands = parse_file_content(file_content, filename)
                     break
             else:
                 raise FileNotFoundError(f"Markdown or HTML index file not found in {self.url}")
@@ -86,8 +91,8 @@ class ToolPage(BaseModel):
 
         elif self._fs.isfile(self.url):
             file_content = self._fs.read_text(self.url)
-            self._body, self._commands = parse_file_content(file_content, self.url.endswith(".md"))
-            set_cwd(self.url)
+            self._body, self._commands = parse_file_content(file_content, self.url)
+            set_cwd(self.url, is_dir=False)
 
         else:
             raise FileNotFoundError(f"Not found: {self.url}")
@@ -95,8 +100,8 @@ class ToolPage(BaseModel):
         return self
 
     async def body(self) -> str:
+        
         body = self._body
-
         body += "\n\n## Available commands:\n"
 
         if self._commands:
@@ -215,7 +220,8 @@ class Browser(BaseModel):
         output_type = get_output_type_hint() or output_type or str
 
         server = MCPServerStdio(
-            "uv", args=["run", "toolfront", "browser", "serve", url], env=self.env, max_retries=DEFAULT_MAX_RETRIES
+            "uv", args=["run", "toolfront", "browser", "serve", url, "--transport", "stdio"], 
+            env=self.env, max_retries=DEFAULT_MAX_RETRIES, log_level=None, timeout=10
         )
 
         instruction_file = files("toolfront") / "instructions" / "ask.txt"
