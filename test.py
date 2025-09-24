@@ -2,9 +2,7 @@ from toolfront import Browser, Database
 
 browser = Browser("http://0.0.0.0:8000")
 
-response = browser.ask(
-    "What are some products and revenues", model="anthropic:claude-3-5-sonnet-latest", stream=True
-)
+response = browser.ask("What are some products and revenues", model="anthropic:claude-3-5-sonnet-latest", stream=True)
 
 # # response = browser.ask(
 #     # "What is the percentage of population under 25 years old for different countries in 2020?", model="anthropic:claude-3-5-sonnet-latest", stream=True
