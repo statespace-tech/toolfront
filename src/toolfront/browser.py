@@ -49,8 +49,8 @@ class ToolPage(BaseModel):
 
     _fs: Any = PrivateAttr()
     _body: str = PrivateAttr()
-    _commands: list[list[str]] = PrivateAttr()
-    _cwd: str | None = PrivateAttr()
+    _commands: list[list[str]] | dict[str, Any] = PrivateAttr()
+    _cwd: Path | str | None = PrivateAttr()
     model_config = {"arbitrary_types_allowed": True}
 
     @model_validator(mode="after")
@@ -103,11 +103,14 @@ class ToolPage(BaseModel):
         body = self._body
         body += "\n\n## Available commands:\n"
 
-        if self._commands:
+        if self._commands and isinstance(self._commands, list):
             body += "\n".join(f"- {c}" for c in self._commands)
             # Run all commands concurrently and collect their outputs
             outputs = await asyncio.gather(
-                *(self.run_command(command, help_fallback=True) for command in self._commands)
+                *(
+                    self.run_command(command if isinstance(command, list) else [str(command)], help_fallback=True)
+                    for command in self._commands
+                )
             )
 
             for command, output in zip(self._commands, outputs, strict=False):
@@ -123,7 +126,9 @@ class ToolPage(BaseModel):
 
         outout = []
 
-        if not any(command[: len(c)] == c for c in self._commands):
+        if isinstance(self._commands, list) and not any(
+            command[: len(c)] == c for c in self._commands if isinstance(c, list)
+        ):
             raise RuntimeError(f"Invalid commands: {command}. Must be one of: {self._commands}")
 
         result = subprocess.run(command, cwd=self._cwd, capture_output=True, text=True)
@@ -216,7 +221,11 @@ class Browser(BaseModel):
         """
 
         # Get the output type from the caller or use the default output type
-        output_type = get_output_type_hint() or output_type or str
+        output_type_hint = get_output_type_hint()
+        if output_type_hint:
+            output_type = output_type_hint  # type: ignore
+        elif output_type is None:
+            output_type = str  # type: ignore
 
         server = MCPServerStdio(
             "uv",
@@ -242,12 +251,14 @@ class Browser(BaseModel):
             system_prompt=instructions,
             toolsets=[server],
             output_retries=DEFAULT_MAX_RETRIES,
-            output_type=output_type,
+            output_type=output_type,  # type: ignore
             retries=DEFAULT_MAX_RETRIES,
             model_settings=ModelSettings(
                 temperature=self.temperature,
             ),
-            history_processors=[history_processor(context_window=self.context_window)],
+            history_processors=[history_processor(context_window=self.context_window)]
+            if history_processor(context_window=self.context_window)
+            else None,  # type: ignore
         )
 
         return asyncio.run(Browser._browse_async(prompt, agent, verbose))
@@ -290,7 +301,7 @@ class Browser(BaseModel):
                                         elif isinstance(event, PartDeltaEvent) and isinstance(
                                             event.delta, (TextPartDelta | ThinkingPartDelta)
                                         ):
-                                            accumulated_content += event.delta.content_delta
+                                            accumulated_content += event.delta.content_delta or ""
                                             update_display(accumulated_content)
 
                             elif Agent.is_call_tools_node(node):
@@ -298,9 +309,14 @@ class Browser(BaseModel):
                                     async for event in handle_stream:
                                         if isinstance(event, FunctionToolCallEvent):
                                             try:
-                                                accumulated_content += f"\n\n>Called tool `{event.part.tool_name}` with args:\n\n```yaml\n{yaml.dump(json.loads(event.part.args))}\n```\n\n"
+                                                args_str = (
+                                                    event.part.args
+                                                    if isinstance(event.part.args, str)
+                                                    else str(event.part.args)
+                                                )
+                                                accumulated_content += f"\n\n>Called tool `{event.part.tool_name}` with args:\n\n```yaml\n{yaml.dump(json.loads(args_str))}\n```\n\n"
                                             except Exception:
-                                                accumulated_content += event.part.args
+                                                accumulated_content += str(event.part.args)
                                             update_display(accumulated_content)
                                         elif isinstance(event, FunctionToolResultEvent):
                                             accumulated_content += f"\n\n>Tool `{event.result.tool_name}` returned:\n\n{event.result.content}\n\n"

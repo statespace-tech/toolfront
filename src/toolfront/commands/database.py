@@ -79,7 +79,7 @@ def list_tables(db) -> None:
         click.echo([f"{catalog}.{dataset}.{table}" for table in tables])
     elif catalog:
         all_tables = []
-        databases = connection.list_databases(catalog=catalog)
+        databases = connection.list_databases(catalog=catalog) if hasattr(connection, "list_databases") else []  # type: ignore
 
         for db in databases:
             try:
@@ -157,7 +157,7 @@ def query(db, sql) -> None:
     connection = create_connection(db)
 
     if hasattr(connection, "sql"):
-        data = connection.sql(sql).to_pandas()
+        data = connection.sql(sql).to_pandas()  # type: ignore
         for col in data.select_dtypes(include=["object"]).columns:
             data[col] = data[col].apply(
                 lambda x: x[:MAX_COLUMN_WIDTH] + "..." if isinstance(x, str) and len(x) > MAX_COLUMN_WIDTH else x

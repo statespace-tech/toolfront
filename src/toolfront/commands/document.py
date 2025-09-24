@@ -153,7 +153,8 @@ def index(url, files, stemmer, stopwords, ignore, strip_accents, lower, overwrit
             );
         """)
 
-        num_files = conn.execute("SELECT COUNT(*) FROM documents;").fetchone()[0]
+        result = conn.execute("SELECT COUNT(*) FROM documents;").fetchone()
+        num_files = result[0] if result else 0
 
     click.echo(f"DuckDB index with {num_files} files created in {index_url}")
 

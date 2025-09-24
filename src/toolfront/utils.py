@@ -3,6 +3,7 @@ import inspect
 import logging
 import os
 import re
+from collections.abc import Callable
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -74,7 +75,7 @@ def clean_url(url: str) -> str:
     return url
 
 
-def get_filesystem(url: str, params: dict[str, str] | list[str] | None = None) -> tuple:
+def get_filesystem(url: str, params: dict[str, str] | list[str] | None = None) -> Any:
     parsed = urlparse(url)
 
     kwargs = dict(parse_qsl(parsed.query, keep_blank_values=True))
@@ -108,9 +109,13 @@ def get_output_type_hint() -> Any:
 
     try:
         # Get caller's frame (2 levels up: this function -> ask() -> actual caller)
-        frame = inspect.currentframe().f_back.f_back
-        source = executing.Source.for_frame(frame)
-        node = source.executing(frame).node
+        frame = inspect.currentframe()
+        if frame and frame.f_back and frame.f_back.f_back:
+            frame = frame.f_back.f_back
+            source = executing.Source.for_frame(frame)
+            node = source.executing(frame).node
+        else:
+            return None
 
         if not node:
             return None
@@ -125,7 +130,10 @@ def get_output_type_hint() -> Any:
         ):
             # Found annotated assignment: var: Type = value
             try:
-                return eval(ast.unparse(parent.annotation), frame.f_globals, frame.f_locals)
+                if frame:
+                    return eval(ast.unparse(parent.annotation), frame.f_globals, frame.f_locals)
+                else:
+                    return ast.unparse(parent.annotation)
             except Exception:
                 return ast.unparse(parent.annotation)
 
@@ -136,7 +144,7 @@ def get_output_type_hint() -> Any:
         return None
 
 
-def parse_markdown_with_frontmatter(markdown: str) -> tuple[str, dict[str, Any]]:
+def parse_markdown_with_frontmatter(markdown: str) -> tuple[str, dict[str, Any] | list[Any]]:
     """Parse frontmatter from markdown content and return both raw markdown and commands in frontmatter.
 
     Args:
@@ -151,7 +159,10 @@ def parse_markdown_with_frontmatter(markdown: str) -> tuple[str, dict[str, Any]]
     if not match:
         return markdown, []
     try:
-        return match.group(2), yaml.safe_load(match.group(1))
+        frontmatter = yaml.safe_load(match.group(1))
+        if frontmatter is None:
+            return match.group(2), []
+        return match.group(2), frontmatter
     except Exception as e:
         logger.warning(f"Failed to parse frontmatter YAML: {e}")
         return markdown, []
@@ -161,7 +172,7 @@ async def message_at_index_contains_tool_return_parts(messages: list[ModelMessag
     return any(isinstance(part, ToolReturnPart) for part in messages[index].parts)
 
 
-def history_processor(context_window: int | None = None) -> callable:
+def history_processor(context_window: int | None = None) -> Callable[..., Any] | None:
     if not context_window:
         return None
 

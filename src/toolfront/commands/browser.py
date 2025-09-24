@@ -3,9 +3,10 @@ import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from typing import Any
 
 import click
-from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.fastmcp import FastMCP
 
 from toolfront.browser import ToolPage
 
@@ -58,7 +59,7 @@ def serve(url, params, host, port, transport) -> None:
 
     params = dict([param.split("=") for param in params])
 
-    page = ToolPage(url=url, params=params)
+    page = ToolPage(url=url, params=params, env=None)
 
     @asynccontextmanager
     async def lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
@@ -72,18 +73,18 @@ def serve(url, params, host, port, transport) -> None:
         "ToolFront MCP server", lifespan=lifespan, host=host, port=port, instructions=asyncio.run(page.body())
     )
 
-    async def navigate(url: str, ctx: Context):
+    async def navigate(url: str, ctx: Any):
         """Navigate to a page.
 
         Instructions:
         1. Only use only absolute file paths or URLs with protocol and domain
         2. When navigation fails check URI syntax and retry with corrected format.
         """
-        page = ToolPage(url=url, params=params)
+        page = ToolPage(url=url, params=params, env=None)
         ctx.request_context.lifespan_context.page = page
         return await page.body()
 
-    async def run_command(command: list[str], ctx: Context):
+    async def run_command(command: list[str], ctx: Any):
         """Run a command.
 
         Run CLI commands in a subprocess and return their output.
