@@ -32,7 +32,7 @@ pip install toolfront
 
 ## Quickstart
 
-ToolFront turns markdowns and scripts into navigable environments for your AI agents.
+ToolFront turns markdowns and scripts into navigatable environments for your AI agents.
 
 ```bash
 mysite/
@@ -111,7 +111,7 @@ Create `./site/database/index.md` with ToolFront's built-in [database commands](
 
 This page allows you to learn about the database: `postgres://user:pass@localhost:5432/mydb`
 
-Use the inspect-table, list-tables, and query tools to navigate the database.
+Use the `inspect-table`, `list-tables`, and `query` tools to navigate the database.
 ```
 
 ## Example 3: Document RAG page
@@ -184,11 +184,11 @@ You can directly use ToolFront Browser as an MCP:
     "toolfront-browser": {
       "command": "uvx",
       "args": [
-        "toolfront", 
-        "browser", 
+        "toolfront",
+        "browser",
         "serve",
         "./mysite",
-        "--transport", 
+        "--transport",
         "stdio"
       ]
     }
