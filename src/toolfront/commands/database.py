@@ -13,6 +13,18 @@ MAX_COLUMN_WIDTH = 1024
 
 
 def create_connection(db: str) -> BaseBackend:
+    """Create database connection using Ibis backend.
+
+    Parameters
+    ----------
+    db : str
+        Database connection string or environment variable name
+
+    Returns
+    -------
+    BaseBackend
+        Connected Ibis backend instance
+    """
     db = os.environ.get(db, db)
     kwargs = dict(parse_qsl(urlparse(db).query, keep_blank_values=True))
     kwargs = {k: json.loads(v) for k, v in kwargs.items()}
@@ -25,7 +37,18 @@ def create_connection(db: str) -> BaseBackend:
 
 
 def is_read_only_query(sql) -> bool:
-    """Check if SQL contains only read operations"""
+    """Check if SQL contains only read operations.
+
+    Parameters
+    ----------
+    sql : str
+        SQL query string to analyze
+
+    Returns
+    -------
+    bool
+        True if query is read-only, False if it contains write operations
+    """
     # Define write operations that make a query non-read-only
     write_operations = [
         "INSERT",
@@ -54,19 +77,27 @@ def is_read_only_query(sql) -> bool:
 
 @click.group()
 def database():
-    """ToolFront CLI"""
+    """Database commands for ToolFront CLI."""
     pass
 
 
 @database.command()
 @click.argument("db", type=click.STRING, required=True)
 def list_tables(db) -> None:
-    """
-    List available tables in the database.
+    """List available tables in the database.
 
-    Parameters:
+    Usage: `database list-tables DB`
+
+    Parameters
+    ----------
     db : str
-        Full database URL or environment variable name containing the database URL.
+        Database connection string or environment variable name
+
+    Example
+    -------
+    ```bash
+    uvx toolfront database list-tables postgres://user:password@localhost:5432/mydb
+    ```
     """
     click.echo(os.environ.get(db, db))
     connection = create_connection(db)
@@ -99,16 +130,26 @@ def list_tables(db) -> None:
 def inspect_table(db, path) -> None:
     """Inspect the schema of database table and get sample data.
 
-    Parameters:
-    db : str
-        Full database URL or environment variable name containing the database URL.
-    path : str
-        Table path to inspect.
+    Usage: `database inspect-table DB PATH`
 
-    Instructions:
-    1. Use this tool to understand table structure like column names, data types, and constraints.
-    2. Inspecting tables helps understand the structure of the data.
-    3. ALWAYS inspect unfamiliar tables first to learn their columns and data types before querying.
+    Parameters
+    ----------
+    db : str
+        Database connection string or environment variable name
+    path : str
+        Table path to inspect
+
+    LLM Instructions
+    ----------------
+    1. Use this tool to understand table structure like column names, data types, and constraints
+    2. Inspecting tables helps understand the structure of the data
+    3. ALWAYS inspect unfamiliar tables first to learn their columns and data types before querying
+
+    Example
+    -------
+    ```bash
+    uvx toolfront database inspect-table postgres://user:password@localhost:5432/mydb mydb.mytable
+    ```
     """
 
     parts = path.split(".")
@@ -137,19 +178,28 @@ def inspect_table(db, path) -> None:
 def query(db, sql) -> None:
     """Run read-only SQL queries against a database.
 
-    Parameters:
+    Usage: `database query DB SQL`
+
+    Parameters
+    ----------
     db : str
-        Full database URL or environment variable name containing the database URL.
+        Database connection string or environment variable name
     sql : str
-        SQL query code to execute.
+        SQL query code to execute
 
-    ALWAYS ENCLOSE ALL IDENTIFIERS (TABLE NAMES, COLUMN NAMES) IN QUOTES TO PRESERVE CASE SENSITIVITY AND AVOID RESERVED WORD CONFLICTS AND SYNTAX ERRORS.
+    LLM Instructions
+    ----------------
+    1. Always enclose all identifiers (table names, column names) in quotes to preserve case sensitivity and avoid reserved word conflicts and syntax errors.
+    1. ONLY write read-only queries for tables that have been explicitly discovered or referenced
+    2. Always use the exact table and column names as they appear in the schema, respecting case sensitivity
+    3. Before writing queries, make sure you understand the schema of the tables you are querying
+    4. When a query fails or returns unexpected results, try to diagnose the issue and then retry        
 
-    Instructions:
-    1. ONLY write read-only queries for tables that have been explicitly discovered or referenced.
-    2. Always use the exact table and column names as they appear in the schema, respecting case sensitivity.
-    3. Before writing queries, make sure you understand the schema of the tables you are querying.
-    4. When a query fails or returns unexpected results, try to diagnose the issue and then retry.
+    Example
+    -------
+    ```bash
+    uvx toolfront database query postgres://user:password@localhost:5432/mydb "SELECT * FROM mytable"
+    ```
     """
 
     if not is_read_only_query(sql):
