@@ -43,6 +43,22 @@ logger = logging.getLogger("toolfront")
 
 
 class ToolPage(BaseModel):
+    """Represents a page in an environment with executable tools and content.
+
+    A ToolPage is a single markdown or HTML file that can contain:
+    - Frontmatter with command specifications
+    - Markdown content with instructions
+    - Links to executable scripts/tools
+
+    Attributes
+    ----------
+    url : str
+        URL or file path to the page
+    params : dict[str, str] | None
+        Authentication parameters for filesystem protocols
+    env : dict[str, str] | None
+        Environment variables for command execution
+    """
     url: str = Field(..., description="url of the page.")
     params: dict[str, str] | None = Field(None, description="Query parameters for the page.", exclude=True)
     env: dict[str, str] | None = Field(None, description="Environment variables for the page.", exclude=True)
@@ -55,6 +71,24 @@ class ToolPage(BaseModel):
 
     @model_validator(mode="after")
     def validate_model(self):
+        """Initialize the page by loading content and parsing commands.
+
+        This method:
+        1. Sets up the filesystem interface
+        2. Finds and loads the appropriate file (index.md/html for directories)
+        3. Parses frontmatter to extract available commands
+        4. Sets the working directory for command execution
+
+        Returns
+        -------
+        self : ToolPage
+            The initialized ToolPage instance
+
+        Raises
+        ------
+        FileNotFoundError
+            If the URL points to a non-existent file or directory without an index file
+        """
         self.url = clean_url(self.url)
         self._fs = get_filesystem(self.url, self.params)
 
@@ -100,6 +134,18 @@ class ToolPage(BaseModel):
         return self
 
     async def body(self) -> str:
+        """Generate the complete page content including commands and their help text.
+
+        This method:
+        1. Combines the markdown body with available commands
+        2. Runs each command with --help to get usage information
+        3. Returns formatted content suitable for AI agent consumption
+
+        Returns
+        -------
+        str
+            Complete page content with commands and help text wrapped in XML tags
+        """
         body = self._body
         body += "\n\n## Available commands:\n"
 
@@ -122,7 +168,25 @@ class ToolPage(BaseModel):
         return f"<page={self.url}>\n{body}\n</page>"
 
     async def run_command(self, command: list[str], help_fallback: bool = True) -> str:
-        """Run a command."""
+        """Execute a command within the page's environment.
+
+        Parameters
+        ----------
+        command : list[str]
+            List of command parts (executable + arguments)
+        help_fallback : bool, default True
+            Whether to try --help if command fails
+
+        Returns
+        -------
+        str
+            Command output or help text
+
+        Raises
+        ------
+        RuntimeError
+            If command is not allowed or fails without help fallback
+        """
 
         outout = []
 
@@ -152,17 +216,7 @@ class ToolPage(BaseModel):
 
 
 class Browser(BaseModel):
-    """Natural language interface for OpenAPI/Swagger APIs.
-
-    Parameters
-    ----------
-    url : str
-        Starting url.
-    params : dict[str, str], optional
-        Authentication parameters for the filesystem protocol.
-    params : dict[str, str], optional
-        Query parameters for all requests.
-    """
+    """Interface for navigating and interacting with environments."""
 
     model: models.Model | models.KnownModelName | str | None = Field(None, description="AI model to use.")
     temperature: float = Field(default=DEFAULT_TEMPERATURE, description="Model temperature.")
@@ -201,23 +255,57 @@ class Browser(BaseModel):
         output_type: BaseModel | None = None,
         verbose: bool = False,
     ) -> Any:
-        """Ask natural language questions and get structured responses.
+        """Ask natural language questions about an environment and get structured responses.
 
         Parameters
         ----------
         prompt : str
-            Natural language question or instruction.
+            Natural language question or instruction
         url : str
-            Starting url.
-        output_type : BaseModel, optional
-            Output type.
-        verbose : bool, optional
-            Show live AI reasoning in terminal.
+            Starting URL/path to environment (file://, https://, s3://, etc.)
+        output_type : BaseModel | None, optional
+            Desired output type (str, int, list, Pydantic model, etc.)
+        verbose : bool, default False
+            Whether to show live AI reasoning and tool calls
 
         Returns
         -------
         Any
-            Response matching the requested output type.
+            Response in the requested output_type format. If no type specified,
+            uses type hint from caller or defaults to string.
+
+        Example
+        -------
+        Simple string response:
+
+        ```python
+        result = browser.ask("Who is best customer?", "s3://path/to/site")
+        # Returns: "Chimex Inc. seems to have the highest revenue"
+        ```
+
+        Example
+        -------
+        Typed response:
+
+        ```python
+        count: float = browser.ask("What's our Q3 revenue?", "s3://analytics-bucket/path/to/reports")
+        # Returns: 225000.3
+        ```
+
+        Example
+        -------
+        Structured response:
+
+        ```python
+        from pydantic import BaseModel
+
+        class Authors(BaseModel):
+            authors: list[str]
+
+        authors: Authors = browser.ask("List all authors in this project", "git://path/to/site")
+
+        # Returns: Authors(authors=["Alice Smith", "Bob Jones", "Carol Lee"])
+        ```
         """
 
         # Get the output type from the caller or use the default output type
@@ -269,9 +357,30 @@ class Browser(BaseModel):
         agent: Agent,
         verbose: bool = False,
     ) -> Any:
-        """
-        Run the agent and optionally stream the response with live updating display.
-        Returns the final result from the agent.
+        """Execute the AI agent with optional live streaming display.
+
+        This internal method handles the actual agent execution with two modes:
+        - Verbose: Shows live AI reasoning, tool calls, and responses in terminal
+        - Quiet: Runs silently and returns only the final result
+
+        Parameters
+        ----------
+        prompt : str
+            The user's natural language query
+        agent : Agent
+            Configured AI agent with tools and system prompt
+        verbose : bool, default False
+            Whether to show live updates during execution
+
+        Returns
+        -------
+        Any
+            The final agent response in the requested output format
+
+        Raises
+        ------
+        RuntimeError
+            If there's unexpected model behavior during execution
         """
 
         console = Console()
