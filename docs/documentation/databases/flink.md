@@ -21,10 +21,3 @@ db = Database.from_flink(table_env=table_env)
 
 revenue = db.ask("What's our total revenue this month?")
 ```
-
-::: toolfront.Database.from_flink
-    options:
-      show_signature: false
-      show_source: false
-      show_root_heading: false
-      show_root_toc_entry: false

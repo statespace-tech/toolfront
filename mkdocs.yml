@@ -25,9 +25,11 @@ theme:
         name: Switch to light mode
   features:
     # - navigation.expand
-    - navigation.tabs
+    # - navigation.tabs
+    - navigation.sections
+    - navigation.expand
     - navigation.tabs.sticky
-    - navigation.top
+    # - navigation.top
     - search.highlight
     - search.share
     - content.code.copy
@@ -66,9 +68,9 @@ plugins:
 
 
 nav:
-  - Home: index.md
+  - index.md
   - Documentation:
-    - Retrieval: documentation/retrieval.md
+    - Browser: reference/browser.md  
     - AI Models: 
       - documentation/ai_models/index.md
       - OpenAI: documentation/ai_models/openai.md
@@ -89,35 +91,53 @@ nav:
       - OpenRouter: documentation/ai_models/openrouter.md
       - Ollama: documentation/ai_models/ollama.md
       - Together AI: documentation/ai_models/together.md
-    - Databases:
-      - BigQuery: documentation/databases/bigquery.md
-      - ClickHouse: documentation/databases/clickhouse.md
-      - Databricks: documentation/databases/databricks.md
-      - Druid: documentation/databases/druid.md
-      - DuckDB: documentation/databases/duckdb.md
-      - Flink: documentation/databases/flink.md
-      - MSSQL: documentation/databases/mssql.md
-      - MySQL: documentation/databases/mysql.md
-      - Oracle: documentation/databases/oracle.md
-      - PostgreSQL: documentation/databases/postgresql.md
-      - PySpark: documentation/databases/pyspark.md
-      - RisingWave: documentation/databases/risingwave.md
-      - Snowflake: documentation/databases/snowflake.md
-      - SQLite: documentation/databases/sqlite.md
-      - Trino: documentation/databases/trino.md
-    - APIs: documentation/api.md
-    - Documents: documentation/document.md
-    - MCP: documentation/mcp.md
-  - Reference:
-    - Database: reference/database.md
-    - API: reference/api.md
-    - Document: reference/document.md
+    # - Documentation:
+    #   - Environments: documentation/environments.md
+    #   - Browser: documentation/browser.md
+    #   - AI Models: 
+    #     - documentation/ai_models/index.md
+    #     - OpenAI: documentation/ai_models/openai.md
+    #     - Anthropic: documentation/ai_models/anthropic.md
+    #     - Google: documentation/ai_models/google.md
+    #     - Bedrock: documentation/ai_models/bedrock.md
+    #     - Cohere: documentation/ai_models/cohere.md
+    #     - Groq: documentation/ai_models/groq.md
+    #     - Mistral: documentation/ai_models/mistral.md
+    #     - HuggingFace: documentation/ai_models/huggingface.md
+    #     - xAI: documentation/ai_models/xai.md
+    #     - DeepSeek: documentation/ai_models/deepseek.md
+    #     - Azure AI: documentation/ai_models/azure.md
+    #     - Fireworks AI: documentation/ai_models/fireworks.md
+    #     - Moonshot AI: documentation/ai_models/moonshot.md
+    #     - GitHub Models: documentation/ai_models/github.md
+    #     - Heroku AI: documentation/ai_models/heroku.md
+    #     - OpenRouter: documentation/ai_models/openrouter.md
+    #     - Ollama: documentation/ai_models/ollama.md
+    #     - Together AI: documentation/ai_models/together.md
+    # - Databases:
+    #   - BigQuery: documentation/databases/bigquery.md
+    #   - ClickHouse: documentation/databases/clickhouse.md
+    #   - Databricks: documentation/databases/databricks.md
+    #   - Druid: documentation/databases/druid.md
+    #   - DuckDB: documentation/databases/duckdb.md
+    #   - Flink: documentation/databases/flink.md
+    #   - MSSQL: documentation/databases/mssql.md
+    #   - MySQL: documentation/databases/mysql.md
+    #   - Oracle: documentation/databases/oracle.md
+    #   - PostgreSQL: documentation/databases/postgresql.md
+    #   - PySpark: documentation/databases/pyspark.md
+    #   - RisingWave: documentation/databases/risingwave.md
+    #   - Snowflake: documentation/databases/snowflake.md
+    #   - SQLite: documentation/databases/sqlite.md
+    #   - Trino: documentation/databases/trino.md
+    # - MCP: documentation/mcp.md
+    - CLI Commands: 
+        - reference/commands/browser.md
+        - reference/commands/database.md
+        - reference/commands/document.md    
   - Examples:
-    - Text2SQL: examples/text2sql.md
-    - Invoice Processing: examples/invoice-processing.md
-    - Dataset Export: examples/dataset-exports.md
-    - CRM Integration: examples/crm-integration.md
-    - Database MCP: examples/database-mcp.md
+    - examples/document_rag.md
+    - examples/text2sql.md
 
 markdown_extensions:
   - admonition

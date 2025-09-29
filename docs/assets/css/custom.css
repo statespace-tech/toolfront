@@ -49,6 +49,14 @@ html {
     scroll-behavior: smooth;
 }
 
+/* Grid layout for side-by-side content */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
 
 .main-container-left {
     display: grid;
@@ -376,4 +384,22 @@ h1, h2, h3 {
         margin-right: 5%;
         text-align: left;
     }
+}
+
+:root {
+  --md-admonition-icon--toolfront: url(../img/logo.svg);
+}
+.md-typeset .admonition.toolfront,
+.md-typeset details.toolfront {
+  border-color: rgb(16, 162, 180);
+}
+.md-typeset .toolfront > .admonition-title,
+.md-typeset .toolfront > summary {
+  background-color: rgba(16, 162, 180, 0.1);
+}
+.md-typeset .toolfront > .admonition-title::before,
+.md-typeset .toolfront > summary::before {
+  background-color: rgb(16, 162, 180);
+  -webkit-mask-image: var(--md-admonition-icon--toolfront);
+          mask-image: var(--md-admonition-icon--toolfront);
 }
