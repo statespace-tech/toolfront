@@ -6,6 +6,7 @@ repo_name: kruskal/toolfront
 
 theme:
   name: material
+  custom_dir: docs/overrides
   icon:
     repo: fontawesome/brands/github
   logo: assets/img/logo.svg
@@ -29,7 +30,7 @@ theme:
     - navigation.sections
     - navigation.expand
     - navigation.tabs.sticky
-    # - navigation.top
+    - navigation.top
     - search.highlight
     - search.share
     - content.code.copy
@@ -68,76 +69,13 @@ plugins:
 
 
 nav:
-  - index.md
-  - Documentation:
-    - Browser: reference/browser.md  
-    - AI Models: 
-      - documentation/ai_models/index.md
-      - OpenAI: documentation/ai_models/openai.md
-      - Anthropic: documentation/ai_models/anthropic.md
-      - Google: documentation/ai_models/google.md
-      - Bedrock: documentation/ai_models/bedrock.md
-      - Cohere: documentation/ai_models/cohere.md
-      - Groq: documentation/ai_models/groq.md
-      - Mistral: documentation/ai_models/mistral.md
-      - HuggingFace: documentation/ai_models/huggingface.md
-      - xAI: documentation/ai_models/xai.md
-      - DeepSeek: documentation/ai_models/deepseek.md
-      - Azure AI: documentation/ai_models/azure.md
-      - Fireworks AI: documentation/ai_models/fireworks.md
-      - Moonshot AI: documentation/ai_models/moonshot.md
-      - GitHub Models: documentation/ai_models/github.md
-      - Heroku AI: documentation/ai_models/heroku.md
-      - OpenRouter: documentation/ai_models/openrouter.md
-      - Ollama: documentation/ai_models/ollama.md
-      - Together AI: documentation/ai_models/together.md
-    # - Documentation:
-    #   - Environments: documentation/environments.md
-    #   - Browser: documentation/browser.md
-    #   - AI Models: 
-    #     - documentation/ai_models/index.md
-    #     - OpenAI: documentation/ai_models/openai.md
-    #     - Anthropic: documentation/ai_models/anthropic.md
-    #     - Google: documentation/ai_models/google.md
-    #     - Bedrock: documentation/ai_models/bedrock.md
-    #     - Cohere: documentation/ai_models/cohere.md
-    #     - Groq: documentation/ai_models/groq.md
-    #     - Mistral: documentation/ai_models/mistral.md
-    #     - HuggingFace: documentation/ai_models/huggingface.md
-    #     - xAI: documentation/ai_models/xai.md
-    #     - DeepSeek: documentation/ai_models/deepseek.md
-    #     - Azure AI: documentation/ai_models/azure.md
-    #     - Fireworks AI: documentation/ai_models/fireworks.md
-    #     - Moonshot AI: documentation/ai_models/moonshot.md
-    #     - GitHub Models: documentation/ai_models/github.md
-    #     - Heroku AI: documentation/ai_models/heroku.md
-    #     - OpenRouter: documentation/ai_models/openrouter.md
-    #     - Ollama: documentation/ai_models/ollama.md
-    #     - Together AI: documentation/ai_models/together.md
-    # - Databases:
-    #   - BigQuery: documentation/databases/bigquery.md
-    #   - ClickHouse: documentation/databases/clickhouse.md
-    #   - Databricks: documentation/databases/databricks.md
-    #   - Druid: documentation/databases/druid.md
-    #   - DuckDB: documentation/databases/duckdb.md
-    #   - Flink: documentation/databases/flink.md
-    #   - MSSQL: documentation/databases/mssql.md
-    #   - MySQL: documentation/databases/mysql.md
-    #   - Oracle: documentation/databases/oracle.md
-    #   - PostgreSQL: documentation/databases/postgresql.md
-    #   - PySpark: documentation/databases/pyspark.md
-    #   - RisingWave: documentation/databases/risingwave.md
-    #   - Snowflake: documentation/databases/snowflake.md
-    #   - SQLite: documentation/databases/sqlite.md
-    #   - Trino: documentation/databases/trino.md
-    # - MCP: documentation/mcp.md
-    - CLI Commands: 
-        - reference/commands/browser.md
-        - reference/commands/database.md
-        - reference/commands/document.md    
-  - Examples:
-    - examples/document_rag.md
-    - examples/text2sql.md
+  - Quickstart: index.md
+  - Installation: pages/installation.md
+  - Python SDK: pages/python_sdk.md  
+  - Browser MCP: pages/browser_mcp.md  
+  - AI Models: pages/ai_models.md
+  - ToolFront Cloud: pages/toolfront_cloud.md
+  - Example: pages/example.md
 
 markdown_extensions:
   - admonition
