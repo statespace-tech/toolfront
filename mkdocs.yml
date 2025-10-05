@@ -1,8 +1,8 @@
 site_name: ToolFront
 site_description: Data Retrieval for AI agents
 site_url: https://docs.toolfront.ai
-repo_url: https://github.com/kruskal-labs/toolfront
-repo_name: kruskal/toolfront
+repo_url: https://github.com/statespace-ai/toolfront
+repo_name: statespace-ai/toolfront
 
 theme:
   name: material
@@ -121,10 +121,10 @@ extra:
       link: https://discord.gg/rRyM7zkZTf
       name: Join our Discord community
     - icon: fontawesome/brands/x-twitter
-      link: https://x.com/toolfront
+      link: https://x.com/statespace_inc
       name: Follow us on X (Twitter)
     - icon: fontawesome/brands/github
-      link: https://github.com/kruskal-labs/toolfront
+      link: https://github.com/statespace-ai/toolfront
       name: Star us on GitHub
 
-copyright: Copyright &copy; 2025 Kruskal Labs, Inc.
+copyright: Copyright &copy; 2025 Statespace AI, Inc.
