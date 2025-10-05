@@ -25,8 +25,6 @@ from rich.markdown import Markdown
 from toolfront.environment import Environment
 from toolfront.utils import get_model_from_env, history_processor
 
-DEFAULT_TEMPERATURE = 0.0
-DEFAULT_CONTEXT_WINDOW = 20
 DEFAULT_TIMEOUT_SECONDS = 10
 DEFAULT_MAX_RETRIES = 3
 
@@ -34,11 +32,155 @@ logger = logging.getLogger("toolfront")
 
 
 class Browser(BaseModel):
-    """Interface for navigating and interacting with environments."""
+    """
+
+    A ready-to-use interface for AI agents to navigate environments and retrieve data.
+    Configure your model, then call `ask()` with your environment URL to get answers.
+
+    Example
+    -------
+    Ask questions and get natural language responses:
+
+    ```python
+    from toolfront import Browser
+
+    browser = Browser(model="openai:gpt-5")
+
+    url = "file:///path/to/toolsite"
+
+    result = browser.ask("What's our total revenue this quarter?", url=url)
+    print(result)
+    # Returns: "Total revenue for Q4 2024 is $2.4M"
+    ```
+
+    Example
+    -------
+    Use `output_type` to get back structured data in any format:
+
+    === ":fontawesome-solid-cube:{ .middle } &nbsp; Scalars"
+
+        ```python
+        from toolfront import Browser
+
+        browser = Browser(model="openai:gpt-5")
+
+        url = "file:///path/to/toolsite"
+
+        avg_price = browser.ask(
+            "What's our average ticket price?",
+            url=url,
+            output_type=float
+        )
+        # Returns: 29.99
+
+        has_inventory = browser.ask(
+            "Do we have any monitors in stock?",
+            url=url,
+            output_type=bool
+        )
+        # Returns: True
+        ```
+
+    === ":fontawesome-solid-layer-group:{ .middle } &nbsp; Collections"
+
+        ```python
+        from toolfront import Browser
+
+        browser = Browser(model="openai:gpt-5")
+
+        url = "file:///path/to/toolsite"
+
+        product_names = browser.ask(
+            "What products do we sell?",
+            url=url,
+            output_type=list[str]
+        )
+        # Returns: ["Laptop Pro", "Wireless Mouse", "USB Cable"]
+
+        sales_by_region = browser.ask(
+            "Sales by region",
+            url=url,
+            output_type=dict[str, int]
+        )
+        # Returns: {"North": 45000, "South": 38000, "East": 52000}
+        ```
+
+    === ":fontawesome-solid-chain:{ .middle } &nbsp; Unions"
+
+        ```python
+        from toolfront import Browser
+
+        browser = Browser(model="openai:gpt-5")
+
+        url = "file:///path/to/toolsite"
+
+        result = browser.ask(
+            "Best-sellers this month?",
+            url=url,
+            output_type=str | list[str]
+        )
+        # Returns: ["Product A", "Product B"] or "No data found"
+
+        error = browser.ask(
+            "What was the error message?",
+            url=url,
+            output_type=str | None
+        )
+        # Returns: "Connection timeout" or None
+        ```
+
+    === ":fontawesome-solid-sitemap:{ .middle } &nbsp; Objects"
+
+        ```python
+        from toolfront import Browser
+        from pydantic import BaseModel, Field
+
+        browser = Browser(model="openai:gpt-5")
+
+        url = "file:///path/to/toolsite"
+
+        class Product(BaseModel):
+            name: str = Field(description="Product name")
+            price: float = Field(description="Product price in USD")
+            in_stock: bool = Field(description="Whether product is in stock")
+
+
+        product = browser.ask(
+            "What's our best-selling product?",
+            url=url,
+            output_type=Product
+        )
+        # Returns: Product(name="Blue Headphones", price=300.0, in_stock=True)
+        ```
+
+    === ":fontawesome-solid-percent:{ .middle } &nbsp; Functions"
+
+        ```python
+        from toolfront import Browser
+
+        browser = Browser(model="openai:gpt-5")
+
+        url = "file:///path/to/toolsite"
+
+        def my_func(price: float, quantity: int):
+            \"\"\"
+            Returns a product's revenue of based on price and quantity sold
+            \"\"\"
+            return price * quantity
+
+        # Returns the output of the provided function
+        product = browser.ask(
+            "Compute the revenue of our best-seller",
+            url=url,
+            output_type=my_func
+        )
+        # Returns: 127.000
+        ```
+    """
 
     model: models.Model | models.KnownModelName | str | None = Field(None, description="AI model to use.")
-    temperature: float = Field(default=DEFAULT_TEMPERATURE, description="Model temperature.")
-    context_window: int = Field(default=DEFAULT_CONTEXT_WINDOW, description="Model context window.")
+    temperature: float = Field(default=0.0, description="Model temperature.")
+    context_window: int = Field(default=30, description="Model context window.")
     params: dict[str, str] | list[str] | None = Field(
         None, description="Authentication parameters for the filesystem protocol", exclude=True
     )
@@ -50,7 +192,7 @@ class Browser(BaseModel):
 
     @field_validator("params", mode="before")
     @classmethod
-    def validate_params(cls, params: dict[str, str] | list[str] | None) -> dict[str, str] | None:
+    def _validate_params(cls, params: dict[str, str] | list[str] | None) -> dict[str, str] | None:
         """Convert list of KEY=VALUE strings to dict."""
         if isinstance(params, list):
             return dict(param.split("=", 1) for param in params)
@@ -58,7 +200,7 @@ class Browser(BaseModel):
 
     @field_validator("env", mode="before")
     @classmethod
-    def validate_env(cls, env: dict[str, str] | list[str] | None) -> dict[str, str] | None:
+    def _validate_env(cls, env: dict[str, str] | list[str] | None) -> dict[str, str] | None:
         """Convert list of KEY=VALUE strings to dict."""
         if isinstance(env, list):
             return dict(env_var.split("=", 1) for env_var in env)
@@ -67,8 +209,8 @@ class Browser(BaseModel):
     def __init__(
         self,
         model: models.Model | models.KnownModelName | str | None = None,
-        temperature: float = DEFAULT_TEMPERATURE,
-        context_window: int = DEFAULT_CONTEXT_WINDOW,
+        temperature: float = 0.0,
+        context_window: int = 30,
         params: dict[str, str] | list[str] | None = None,
         env: dict[str, str] | list[str] | None = None,
         **kwargs,
@@ -107,39 +249,6 @@ class Browser(BaseModel):
         Any
             Response in the requested output_type format. If no type specified,
             uses type hint from caller or defaults to string.
-
-        Example
-        -------
-        Simple string response:
-
-        ```python
-        result = browser.ask("Who is best customer?", "s3://path/to/site", output_type=str)
-        # Returns: "Chimex Inc. seems to have the highest revenue"
-        ```
-
-        Example
-        -------
-        Typed response:
-
-        ```python
-        count = browser.ask("What's our Q3 revenue?", "s3://analytics-bucket/path/to/reports", output_type=float|None)
-        # Returns: 225000.3
-        ```
-
-        Example
-        -------
-        Structured response:
-
-        ```python
-        from pydantic import BaseModel
-
-        class Author(BaseModel):
-            name: str
-
-        authors = browser.ask("List all authors in this project", "git://path/to/site", output_type=list[Author])
-
-        # Returns: [Author(name="Alice Smith"), Author(name="Bob Jones"), Author(name="Carol Lee")]
-        ```
         """
 
         environment = Environment(url=url, params=self.params, env=self.env)  # type: ignore[arg-type]

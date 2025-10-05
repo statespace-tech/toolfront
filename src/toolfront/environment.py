@@ -201,7 +201,7 @@ class Environment(BaseModel):
     @classmethod
     def validate_params(cls, params: dict[str, str] | list[str] | tuple | None) -> dict[str, str] | None:
         """Convert list of KEY=VALUE strings to dict."""
-        if isinstance(params, (list, tuple)):
+        if isinstance(params, list | tuple):
             return dict(param.split("=", 1) for param in params)
         return params
 
@@ -209,7 +209,7 @@ class Environment(BaseModel):
     @classmethod
     def validate_env(cls, env: dict[str, str] | list[str] | tuple | None) -> dict[str, str] | None:
         """Convert list of KEY=VALUE strings to dict."""
-        if isinstance(env, (list, tuple)):
+        if isinstance(env, list | tuple):
             return dict(env_var.split("=", 1) for env_var in env)
         return env
 
@@ -392,7 +392,7 @@ class Environment(BaseModel):
 
         return GlobOutput(matches=matches, count=len(matches), url_pattern=url_pattern)
 
-    async def read_file(self, file_url: str, offset: int | None = None, length: int | None = None) -> ReadFileOutput:
+    async def read(self, file_url: str, offset: int | None = None, length: int | None = None) -> ReadFileOutput:
         """Read a file from the filesystem.
 
         Instructions:
