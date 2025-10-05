@@ -3,14 +3,13 @@ hide:
   - title
   - header
   - footer
-  # - navigation
-  # - toc
 ---
-# FastAPI { #fastapi }
+
 
 <style>
 .md-content .md-typeset h1 { display: none; }
 </style>
+
 
 <p align="center">
   <a href="https://github.com/kruskal-labs/toolfront">
@@ -18,7 +17,7 @@ hide:
   </a>
 </p>
 <p align="center">
-    <em>Data retrieval environments for AI agents</em>
+    <strong><em>Data environments for AI agents</em></strong>
 </p>
 <p align="center">
 <a href="https://github.com/kruskal-labs/toolfront/actions/workflows/test.yml" target="_blank">
@@ -36,102 +35,56 @@ hide:
 </p>
 ---
 
-**Documentation: [docs.toolfront.ai](http://docs.toolfront.ai/)**
-
 **Source code: [https://github.com/kruskal-labs/toolfront](https://github.com/kruskal-labs/toolfront)**
 
 ---
 
-**ToolFront** turns your markdowns and scripts into interactive sites for your AI agents. You can add arbitrary logic and context to these environments to help your agent retrieve the data you need.
+ToolFront helps you build and deploy environments for AI agents. Think of environments as directories agents can explore and take actions in.
 
-```bash
-toolsite/
+```markdown
+my_environment
 ├── index.md
-├── page_1/
+├── page/
 │   ├── cli.py
 │   └── index.md
-└── page_2/
-    ├── cli.rs
-    └── index.md
+└── data/
+    ├── sample.txt
+    └── data.csv
 ```
 
+Agents can call any commands declared as markdown headers, optionally passing arguments. These tools define what actions agents can take when browsing your environments.
+
+
+```markdown title="index.md"
 ---
-
-**Markdown** pages define instructions and commands for your AI agents. `tool` commands can be called by agents, 
-while `content` commands dynamically add context to your pages.
-
-=== ":fontawesome-brands-markdown:{ .middle } &nbsp; Instructions"
-
-    ```markdown hl_lines="9-16"
-    ---
-    tool:
-    - [python3, cli.py]
-    - [curl, https://api.example.com/data]
-    content
-    - [echo, "$USER"]
-    ---
-
-    # My toolsite
-
-    You are a business analyst. Your goal is to answer the user's question.
-
-    Run `cli.py` to retrieve the latest orders.
-
-    Go to ./page_1 to learn about our products, or ./page_2 to learn about customers.
-    ```
-
-=== ":fontawesome-solid-terminal:{ .middle } &nbsp; Commands"
-
-    ```markdown hl_lines="1-7"
-    ---
-    tool:
-    - [python3, cli.py]
-    - [curl, https://api.example.com/data]
-    content
-    - [echo, "user: $USER"]
-    ---
-
-    # My toolsite
-
-    You are a business analyst. Your goal is to answer the user's question.
-
-    Run `cli.py` to retrieve the latest orders.
-
-    Go to ./page_1 to learn about our products, or ./page_2 to learn about customers.
-    ```
-
-
-
-!!! question "Tool instructions"
-    ToolFront automatically runs the `--help` flag on each tool command and passes the instructions to your agent.
+tools:
+- [python3, cli.py]
+- [curl, -X, GET, https://api.example.com/data]
 
 ---
 
-**Browsers** help AI agents navigate environment pages and use tools. You can use ToolFront's python SDK for rapid development, or the MCP
- if you want more control of your agent.
+# My environment page
 
+Add [links](./page_1) to tell your agents what pages it can visit.
+
+Agents can call any command defined in the header.
+- `python3 cli.py` executes a python script
+- `curl -X GET https://api.example.com/data` calls an API
+```
+
+Launch browsing sessions with ToolFront's Python SDK, or build your own browsing agent with the MCP. Browsing is always powered by your own models.
 
 === ":simple-python:{ .middle } &nbsp; SDK"
     ```python
     from toolfront import Browser
-    from pydantic import BaseModel
 
     browser = Browser(model="openai:gpt-5")
-    url = "file:///path/to/toolsite"
+
+    url = "file:///path/to/environment"
 
     answer = browser.ask("What's our average ticket price?", url=url)
-
-    answer = browser.ask("Average ticket price?", url=url, output_type=float) # (1)!
-
-    class Customer(BaseModel):  # (2)!
-        name: str = Field(..., description="Customer name")
-        seats: int = Field(..., description="Number of seats")
-
-    answer = browser.ask("Who's our best customer?", url=url, return_type=Customer)
+    print(answer)
     ```
-
-    1. Setting the `output_type` parameter makes the agent return data in the type you specify (e.g., scalars, collections, dataclasses, Pydantic models, unions, or functions).
-    2. Adding Pydantic field descriptions improves performance.
 
 
 === ":simple-modelcontextprotocol:{ .middle } &nbsp; MCP"
@@ -140,114 +93,30 @@ while `content` commands dynamically add context to your pages.
       "mcpServers": {
         "toolfront": {
           "command": "uvx",
-          "args": [
-            "toolfront", 
-            "browser", 
-            "serve", 
-            "file:///path/to/toolsite",
-            "--transport",
-            "stdio"
-          ]
+          "args": ["toolfront", "browser", "serve", "file:///path/to/toolsite"]
         }
       }
     }
     ```
 
+To get started, install `toolfront` using your favorite PyPI package manager
 
-!!! question "Installation"
-    Install the `toolfront` browser with `pip` or your favorite PyPI package manager: `pip install toolfront`
+```bash
+pip install toolfront
+```
 
----
+!!! toolfront "Deploy with ToolFront Cloud 🔥"
 
-**Models** can use ToolFront's browser to navigate pages and call tools. The browser works with all major cloud model providers, as well as local models.
-
-=== ":fontawesome-solid-cloud:{ .middle } &nbsp; Cloud"
-
-    ```python
-    from toolfront import Browser
-
-    # OpenAI
-    browser = Browser(model="openai:gpt-4o")
-
-    # Anthropic
-    browser = Browser(model="anthropic:claude-3-5-sonnet-20241022")
-  
-    # Google
-    browser = Browser(model="google:gemini-1.5-pro")
-    ```
-
-=== ":fontawesome-solid-desktop:{ .middle } &nbsp; Local"
-
-    ```python
-    from toolfront import Database
-    from pydantic_ai.models.openai import OpenAIChatModel
-
-    ollama_model = OpenAIChatModel(
-        'llama3.2',
-        base_url='http://localhost:11434/v1',
-        api_key='ignored',
-    )
-
-    db = Browser("postgres://user:pass@localhost:5432/mydb", model=ollama_model)
-    ```
-
-
-
-
----
-
-
-**Hosting** markdown pages can be done on any filesystem supported by [fsspec](https://filesystem-spec.readthedocs.io/). Use the browser's `params` to 
-authenticate with your filesystem.
-
-=== ":fontawesome-solid-folder:{ .middle } &nbsp; Filesystem"
-
-    ```python
-
-    browser = Browser(params=None)
-
-    result = browser.ask(..., url="file:///path/to/toolsite")
-    ```
-
-=== ":fontawesome-solid-bucket:{ .middle } &nbsp; S3"
-
-    ```python
-    browser = Browser(params={"key": "ACCESS_KEY", "secret": "SECRET_KEY"})
-
-    result = browser.ask(..., url="s3://my-bucket/toolsite")
-    ```
-
-=== ":simple-github:{ .middle } &nbsp; GitHub"
-
-    ```python
-    browser = Browser(params={"username": "user", "token": "ghp_token"})
-
-    result = browser.ask(..., url="github://company/repo/toolsite")
-    ```
-
-
-
-!!! toolfront "Deploy with ToolFront's API  🔥"
-
-    Markdown pages can be hosted anywhere, but scripts need separate hosting. 
-    ToolFront's API hosts and deploys entire environments with both markdown pages and command scripts:
-
-
-    ```bash
-    toolfront deploy ./path/to/toolsite.
-    ```
-
-    Would give you a securely hosted environment you AI agents can browse:
+    Deploy your environments in one step with [**ToolFront Cloud**](./pages/toolfront_cloud). Simply un `toolfront deploy ./path/to/toolsite` to get a secure environment URL you can start using right away.
 
     ```python
     from toolfront import Browser
 
-    browser = Browser(params={"api_key": "YOUR-TOOLFRONT-API-KEY"})
+    browser = Browser(params={"api_key": "TOOLFRONT-API-KEY"})
 
-    result = browser.ask(..., url="https://api.toolfront.ai/user/mysite")
+    result = browser.ask(..., url="https://cloud.toolfront.ai/user/environment")
     ```
 
-    [**Learn more about the ToolFront API**](https://toolfront.ai/)
-
+    Agents using environments hosted on **ToolFront Cloud** get instant access to powerful search features.
 
 

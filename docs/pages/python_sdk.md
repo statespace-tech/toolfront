@@ -1,6 +1,6 @@
-# Browser
+# Browser SDK
 
-::: toolfront.commands.browser.serve
+::: toolfront.browser.Browser
     options:
       show_root_heading: true
       show_source: true
