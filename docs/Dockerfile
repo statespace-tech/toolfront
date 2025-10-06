@@ -32,10 +32,10 @@ RUN uv pip install --system -e . mkdocs-material[imaging] mkdocstrings[python]
 COPY mkdocs.yml ./
 
 # Copy docs content
-COPY docs/pages ./docs/pages
-COPY docs/assets ./docs/assets
-COPY docs/overrides ./docs/overrides
-COPY docs/index.md ./docs/
+COPY pages ./docs/pages
+COPY assets ./docs/assets
+COPY overrides ./docs/overrides
+COPY index.md ./docs/
 
 # Expose port 8080
 EXPOSE 8080
