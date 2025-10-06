@@ -1,13 +1,14 @@
 site_name: ToolFront
 site_description: Data Retrieval for AI agents
 site_url: https://docs.toolfront.ai
-repo_url: https://github.com/kruskal-labs/toolfront
-repo_name: kruskal/toolfront
+repo_url: https://github.com/statespace-ai/toolfront
+repo_name: statespace-ai/toolfront
 
 theme:
   name: material
+  custom_dir: docs/overrides
   icon:
-    repo: fontawesome/brands/github
+    repo: fontawesome/brands/git-alt
   logo: assets/img/logo.svg
   favicon: assets/img/favicon.png
   palette:
@@ -25,7 +26,9 @@ theme:
         name: Switch to light mode
   features:
     # - navigation.expand
-    - navigation.tabs
+    # - navigation.tabs
+    - navigation.sections
+    - navigation.expand
     - navigation.tabs.sticky
     - navigation.top
     - search.highlight
@@ -66,58 +69,13 @@ plugins:
 
 
 nav:
-  - Home: index.md
-  - Documentation:
-    - Retrieval: documentation/retrieval.md
-    - AI Models: 
-      - documentation/ai_models/index.md
-      - OpenAI: documentation/ai_models/openai.md
-      - Anthropic: documentation/ai_models/anthropic.md
-      - Google: documentation/ai_models/google.md
-      - Bedrock: documentation/ai_models/bedrock.md
-      - Cohere: documentation/ai_models/cohere.md
-      - Groq: documentation/ai_models/groq.md
-      - Mistral: documentation/ai_models/mistral.md
-      - HuggingFace: documentation/ai_models/huggingface.md
-      - xAI: documentation/ai_models/xai.md
-      - DeepSeek: documentation/ai_models/deepseek.md
-      - Azure AI: documentation/ai_models/azure.md
-      - Fireworks AI: documentation/ai_models/fireworks.md
-      - Moonshot AI: documentation/ai_models/moonshot.md
-      - GitHub Models: documentation/ai_models/github.md
-      - Heroku AI: documentation/ai_models/heroku.md
-      - OpenRouter: documentation/ai_models/openrouter.md
-      - Ollama: documentation/ai_models/ollama.md
-      - Together AI: documentation/ai_models/together.md
-    - Databases:
-      - BigQuery: documentation/databases/bigquery.md
-      - ClickHouse: documentation/databases/clickhouse.md
-      - Databricks: documentation/databases/databricks.md
-      - Druid: documentation/databases/druid.md
-      - DuckDB: documentation/databases/duckdb.md
-      - Flink: documentation/databases/flink.md
-      - MSSQL: documentation/databases/mssql.md
-      - MySQL: documentation/databases/mysql.md
-      - Oracle: documentation/databases/oracle.md
-      - PostgreSQL: documentation/databases/postgresql.md
-      - PySpark: documentation/databases/pyspark.md
-      - RisingWave: documentation/databases/risingwave.md
-      - Snowflake: documentation/databases/snowflake.md
-      - SQLite: documentation/databases/sqlite.md
-      - Trino: documentation/databases/trino.md
-    - APIs: documentation/api.md
-    - Documents: documentation/document.md
-    - MCP: documentation/mcp.md
-  - Reference:
-    - Database: reference/database.md
-    - API: reference/api.md
-    - Document: reference/document.md
-  - Examples:
-    - Text2SQL: examples/text2sql.md
-    - Invoice Processing: examples/invoice-processing.md
-    - Dataset Export: examples/dataset-exports.md
-    - CRM Integration: examples/crm-integration.md
-    - Database MCP: examples/database-mcp.md
+  - Quickstart: index.md
+  - Installation: pages/installation.md
+  - Python SDK: pages/python_sdk.md  
+  - Browser MCP: pages/browser_mcp.md  
+  - AI Models: pages/ai_models.md
+  - ToolFront Cloud: pages/toolfront_cloud.md
+  - Example: pages/example.md
 
 markdown_extensions:
   - admonition
@@ -163,10 +121,10 @@ extra:
       link: https://discord.gg/rRyM7zkZTf
       name: Join our Discord community
     - icon: fontawesome/brands/x-twitter
-      link: https://x.com/toolfront
+      link: https://x.com/statespace_inc
       name: Follow us on X (Twitter)
     - icon: fontawesome/brands/github
-      link: https://github.com/kruskal-labs/toolfront
+      link: https://github.com/statespace-ai/toolfront
       name: Star us on GitHub
 
-copyright: Copyright &copy; 2025 Kruskal Labs, Inc.
+copyright: Copyright &copy; 2025 Statespace AI, Inc.

@@ -1,1 +1,1 @@
-
+"""Unit tests for ToolFront."""

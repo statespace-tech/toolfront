@@ -1,37 +1,38 @@
-"""Unit tests for utility functions in toolfront.utils."""
+"""Unit tests for get_frontmatter function."""
 
-from toolfront.utils import sanitize_url
+from toolfront.environment import get_frontmatter
 
 
-class TestSanitizeUrl:
-    """Test cases for sanitize_url function."""
+def test_parse_markdown_with_tools():
+    """Test parsing markdown with tools frontmatter."""
+    markdown = """---
+tools:
+  - python3 script.py
+  - bash ls -la
+---
+# Title
 
-    def test_sanitize_url_with_password(self):
-        """Test password removal from URLs."""
-        url = "postgresql://user:password@localhost:5432/db"
-        result = sanitize_url(url)
-        assert result == "postgresql://user:***@localhost:5432/db"
+Some content"""
 
-    def test_sanitize_url_without_password(self):
-        """Test URLs without passwords remain unchanged."""
-        url = "postgresql://user@localhost:5432/db"
-        result = sanitize_url(url)
-        assert result == url
+    frontmatter = get_frontmatter(markdown)
+    assert "tools" in frontmatter
+    assert frontmatter["tools"] == ["python3 script.py", "bash ls -la"]
 
-    def test_sanitize_url_no_auth(self):
-        """Test URLs without authentication."""
-        url = "postgresql://localhost:5432/db"
-        result = sanitize_url(url)
-        assert result == url
 
-    def test_sanitize_file_url(self):
-        """Test file URLs."""
-        url = "file:///path/to/file.db"
-        result = sanitize_url(url)
-        assert result == url
+def test_parse_markdown_without_frontmatter():
+    """Test parsing markdown without frontmatter."""
+    markdown = "# Title\n\nSome content"
+    frontmatter = get_frontmatter(markdown)
+    assert frontmatter == {}
 
-    def test_sanitize_http_url_with_password(self):
-        """Test HTTP URLs with authentication."""
-        url = "https://user:secret@api.example.com/v1"
-        result = sanitize_url(url)
-        assert result == "https://user:***@api.example.com/v1"
+
+def test_parse_markdown_with_invalid_yaml():
+    """Test that invalid YAML frontmatter returns empty dict."""
+    markdown = """---
+[this is: invalid yaml
+---
+# Title"""
+
+    frontmatter = get_frontmatter(markdown)
+    # When YAML parsing fails, it returns empty dict
+    assert frontmatter == {}
