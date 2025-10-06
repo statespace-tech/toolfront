@@ -8,7 +8,7 @@ theme:
   name: material
   custom_dir: docs/overrides
   icon:
-    repo: fontawesome/brands/github
+    repo: fontawesome/brands/git-alt
   logo: assets/img/logo.svg
   favicon: assets/img/favicon.png
   palette:

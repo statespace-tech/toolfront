@@ -33,13 +33,15 @@ hide:
     <img src="https://img.shields.io/badge/ToolFront-black?style=flat-square&logo=x&logoColor=white" alt="X">
 </a>
 </p>
+
 ---
 
 **Source code: [https://github.com/statespace-ai/toolfront](https://github.com/statespace-ai/toolfront)**
 
 ---
 
-ToolFront helps you build and deploy environments for AI agents. Think of environments as directories agents can explore and take actions in.
+ToolFront helps you build and deploy environments for AI agents. Think of environments as interactive directories that agents can explore and take actions in.
+
 
 ```markdown
 my_environment
@@ -52,8 +54,8 @@ my_environment
     └── data.csv
 ```
 
-Agents can call any commands declared as markdown headers, optionally passing arguments. These tools define what actions agents can take when browsing your environments.
 
+To add actions to an environment, simply define commands in any markdown header. As agents browse files, they will discover these tools learn how to use them with the `--help` flag.
 
 ```markdown title="index.md"
 ---
@@ -67,7 +69,7 @@ tools:
 
 Add [links](./page_1) to tell your agents what pages it can visit.
 
-Agents can call any command defined in the header.
+Agents can call any command defined in markdown headers.
 - `python3 cli.py` executes a python script
 - `curl -X GET https://api.example.com/data` calls an API
 ```
@@ -107,7 +109,7 @@ pip install toolfront
 
 !!! toolfront "Deploy with ToolFront Cloud 🔥"
 
-    Deploy your environments in one step with [**ToolFront Cloud**](./pages/toolfront_cloud.md). Simply un `toolfront deploy ./path/to/toolsite` to get a secure environment URL you can start using right away.
+    Deploy your environments in one step with [**ToolFront Cloud**](./pages/toolfront_cloud.md). Simply run `toolfront deploy ./path/to/toolsite` to get a secure environment URL you can start using right away.
 
     ```python
     from toolfront import Browser
