@@ -74,7 +74,7 @@ Agents can call any command defined in markdown headers.
 - `curl -X GET https://api.example.com/data` calls an API
 ```
 
-Launch browsing sessions with ToolFront's Python SDK, or build your own browsing agent with the MCP. Browsing is always powered by your own models.
+You can launch browsing sessions with ToolFront's Python SDK, or build your own browsing agent with the MCP. Browsing is always powered by your own models.
 
 === ":simple-python:{ .middle } &nbsp; SDK"
     ```python
