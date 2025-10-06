@@ -1,3 +1,0 @@
-# Ollama
-
-Coming soon!
