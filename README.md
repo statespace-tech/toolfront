@@ -93,16 +93,16 @@ print(answer)
 }
 ```
 
-ToolFront's browser comes with six core tools your agents can use to interact with environments:
+ToolFront comes with six core tools* your agents can use to interact with environments:
 
-- **`run_command`** - Execute commands exclusively defined in markdown headers
+- **`run_command`** - Execute commands defined in markdown headers
 - **`read`** - Get the content of a specific page or file
 - **`glob`** - List files matching a pattern
 - **`tree`** - View directory structure
 - **`grep`*** - Find relevant lines that match a regular expression
 - **`search`*** - Find relevant documents containing a list of terms
 
-\* *Because `grep` and `search` require indexing environments, they're currently only available through ToolFront Cloud. You can always build custom browser agents with your own indexing and search tools using ToolFront's MCP.*
+\* *`grep` and `search` require indexing environments.*
 
 ## ToolFront Cloud
 
@@ -117,7 +117,7 @@ Would give you a secure environment URL your agents can browse.
 ```python
 from toolfront import Browser
 
-browser = Browser(env={"TOOLFRONT_API_KEY": "my-api-key"})
+browser = Browser(params={"TOOLFRONT_API_KEY": "my-api-key"})
 
 answer = browser.ask(..., url="https://cloud.toolfront.ai/user/environment")
 ```
