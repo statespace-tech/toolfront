@@ -1,6 +1,6 @@
 [project]
 name = "toolfront"
-version = "0.3.0"
+version = "0.3.1"
 description = "ToolFront helps you retrieve information from large databases, APIs, and documents with AI."
 readme = "README.md"
 authors = [
@@ -43,6 +43,12 @@ include = ["toolfront*"]
 
 [tool.setuptools.package-data]
 "toolfront" = ["instructions/*.txt"]
+
+[project.urls]
+Homepage = "https://github.com/statespace-ai/toolfront"
+Repository = "https://github.com/statespace-ai/toolfront"
+Documentation = "https://docs.toolfront.ai"
+"Bug Tracker" = "https://github.com/statespace-ai/toolfront/issues"
 
 [project.optional-dependencies]
 test = [
