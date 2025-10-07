@@ -184,4 +184,4 @@ log_success "Successfully released version $NEW_VERSION!"
 echo
 log_info "Summary:"
 echo "  📦 PyPI: https://pypi.org/project/toolfront/$NEW_VERSION/"
-echo "  🏷️  Tag: https://github.com/kruskal-labs/toolfront/releases/tag/v$NEW_VERSION"
+echo "  🏷️  Tag: https://github.com/statespace-ai/toolfront/releases/tag/v$NEW_VERSION"
