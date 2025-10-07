@@ -5,12 +5,12 @@ from toolfront.environment import Environment
 
 
 @click.group()
-def browser():
-    """Browser commands for MCP server functionality."""
+def mcp():
+    """ToolFront CLI"""
     pass
 
 
-@browser.command()
+@mcp.command()
 @click.argument("url", type=click.STRING, required=True)
 @click.option(
     "--params",
@@ -29,11 +29,11 @@ def browser():
 )
 @click.option("--env", type=click.STRING, default=None, help="Environment variables to pass to the server")
 def serve(url, params, host, port, transport, env) -> None:
-    """Start an MCP server for browsing environments.
+    """Start an MCP server for interacting with environments.
 
     ToolFront's Model Context Protocol (MCP) server exposes environment browsing tools for use with custom AI agents. The server provides tools for reading files, running commands, and searching content.
 
-    Usage: `toolfront browser serve URL [OPTIONS]`
+    Usage: `toolfront mcp URL [OPTIONS]`
 
     Parameters
     ----------
@@ -55,7 +55,7 @@ def serve(url, params, host, port, transport, env) -> None:
     Start with stdio transport for local environments:
 
     ```bash
-    toolfront browser serve file:///path/to/mysite
+    toolfront mcp file:///path/to/mysite
     ```
 
     Example
@@ -63,7 +63,7 @@ def serve(url, params, host, port, transport, env) -> None:
     Start with HTTP transport for remote access:
 
     ```bash
-    toolfront browser serve file:///path/to/mysite --transport streamable-http --port 8080
+    toolfront mcp file:///path/to/mysite --transport streamable-http --port 8080
     ```
 
     Example
@@ -71,7 +71,7 @@ def serve(url, params, host, port, transport, env) -> None:
     Connect to S3 with authentication:
 
     ```bash
-    toolfront browser serve s3://bucket/mysite --params AWS_ACCESS_KEY_ID=xxx --params AWS_SECRET_ACCESS_KEY=yyy
+    toolfront mcp s3://bucket/mysite --params AWS_ACCESS_KEY_ID=xxx --params AWS_SECRET_ACCESS_KEY=yyy
     ```
 
     Example
@@ -79,7 +79,7 @@ def serve(url, params, host, port, transport, env) -> None:
     Connect to GitHub repository:
 
     ```bash
-    toolfront browser serve github://org/repo/mysite --params GH_TOKEN=xxx
+    toolfront mcp github://org/repo/mysite --params GH_TOKEN=xxx
     ```
     """
     click.echo("Starting MCP server")
@@ -91,10 +91,16 @@ def serve(url, params, host, port, transport, env) -> None:
     mcp.add_tool(environment.run_command)
     mcp.add_tool(environment.read)
     mcp.add_tool(environment.glob)
+    mcp.add_tool(environment.tree)
 
     # Only add search tool if index page exists
     if environment.index_page:
+        mcp.add_tool(environment.grep)
         mcp.add_tool(environment.search)
 
     click.echo("MCP server started successfully")
     mcp.run(transport=transport)
+
+
+if __name__ == "__main__":
+    mcp()
