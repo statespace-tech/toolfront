@@ -98,16 +98,16 @@ You can launch browsing sessions with ToolFront's Python SDK, or build your own 
     }
     ```
 
-ToolFront's browser comes with six core tools your agents can use interact with environments. [^1]
+ToolFront's comes with six core tools[^1] your agents can use to interact with environments:
 
-- :material-play:{ .middle } `run_command` - Execute commands exclusively defined in markdown headers
+- :material-play:{ .middle } `run_command` - Execute commands defined in markdown headers
 - :material-eye:{ .middle } `read` - Get the content of a specific page or file
 - :material-regex:{ .middle } `glob` - List files matching a pattern
 - :material-file-tree:{ .middle } `tree` - View directory structure
 - :material-text-search:{ .middle } `grep` - Find relevant lines that match a regular expression 
 - :material-magnify:{ .middle } `search` - Find relevant documents containing a list of terms
 
-[^1]: Because `grep` and `search` require indexing environments, they're currently only available through ToolFront Cloud. You can always build custom agents and tools with ToolFront's MCP.
+[^1]: `grep` and `search` require indexing environments.
 
 To get started, install `toolfront` using your favorite PyPI package manager.
 
@@ -131,7 +131,7 @@ To get started, install `toolfront` using your favorite PyPI package manager.
 
 !!! toolfront "Deploy with ToolFront Cloud 🔥"
 
-    Instantly deploy your environments with [**ToolFront Cloud**](./pages/toolfront_cloud.md).
+    Instantly deploy your environments with **ToolFront Cloud**
     
     ```bash
     toolfront deploy ./path/to/environment --api-key "my-api-key"
@@ -142,7 +142,7 @@ To get started, install `toolfront` using your favorite PyPI package manager.
     ```python
     from toolfront import Browser
 
-    browser = Browser(env={"TOOLFRONT_API_KEY": "my-api-key"})
+    browser = Browser(params={"TOOLFRONT_API_KEY": "my-api-key"})
 
     answer = browser.ask(..., url="https://cloud.toolfront.ai/user/environment")
     ```
