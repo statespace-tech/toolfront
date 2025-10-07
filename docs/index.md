@@ -109,7 +109,7 @@ ToolFront's browser comes with six core tools your agents can use interact with 
 
 [^1]: Because `grep` and `search` require indexing environments, they're currently only available through ToolFront Cloud. You can always build custom browser agents and tools with ToolFront's MCP.
 
-To get started, install `toolfront` using your favorite PyPI package manager.
+To get started, install `toolfront` using your favorite PyPI package manager. Be sure to also check out [the only example you'll ever need](/pages/example/).
 
 === ":fontawesome-brands-python:{ .middle } &nbsp; pip"
 
@@ -142,5 +142,3 @@ To get started, install `toolfront` using your favorite PyPI package manager.
     ```
 
     Agents using environments hosted on **ToolFront Cloud** get instant access to powerful search features.
-
-

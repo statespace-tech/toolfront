@@ -1,4 +1,4 @@
-# Complete Example
+# The Only Example You'll Ever Need
 
 In this example, we'll build a sales analytics environment for an e-commerce company, powered by GPT-5. The agent will answer business questions by pulling data from three sources:
 
