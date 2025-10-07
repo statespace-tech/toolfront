@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from importlib.resources import files
 from typing import Any
 
 import yaml
@@ -261,16 +262,8 @@ class Browser(BaseModel):
             timeout=DEFAULT_TIMEOUT_SECONDS,
         )
 
-        instructions = f"""
-        Answer the user's question using only data explicitly retrieved through the provided tools.
-        Never make assumptions, hallucinate data, or supplement answers with general knowledge.
-        Always follow file and tool instructions.
-        Return once you have found what you're looking for.
-        If no relevant data can be found after exhaustive attempts, clearly explain why
-        The following environment variables are available: {self.env}
-        Your environment root URL is: {environment.url}
-        Your environment home page URL is: {environment.home_page}
-        """
+        instructions_template = files("toolfront.instructions").joinpath("ask.txt").read_text()
+        instructions = instructions_template.format(environment.env, environment.url, environment.home_page)
 
         history_processor_ = history_processor(context_window=self.context_window)
 
