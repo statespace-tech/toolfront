@@ -1,10 +1,7 @@
 ---
-hide:
-  - title
-  - header
-  - footer
+title: "Data Environments for AI Agents"
+description: "Build and deploy data environments your own agents can browse."
 ---
-
 
 <style>
 .md-content .md-typeset h1 { display: none; }
