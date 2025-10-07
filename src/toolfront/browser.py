@@ -255,7 +255,7 @@ class Browser(BaseModel):
 
         server = MCPServerStdio(
             "uv",
-            args=["run", "toolfront", "browser", "serve", url, "--transport", "stdio"],
+            args=["run", "toolfront", "mcp", "serve", url, "--transport", "stdio"],
             env=environment.env,
             max_retries=DEFAULT_MAX_RETRIES,
             timeout=DEFAULT_TIMEOUT_SECONDS,

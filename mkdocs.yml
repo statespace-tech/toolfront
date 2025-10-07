@@ -70,7 +70,6 @@ plugins:
 
 nav:
   - Quickstart: index.md
-  - Installation: pages/installation.md
   - Python SDK: pages/python_sdk.md  
   - Browser MCP: pages/browser_mcp.md  
   - AI Models: pages/ai_models.md
@@ -98,6 +97,8 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - footnotes
+
 
 extra_css:
   - assets/css/custom.css

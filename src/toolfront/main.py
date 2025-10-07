@@ -1,19 +1,17 @@
 import click
 
-from .commands.browser import browser
-from .commands.database import database
-from .commands.document import document
+from .cli.database import database
+from .cli.mcp import mcp
 
 
 @click.group()
-def cli():
+def main():
     """ToolFront CLI"""
     pass
 
 
-cli.add_command(browser)
-cli.add_command(database)
-cli.add_command(document)
+main.add_command(mcp)
+main.add_command(database)
 
 if __name__ == "__main__":
-    cli()
+    main()

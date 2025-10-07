@@ -1,6 +1,6 @@
 """Unit tests for database security functions."""
 
-from toolfront.commands.database import is_read_only_query
+from toolfront.cli.database import is_read_only_query
 
 
 class TestIsReadOnlyQuery:

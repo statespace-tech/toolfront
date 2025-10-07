@@ -87,12 +87,22 @@ print(answer)
   "mcpServers": {
     "toolfront": {
       "command": "uvx",
-      "args": ["toolfront", "browser", "serve", "file:///path/to/toolsite"]
+      "args": ["toolfront", "mcp", "file:///path/to/toolsite"]
     }
   }
 }
 ```
 
+ToolFront's browser comes with six core tools your agents can use to interact with environments:
+
+- **`run_command`** - Execute commands exclusively defined in markdown headers
+- **`read`** - Get the content of a specific page or file
+- **`glob`** - List files matching a pattern
+- **`tree`** - View directory structure
+- **`grep`*** - Find relevant lines that match a regular expression
+- **`search`*** - Find relevant documents containing a list of terms
+
+\* *Because `grep` and `search` require indexing environments, they're currently only available through ToolFront Cloud. You can always build custom browser agents with your own indexing and search tools using ToolFront's MCP.*
 
 ## ToolFront Cloud
 
