@@ -90,13 +90,9 @@ def serve(url, params, host, port, transport, env) -> None:
 
     mcp.add_tool(environment.run_command)
     mcp.add_tool(environment.read)
-    mcp.add_tool(environment.glob)
     mcp.add_tool(environment.tree)
-
-    # Only add search tool if index page exists
-    if environment.index_page:
-        mcp.add_tool(environment.grep)
-        mcp.add_tool(environment.search)
+    mcp.add_tool(environment.glob)
+    mcp.add_tool(environment.grep)
 
     click.echo("MCP server started successfully")
     mcp.run(transport=transport)

@@ -1,5 +1,3 @@
-"""Environment module for managing filesystem operations and document search."""
-
 import logging
 import re
 import subprocess
@@ -8,7 +6,6 @@ from enum import Enum
 from typing import Any
 from urllib.parse import parse_qsl, urlparse, urlunparse
 
-import duckdb
 import yaml
 from fsspec import filesystem
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator, model_validator
@@ -55,51 +52,11 @@ def get_frontmatter(markdown: str) -> dict[str, Any]:
 
 
 class OutputMode(str, Enum):
-    """Output modes for regex search."""
+    """Output modes for search."""
 
     CONTENT = "content"
     FILES_WITH_MATCHES = "files_with_matches"
     COUNT = "count"
-
-
-class Stemmer(str, Enum):
-    """Stemmer options for full-text search."""
-
-    ARABIC = "arabic"
-    BASQUE = "basque"
-    CATALAN = "catalan"
-    DANISH = "danish"
-    DUTCH = "dutch"
-    ENGLISH = "english"
-    FINNISH = "finnish"
-    FRENCH = "french"
-    GERMAN = "german"
-    GREEK = "greek"
-    HINDI = "hindi"
-    HUNGARIAN = "hungarian"
-    INDONESIAN = "indonesian"
-    IRISH = "irish"
-    ITALIAN = "italian"
-    LITHUANIAN = "lithuanian"
-    NEPALI = "nepali"
-    NORWEGIAN = "norwegian"
-    PORTER = "porter"
-    PORTUGUESE = "portuguese"
-    ROMANIAN = "romanian"
-    RUSSIAN = "russian"
-    SERBIAN = "serbian"
-    SPANISH = "spanish"
-    SWEDISH = "swedish"
-    TAMIL = "tamil"
-    TURKISH = "turkish"
-    NONE = "none"
-
-
-class Stopwords(str, Enum):
-    """Stopwords options for full-text search."""
-
-    ENGLISH = "english"
-    NONE = "none"
 
 
 class CommandOutput(BaseModel):
@@ -115,6 +72,30 @@ class GlobOutput(BaseModel):
     matches: list[str] = Field(..., description="Array of matching file paths")
     count: int = Field(..., description="Number of matches")
     url_pattern: str = Field(..., description="URL pattern used")
+
+
+class ReadFileOutput(BaseModel):
+    """File read operation output."""
+
+    content: str = Field(..., description="File content with line numbers")
+    total_lines: int = Field(..., description="Total number of lines in file")
+    lines_returned: int = Field(..., description="Lines returned")
+
+
+class SearchResult(BaseModel):
+    """Single BM25 search result."""
+
+    file: str = Field(..., description="File path containing the match")
+    score: float = Field(..., description="BM25 relevance score")
+    content: str = Field(..., description="Matching document content")
+
+
+class SearchOutput(BaseModel):
+    """BM25 search output."""
+
+    results: list[SearchResult] = Field(..., description="Search results ranked by BM25 score")
+    total_results: int = Field(..., description="Total number of results found")
+    terms: str = Field(..., description="Search terms used")
 
 
 class GrepMatch(BaseModel):
@@ -147,30 +128,6 @@ class GrepCountOutput(BaseModel):
     total_matches: int = Field(..., description="Total number of matches across all files")
 
 
-class ReadFileOutput(BaseModel):
-    """File read operation output."""
-
-    content: str = Field(..., description="File content with line numbers")
-    total_lines: int = Field(..., description="Total number of lines in file")
-    lines_returned: int = Field(..., description="Lines returned")
-
-
-class BM25Result(BaseModel):
-    """Single BM25 search result."""
-
-    filename: str = Field(..., description="File path")
-    score: float = Field(..., description="BM25 relevance score")
-
-
-class BM25Output(BaseModel):
-    """Output for BM25 search."""
-
-    results: list[BM25Result] = Field(..., description="Search results ranked by BM25 score")
-    total_results: int = Field(..., description="Total number of results found")
-    query: str = Field(..., description="Search query used")
-    url_pattern: str = Field(..., description="URL pattern searched")
-
-
 class Environment(BaseModel):
     """Environment for managing filesystem operations and document search.
 
@@ -184,8 +141,6 @@ class Environment(BaseModel):
         Environment variables for command execution
     home_page : str | None
         Home page URL (file if URL is a file, else index.md in directory)
-    index_page : str | None
-        Path to DuckDB index for search operations
     """
 
     url: str = Field(..., description="Root URL for the environment")
@@ -194,7 +149,6 @@ class Environment(BaseModel):
     )
     env: dict[str, str] | None = Field(default=None, description="Environment variables for commands", exclude=True)
     home_page: str | None = Field(default=None, description="Home page for the environment")
-    index_page: str | None = Field(default=None, description="DuckDB index for search")
 
     _fs: Any = PrivateAttr(None)
 
@@ -241,11 +195,6 @@ class Environment(BaseModel):
                 self.home_page = home_page
         else:
             raise ValueError(f"URL does not point to a valid file or directory: {url}")
-
-        # Check for search index
-        index_page = f"{parsed.path}/index.duckdb"
-        if self._fs.isfile(index_page):
-            self.index_page = index_page
 
         return self
 
@@ -352,46 +301,6 @@ class Environment(BaseModel):
 
         return CommandOutput(stdout=result.stdout, stderr=result.stderr)
 
-    async def glob(self, path_url: str, pattern: str) -> GlobOutput:
-        """Find files matching a glob pattern.
-
-        Instructions:
-        1. path_url MUST be an absolute directory URL within the environment root (e.g., 'file:///path/to/dir', 's3://bucket/path', 'https://example.com/files')
-        2. All URLs must be within the environment's root URL
-        3. pattern is the glob pattern to match (e.g., '**/*.py', '*.md', 'src/**/*.txt')
-        4. Use ** for recursive directory matching
-        5. Pattern is combined with the directory URL
-
-        Examples:
-        - Find Python files locally: path_url='file:///path/to/project', pattern='**/*.py'
-        - Find markdown in remote bucket: path_url='s3://bucket/docs', pattern='**/*.md'
-        - Find text files via HTTP: path_url='https://example.com/files', pattern='*.txt'
-
-        Parameters
-        ----------
-        path_url : str
-            Absolute directory URL (e.g., 'file:///path/to/dir', 's3://bucket/path', 'https://example.com/files')
-        pattern : str
-            Glob pattern to match (e.g., '**/*.py', '*.md')
-
-        Returns
-        -------
-        GlobOutput
-            Object with matches, count, and url pattern
-
-        Raises
-        ------
-        ValueError
-            If path_url is not a directory or pattern is malformed
-        """
-        parsed = self._validate_url(path_url, require_type="directory")
-
-        search_path = parsed.path.rstrip("/") + "/" + pattern
-        matches = self._fs.glob(search_path)
-        url_pattern = f"{urlunparse(parsed)}/{pattern}"
-
-        return GlobOutput(matches=matches, count=len(matches), url_pattern=url_pattern)
-
     async def read(self, file_url: str, offset: int | None = None, length: int | None = None) -> ReadFileOutput:
         """Read a file from the filesystem.
 
@@ -430,217 +339,6 @@ class Environment(BaseModel):
         content = "\n".join(f"{start + i + 1:6d}\t{line}" for i, line in enumerate(selected_lines))
 
         return ReadFileOutput(content=content, total_lines=total_lines, lines_returned=len(selected_lines))
-
-    async def search(
-        self,
-        query: str,
-        path_url: str,
-        filename_pattern: str | None = None,
-        limit: int = 10,
-    ) -> BM25Output:
-        """Search documents using BM25 full-text search.
-
-        Instructions:
-        1. Craft queries with actual terms/keywords you've seen in documents
-        2. Include synonyms and variations (e.g., "authenticate login session")
-        3. Mix general concepts with specific names (classes, functions, terms)
-        4. Results ranked by relevance score (higher = more relevant)
-        5. Use filename_pattern to filter by filename regex (e.g., '\\.py$')
-        6. path_url MUST be an absolute URL within the environment root
-
-        Parameters
-        ----------
-        query : str
-            Search terms (natural language keywords)
-        path_url : str
-            Absolute URL to search
-        filename_pattern : str | None
-            Regex pattern to filter filenames
-        limit : int
-            Maximum results to return (default: 10)
-
-        Returns
-        -------
-        BM25Output
-            Results ranked by BM25 score
-
-        Raises
-        ------
-        RuntimeError
-            If no search index exists
-        """
-        if not self.index_page:
-            raise RuntimeError("No search index found in environment. Create one first with 'document index' command.")
-
-        self._validate_url(path_url)
-
-        with duckdb.connect(":memory:") as conn:
-            conn.register_filesystem(self._fs)
-            conn.execute(f"ATTACH '{self.index_page}' AS idx")
-
-            filename_filter = ""
-            if filename_pattern:
-                filename_filter = f"AND regexp_matches(filename, '{filename_pattern}')"
-
-            query_sql = f"""
-                SELECT filename, fts_main_documents.match_bm25(filename, ?) AS score
-                FROM idx.documents
-                WHERE score IS NOT NULL {filename_filter}
-                ORDER BY score DESC
-                LIMIT ?
-            """
-            results_df = conn.execute(query_sql, [query, limit]).fetchdf()
-
-            results = [
-                BM25Result(filename=str(row["filename"]), score=float(row["score"])) for _, row in results_df.iterrows()
-            ]
-            return BM25Output(results=results, total_results=len(results), query=query, url_pattern=self.url)
-
-    async def grep(
-        self,
-        pattern: str,
-        path_url: str,
-        filename_pattern: str | None = None,
-        output_mode: OutputMode = OutputMode.CONTENT,
-        case_insensitive: bool = False,
-        show_line_numbers: bool = True,
-        lines_before: int | None = None,
-        lines_after: int | None = None,
-        lines_context: int | None = None,
-        limit: int | None = None,
-        multiline: bool = False,
-    ) -> GrepContentOutput | GrepFilesOutput | GrepCountOutput:
-        """Search documents using regex pattern matching.
-
-        Instructions:
-        1. pattern is a regular expression (not literal string)
-        2. Set case_insensitive=True for case-insensitive matching
-        3. Set multiline=True for patterns spanning multiple lines
-        4. Use output_mode to control results:
-           - 'content': matching lines with optional context
-           - 'files_with_matches': list of files containing matches
-           - 'count': total number of matches
-        5. Use filename_pattern to filter by filename regex (e.g., '\\.py$')
-        6. For content mode, use lines_before/lines_after/lines_context
-        7. path_url MUST be an absolute URL within the environment root
-
-        Parameters
-        ----------
-        pattern : str
-            Regular expression pattern
-        path_url : str
-            Absolute URL to search
-        filename_pattern : str | None
-            Regex to filter filenames
-        output_mode : OutputMode
-            Output mode (default: content)
-        case_insensitive : bool
-            Case insensitive (default: False)
-        show_line_numbers : bool
-            Show line numbers in content mode (default: True)
-        lines_before : int | None
-            Lines before match (content mode)
-        lines_after : int | None
-            Lines after match (content mode)
-        lines_context : int | None
-            Lines before and after (overrides lines_before/after)
-        limit : int | None
-            Max results (None for unlimited)
-        multiline : bool
-            Multiline mode (default: False)
-
-        Returns
-        -------
-        GrepContentOutput | GrepFilesOutput | GrepCountOutput
-            Output depends on output_mode
-
-        Raises
-        ------
-        RuntimeError
-            If no search index exists
-        """
-        if not self.index_page:
-            raise RuntimeError("No search index found in environment. Create one first with 'document index' command.")
-
-        self._validate_url(path_url)
-
-        with duckdb.connect(":memory:") as conn:
-            conn.register_filesystem(self._fs)
-            conn.execute(f"ATTACH '{self.index_page}' AS idx")
-
-            filename_filter = f"AND regexp_matches(filename, '{filename_pattern}')" if filename_pattern else ""
-            regex_flags = ("s" if multiline else "") + ("i" if case_insensitive else "")
-
-            if output_mode == OutputMode.FILES_WITH_MATCHES:
-                query_sql = f"""
-                    SELECT DISTINCT filename
-                    FROM idx.lines
-                    WHERE regexp_matches(line, '{pattern}', '{regex_flags}') {filename_filter}
-                    LIMIT {limit or -1}
-                """
-                files = [row[0] for row in conn.execute(query_sql).fetchall()]
-                return GrepFilesOutput(files=files, count=len(files))
-
-            if output_mode == OutputMode.COUNT:
-                query_sql = f"""
-                    SELECT COUNT(*)
-                    FROM idx.lines
-                    WHERE regexp_matches(line, '{pattern}', '{regex_flags}') {filename_filter}
-                """
-                result = conn.execute(query_sql).fetchone()
-                return GrepCountOutput(total_matches=result[0] if result else 0)
-
-            # CONTENT mode
-            before = lines_context if lines_context is not None else (lines_before or 0)
-            after = lines_context if lines_context is not None else (lines_after or 0)
-
-            if before > 0 or after > 0:
-                query_sql = f"""
-                    WITH matches AS (
-                        SELECT filename, line_number, line
-                        FROM idx.lines
-                        WHERE regexp_matches(line, '{pattern}', '{regex_flags}') {filename_filter}
-                        LIMIT {limit or -1}
-                    ),
-                    context AS (
-                        SELECT
-                            m.filename, m.line_number, m.line,
-                            LIST(l.line ORDER BY l.line_number) FILTER (
-                                WHERE l.line_number < m.line_number
-                                AND l.line_number >= m.line_number - {before}
-                            ) AS before_context,
-                            LIST(l.line ORDER BY l.line_number) FILTER (
-                                WHERE l.line_number > m.line_number
-                                AND l.line_number <= m.line_number + {after}
-                            ) AS after_context
-                        FROM matches m
-                        LEFT JOIN idx.lines l ON m.filename = l.filename
-                            AND l.line_number BETWEEN m.line_number - {before} AND m.line_number + {after}
-                        GROUP BY m.filename, m.line_number, m.line
-                    )
-                    SELECT * FROM context
-                """
-            else:
-                query_sql = f"""
-                    SELECT filename, line_number, line, NULL as before_context, NULL as after_context
-                    FROM idx.lines
-                    WHERE regexp_matches(line, '{pattern}', '{regex_flags}') {filename_filter}
-                    LIMIT {limit or -1}
-                """
-
-            matches = conn.execute(query_sql).fetchall()
-            all_matches = [
-                GrepMatch(
-                    file=filename,
-                    line_number=line_num if show_line_numbers else None,
-                    line=line,
-                    before_context=before_ctx,
-                    after_context=after_ctx,
-                )
-                for filename, line_num, line, before_ctx, after_ctx in matches
-            ]
-
-            return GrepContentOutput(matches=all_matches, total_matches=len(all_matches))
 
     async def tree(
         self,
@@ -682,3 +380,234 @@ class Environment(BaseModel):
             recursion_limit=recursion_limit,
             max_display=max_display,
         )
+
+    async def glob(self, path_url: str, pattern: str) -> GlobOutput:
+        """Find files matching a glob pattern.
+
+        Instructions:
+        1. path_url MUST be an absolute directory URL within the environment root (e.g., 'file:///path/to/dir', 's3://bucket/path', 'https://example.com/files')
+        2. All URLs must be within the environment's root URL
+        3. pattern is the glob pattern to match (e.g., '**/*.py', '*.md', 'src/**/*.txt')
+        4. Use ** for recursive directory matching
+        5. Pattern is combined with the directory URL
+
+        Examples:
+        - Find Python files locally: path_url='file:///path/to/project', pattern='**/*.py'
+        - Find markdown in remote bucket: path_url='s3://bucket/docs', pattern='**/*.md'
+        - Find text files via HTTP: path_url='https://example.com/files', pattern='*.txt'
+
+        Parameters
+        ----------
+        path_url : str
+            Absolute directory URL (e.g., 'file:///path/to/dir', 's3://bucket/path', 'https://example.com/files')
+        pattern : str
+            Glob pattern to match (e.g., '**/*.py', '*.md')
+
+        Returns
+        -------
+        GlobOutput
+            Object with matches, count, and url pattern
+
+        Raises
+        ------
+        ValueError
+            If path_url is not a directory or pattern is malformed
+        """
+        parsed = self._validate_url(path_url, require_type="directory")
+
+        search_path = parsed.path.rstrip("/") + "/" + pattern
+        matches = self._fs.glob(search_path)
+        url_pattern = f"{urlunparse(parsed)}/{pattern}"
+
+        return GlobOutput(matches=matches, count=len(matches), url_pattern=url_pattern)
+
+    async def grep(
+        self,
+        pattern: str,
+        path_url: str,
+        filename_pattern: str | None = None,
+        output_mode: OutputMode = OutputMode.CONTENT,
+        case_insensitive: bool = False,
+        show_line_numbers: bool = True,
+        lines_before: int | None = None,
+        lines_after: int | None = None,
+        lines_context: int | None = None,
+        limit: int | None = None,
+    ) -> GrepContentOutput | GrepFilesOutput | GrepCountOutput:
+        """Search documents using regex pattern matching via grep subprocess.
+
+        Instructions:
+        1. pattern is a regular expression (not literal string)
+        2. Set case_insensitive=True for case-insensitive matching
+        3. Use output_mode to control results:
+           - 'content': matching lines with optional context
+           - 'files_with_matches': list of files containing matches
+           - 'count': total number of matches
+        4. For content mode, use lines_before/lines_after/lines_context for context
+        5. Use filename_pattern to filter by filename glob (e.g., '*.py')
+        6. path_url MUST be an absolute URL within the environment root
+        7. For local filesystems (file://), uses native grep subprocess for performance
+
+        Parameters
+        ----------
+        pattern : str
+            Regular expression pattern
+        path_url : str
+            Absolute URL to search
+        filename_pattern : str | None
+            Glob pattern to filter filenames (e.g., '*.py', '*.md')
+        output_mode : OutputMode
+            Output mode (default: content)
+        case_insensitive : bool
+            Case insensitive (default: False)
+        show_line_numbers : bool
+            Show line numbers in content mode (default: True)
+        lines_before : int | None
+            Lines before match (content mode)
+        lines_after : int | None
+            Lines after match (content mode)
+        lines_context : int | None
+            Lines before and after (overrides lines_before/after)
+        limit : int | None
+            Max results (None for unlimited)
+
+        Returns
+        -------
+        GrepContentOutput | GrepFilesOutput | GrepCountOutput
+            Output depends on output_mode
+
+        Raises
+        ------
+        RuntimeError
+            If grep command fails
+        """
+        parsed = self._validate_url(path_url, require_type="directory")
+
+        # For local filesystems, use native grep
+        if parsed.scheme == "file":
+            grep_args = ["grep", "-r"]
+
+            # Add flags
+            if case_insensitive:
+                grep_args.append("-i")
+            if show_line_numbers and output_mode == OutputMode.CONTENT:
+                grep_args.append("-n")
+
+            # Handle output mode
+            if output_mode == OutputMode.FILES_WITH_MATCHES:
+                grep_args.append("-l")
+            elif output_mode == OutputMode.COUNT:
+                grep_args.append("-c")
+
+            # Handle context
+            if output_mode == OutputMode.CONTENT:
+                if lines_context is not None:
+                    grep_args.append(f"-C{lines_context}")
+                else:
+                    if lines_before:
+                        grep_args.append(f"-B{lines_before}")
+                    if lines_after:
+                        grep_args.append(f"-A{lines_after}")
+
+            # Add filename filter
+            if filename_pattern:
+                grep_args.extend(["--include", filename_pattern])
+
+            # Add pattern and path
+            grep_args.append(pattern)
+            grep_args.append(parsed.path)
+
+            result = subprocess.run(grep_args, capture_output=True, text=True)
+
+            # Parse output based on mode
+            if output_mode == OutputMode.FILES_WITH_MATCHES:
+                files = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+                return GrepFilesOutput(files=files, count=len(files))
+
+            elif output_mode == OutputMode.COUNT:
+                total = 0
+                for line in result.stdout.splitlines():
+                    if ":" in line:
+                        try:
+                            count = int(line.split(":")[-1])
+                            total += count
+                        except ValueError:
+                            continue
+                return GrepCountOutput(total_matches=total)
+
+            else:  # CONTENT mode
+                matches = []
+                lines = result.stdout.splitlines()
+                i = 0
+                while i < len(lines):
+                    line = lines[i]
+                    if not line:
+                        i += 1
+                        continue
+
+                    # Parse grep output: filename:line_number:content
+                    if ":" in line:
+                        parts = line.split(":", 2)
+                        if len(parts) >= 3:
+                            filename = parts[0]
+                            try:
+                                line_num = int(parts[1]) if show_line_numbers else None
+                                content = parts[2]
+
+                                # Collect context (simplistic - grep handles this)
+                                match = GrepMatch(
+                                    file=filename,
+                                    line_number=line_num,
+                                    line=content,
+                                    before_context=None,
+                                    after_context=None,
+                                )
+                                matches.append(match)
+
+                                if limit and len(matches) >= limit:
+                                    break
+                            except ValueError:
+                                pass
+                    i += 1
+
+                return GrepContentOutput(matches=matches, total_matches=len(matches))
+
+        else:
+            raise NotImplementedError("Grep for remote filesystems is not yet implemented.")
+
+    async def search(
+        self,
+        terms: str,
+        path_url: str,
+        limit: int = 10,
+    ) -> SearchOutput:
+        """Search documents using BM25 full-text search.
+
+        Instructions:
+        1. Craft queries with actual terms/keywords you've seen in documents
+        2. Include synonyms and variations (e.g., "authenticate login session")
+        3. Mix general concepts with specific names (classes, functions, terms)
+        4. Results ranked by relevance score (higher = more relevant)
+        5. Searches entire document content (whole files)
+        6. path_url MUST be an absolute URL within the environment root
+
+        Parameters
+        ----------
+        terms : str
+            Search query (natural language keywords)
+        path_url : str
+            Absolute URL to search
+        limit : int
+            Max results (default: 10)
+
+        Returns
+        -------
+        SearchOutput
+            Search results ranked by BM25 score
+
+        Raises
+        ------
+        RuntimeError
+            If no search index exists
+        """
+        raise NotImplementedError("Search is not implemented yet")

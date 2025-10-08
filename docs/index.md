@@ -142,13 +142,14 @@ You can launch browsing sessions with ToolFront's Python SDK, or build your own 
     }
     ```
 
-ToolFront's comes with six core tools your agents can use to interact with environments:
+ToolFront comes with six core tools your agents can use to interact with environments:
 
 - :material-play:{ .middle } `run_command` - Execute commands defined in markdown headers
-- :material-eye:{ .middle } `read` - Get the content of a specific page or file
-- :material-regex:{ .middle } `glob` - List files matching a pattern
+- :material-eye:{ .middle } `read` - Read the content of a specific file
 - :material-file-tree:{ .middle } `tree` - View directory structure
-- :material-magnify:{ .middle } `search` - Find relevant documents or lines[^1]
+- :material-folder-search:{ .middle } `glob` - List files matching a glob pattern
+- :material-regex:{ .middle } `grep` - Search files using regex patterns
+- :material-magnify:{ .middle } `search` - Find relevant documents using BM25 full-text search[^1]
 
 [^1]: `search` requires indexing environment files.
 

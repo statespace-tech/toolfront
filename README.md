@@ -100,9 +100,10 @@ ToolFront's comes with six core tools your agents can use to interact with envir
 - **`read`** - Get the content of a specific page or file
 - **`glob`** - List files matching a pattern
 - **`tree`** - View directory structure
-- **`search`** - Find relevant documents or lines[^1]
+- **`grep`** - Search files using regex patterns 
+- **`search`** - Find relevant documents or lines*
 
-[^1]: `search` requires indexing environment files.
+*requires indexing environment files.
 
 ## ToolFront Cloud
 
