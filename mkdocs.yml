@@ -9,7 +9,7 @@ theme:
   custom_dir: docs/overrides
   icon:
     repo: fontawesome/brands/git-alt
-  logo: assets/img/logo.svg
+  logo: assets/img/logo_bw.svg
   favicon: assets/img/favicon.png
   palette:
     - scheme: default

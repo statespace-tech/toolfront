@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/statespace-ai/toolfront">
-    <img src="https://raw.githubusercontent.com/statespace-ai/toolfront/main/img/logo.png" width="150" alt="ToolFront Logo">
+    <img src="https://raw.githubusercontent.com/statespace-ai/toolfront/main/docs/assets/img/logo.svg" width="150" alt="ToolFront Logo">
   </a>
 </p>
 
@@ -38,12 +38,13 @@ ToolFront helps you build and deploy environments for AI agents. Think of enviro
 ```markdown
 environment
 ├── index.md
-├── page/
-│   ├── cli.py
-│   └── index.md
+├── pages/
+│   ├── database.md
+│   ├── document.md
+│   └── api.md
 └── data/
-    ├── sample.txt
-    └── data.csv
+    ├── receipt_20240115_001.txt
+    └── receipt_20240118_002.txt
 ```
 
 To add actions to an environment, simply define commands in any markdown header. As agents browse files, they will discover these tools and learn how to use them with the `--help` flag.
@@ -93,16 +94,15 @@ print(answer)
 }
 ```
 
-ToolFront comes with six core tools* your agents can use to interact with environments:
+ToolFront's comes with six core tools your agents can use to interact with environments:
 
 - **`run_command`** - Execute commands defined in markdown headers
 - **`read`** - Get the content of a specific page or file
 - **`glob`** - List files matching a pattern
 - **`tree`** - View directory structure
-- **`grep`*** - Find relevant lines that match a regular expression
-- **`search`*** - Find relevant documents containing a list of terms
+- **`search`** - Find relevant documents or lines[^1]
 
-\* *`grep` and `search` require indexing environments.*
+[^1]: `search` requires indexing environment files.
 
 ## ToolFront Cloud
 
@@ -115,14 +115,21 @@ toolfront deploy ./path/to/environment --api-key "my-api-key"
 Would give you a secure environment URL your agents can browse.
 
 ```python
-from toolfront import Browser
-
-browser = Browser(params={"TOOLFRONT_API_KEY": "my-api-key"})
-
 answer = browser.ask(..., url="https://cloud.toolfront.ai/user/environment")
 ```
 
-Environments deployed to **ToolFront Cloud** are automatically indexed and get access to `grep` and `search` tools.
+Environments deployed with **ToolFront Cloud** are automatically indexed and get access to the powerful `search` tool.
+
+```
+Let me search the environment for documents relevant to "ticket pricing API"...
+
+Found 3 relevant pages:
+  - ./api/pricing.md (highly relevant)
+  - ./guides/analytics.md (relevant)
+  - ./examples/queries.md (somewhat relevant)
+
+I'll start by reading ./api/pricing.md...
+```
 
 **ToolFront Cloud** is currently in open beta. To request access, join our [Discord](https://discord.gg/rRyM7zkZTf) or email `esteban[at]kruskal[dot]ai`.
 
