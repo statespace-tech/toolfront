@@ -56,63 +56,62 @@ To add actions to an environment, simply define commands in any markdown header.
 
 === "Landing Page"
     ```markdown title="index.md"
-    # Sales Analytics Environment
+    ---
+    tools:
+      - [date, +%Y-%m-%d]
 
-    You are a business analyst at an e-commerce company.
-    Answer questions about company sales data and customer activity.
-    Navigate to different pages to access various data sources.
+    ---
 
-    - Go to [database](./pages/database.md) to query sales transactions
-    - Go to [Documents](./pages/document.md) to read customer receipts
-    - Go to [API](./pages/api.md) to fetch real-time pricing data
+    # Landing Page
+
+    Your landing page sets global instructions and tools for agents.
+    Add links to specialized pages (e.g., `./pages`) for different workflows.
+    Define tools like `date` that work everywhere.
     ```
 
-=== "Text-to-SQL Page"
+=== "Text-to-SQL"
     ```markdown title="database.md"
     ---
     tools:
-      - [toolfront, database, list-tables]
-      - [toolfront, database, inspect-table]
-      - [toolfront, database, query]
+      - [toolfront, database]
 
     ---
 
     # Database Page
 
-    Use ToolFront's built-in commands to explore tables and run SQL queries:
-    - `toolfront database list-tables` shows available tables
-    - `toolfront database inspect-table` displays a table's schema
-    - `toolfront database query` runs SQL queries on the data
+    Use ToolFront's `database` CLI for text-to-SQL workflows.
+    Agents can call subcommands like `list-tables`, `inspect-table`, and `query`,
+    passing arguments as needed.
     ```
 
-=== "Document RAG Page"
+=== "Document RAG"
     ```markdown title="document.md"
+    ---
+    tools:
+      - [python, extract_totals.py]
+
+    ---
+
     # Documents Page
 
-    Read customer receipts stored as plain text files in `../data/`.
-    Filenames use timestamped IDs (e.g., `receipt_20240115_001.txt`).
-
-    - `receipt_20240115_001.txt` contains a January 15th transaction
-    - `receipt_20240118_002.txt` contains a January 18th transaction
-    - Files include customer info, line items, and payment details
+    Agents use built-in tools like `read`, `glob`, and `grep` to search files.
+    Point to document directories like `../data/` where files are stored.
+    Add custom commands (e.g., `extract_totals.py`) for structured extraction.
     ```
 
-=== "API Integration Page"
+=== "API Integration"
     ```markdown title="api.md"
     ---
     tools:
       - [curl, -X, GET, "https://api.products.com/v1/pricing"]
-      - [curl, -X, GET, "https://api.products.com/v1/inventory"]
     
     ---
 
     # API Page
 
-    Fetch real-time pricing and inventory from the product management API.
-    Use the provided curl commands to retrieve JSON data.
-
-    - `curl -X GET https://api.products.com/v1/pricing` gets current prices
-    - `curl -X GET https://api.products.com/v1/inventory` checks stock levels
+    Define HTTP endpoints as executable tools using `curl` commands.
+    Add headers like `-H "Authorization: Bearer $TOKEN"` for authenticated APIs.
+    Agents can fetch live data by calling these commands with parameters.
     ```
 
 You can launch browsing sessions with ToolFront's Python SDK, or build your own browsing agent with the MCP. Browsing is always powered by your own models.
