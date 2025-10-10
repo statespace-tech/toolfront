@@ -1,4 +1,4 @@
-# Browser SDK
+# Python SDK
 
 ::: toolfront.browser.Browser
     options:

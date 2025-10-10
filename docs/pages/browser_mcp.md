@@ -1,4 +1,4 @@
-# Browser SDK
+# Browser MCP
 
 ::: toolfront.cli.mcp.serve
     options:

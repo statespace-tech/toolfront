@@ -1,5 +1,5 @@
 site_name: ToolFront
-site_description: Data Retrieval for AI agents
+site_description: Data Environments for AI agents
 site_url: https://docs.toolfront.ai
 repo_url: https://github.com/statespace-ai/toolfront
 repo_name: statespace-ai/toolfront
@@ -9,8 +9,8 @@ theme:
   custom_dir: docs/overrides
   icon:
     repo: fontawesome/brands/git-alt
-  logo: assets/img/logo_bw.svg
-  favicon: assets/img/favicon.png
+  logo: assets/images/logo_bw.svg
+  favicon: assets/images/favicon.png
   palette:
     - scheme: default
       primary: custom
@@ -25,8 +25,6 @@ theme:
         icon: material/lightbulb
         name: Switch to light mode
   features:
-    # - navigation.expand
-    # - navigation.tabs
     - navigation.sections
     - navigation.expand
     - navigation.tabs.sticky
@@ -44,9 +42,11 @@ theme:
 plugins:
   - search
   - social:
+      cards: true
       cards_layout_options:
         background_color: "#10a2b4"
         color: "#ffffff"
+        logo: docs/assets/images/logo.svg
   - autorefs
   - mkdocstrings:
       handlers:
@@ -78,11 +78,7 @@ nav:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.superfences
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
@@ -98,17 +94,11 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - footnotes
 
-
 extra_css:
   - assets/css/custom.css
-  - https://unpkg.com/aos@2.3.1/dist/aos.css
-  - https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css
 
 extra_javascript:
   - assets/js/gtag-init.js
-  - https://unpkg.com/aos@2.3.1/dist/aos.js
-  - https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js
-  - assets/js/marquee.js
   - assets/js/analytics.js
 
 extra:

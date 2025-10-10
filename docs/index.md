@@ -1,6 +1,5 @@
 ---
-title: "Data Environments for AI Agents"
-description: "Build and deploy data environments your own agents can browse."
+title: "Quickstart"
 ---
 
 <style>
@@ -10,7 +9,7 @@ description: "Build and deploy data environments your own agents can browse."
 
 <p align="center">
   <a href="https://github.com/statespace-ai/toolfront">
-    <img src="assets/img/logo.svg" alt="ToolFront" style="width:20%;">
+    <img src="assets/images/logo.svg" alt="ToolFront" style="width:20%;">
   </a>
 </p>
 <p align="center">

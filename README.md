@@ -1,19 +1,27 @@
 <p align="center">
   <a href="https://github.com/statespace-ai/toolfront">
-    <img src="https://raw.githubusercontent.com/statespace-ai/toolfront/main/docs/assets/img/logo.svg" width="150" alt="ToolFront Logo">
+    <img src="https://raw.githubusercontent.com/statespace-ai/toolfront/main/docs/assets/images/logo.svg" width="150" alt="ToolFront Logo">
   </a>
 </p>
 
-<div align="center">
+<p align="center">
+    <strong><em>Data environments for AI agents</em></strong>
+</p>
 
-*Data environments for AI agents*
-
-[![Test Suite](https://github.com/statespace-ai/toolfront/actions/workflows/test.yml/badge.svg)](https://github.com/statespace-ai/toolfront/actions/workflows/test.yml)
-[![PyPI package](https://img.shields.io/pypi/v/toolfront?color=%2334D058&label=pypi%20package)](https://pypi.org/project/toolfront/)
-[![Discord](https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/rRyM7zkZTf)
-[![X](https://img.shields.io/badge/ToolFront-black?style=flat-square&logo=x&logoColor=white)](https://x.com/statespace_ai)
-
-</div>
+<p align="center">
+<a href="https://github.com/statespace-ai/toolfront/actions/workflows/test.yml" target="_blank">
+    <img src="https://github.com/statespace-ai/toolfront/actions/workflows/test.yml/badge.svg" alt="Test Suite">
+</a>
+<a href="https://pypi.org/project/toolfront/" target="_blank">
+    <img src="https://img.shields.io/pypi/v/toolfront?color=%2334D058&label=pypi%20package" alt="PyPI package">
+</a>
+<a href="https://discord.gg/rRyM7zkZTf" target="_blank">
+    <img src="https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&style=flat-square" alt="Discord">
+</a>
+<a href="https://x.com/statespace_ai" target="_blank">
+    <img src="https://img.shields.io/badge/Statespace-black?style=flat-square&logo=x&logoColor=white" alt="X">
+</a>
+</p>
 
 ---
 
@@ -22,16 +30,6 @@
 **Source code: [https://github.com/statespace-ai/toolfront](https://github.com/statespace-ai/toolfront)**
 
 ---
-
-## Installation
-
-Install `toolfront` with `pip` or your favorite PyPI package manager.
-
-```bash
-pip install toolfront
-```
-
-## Quickstart
 
 ToolFront helps you build and deploy environments for AI agents. Think of environments as interactive directories that agents can explore and take actions in.
 
@@ -49,26 +47,81 @@ environment
 
 To add actions to an environment, simply define commands in any markdown header. As agents browse files, they will discover these tools and learn how to use them with the `--help` flag.
 
+**Landing Page**
+
 ```markdown
+# index.md
+
 ---
 tools:
-- [python3, cli.py]
-- [curl, -X, GET, https://api.example.com/data]
+  - [date, +%Y-%m-%d]
 
 ---
 
-# My environment page
+# Landing Page
 
-Add [links](./page_1) to tell your agents what pages they should check out.
+Your landing page sets global instructions and tools for agents.
+Add links to specialized pages (e.g., `./pages`) for different workflows.
+Define tools like `date` that work everywhere.
+```
 
-Agents can call any command defined in markdown headers.
-- `python3 cli.py` executes a python script
-- `curl -X GET https://api.example.com/data` calls an API
+**Text-to-SQL**
+
+```markdown
+# database.md
+
+---
+tools:
+  - [toolfront, database]
+
+---
+
+# Database Page
+
+Use ToolFront's `database` CLI for text-to-SQL workflows.
+Agents can call subcommands like `list-tables`, `inspect-table`, and `query`,
+passing arguments as needed.
+```
+
+**Document RAG**
+
+```markdown
+# document.md
+
+---
+tools:
+  - [python, extract_totals.py]
+
+---
+
+# Documents Page
+
+Agents use built-in tools like `read`, `glob`, and `grep` to search files.
+Point to document directories like `../data/` where files are stored.
+Add custom commands (e.g., `extract_totals.py`) for structured extraction.
+```
+
+**API Integration**
+
+```markdown
+# api.md
+
+---
+tools:
+  - [curl, -X, GET, "https://api.products.com/v1/pricing"]
+
+---
+
+# API Page
+
+Define HTTP endpoints as executable tools using `curl` commands.
+Add headers like `-H "Authorization: Bearer $TOKEN"` for authenticated APIs.
+Agents can fetch live data by calling these commands with parameters.
 ```
 
 You can launch browsing sessions with ToolFront's Python SDK, or build your own browsing agent with the MCP. Browsing is always powered by your own models.
 
-### Using the SDK
+**SDK**
 
 ```python
 from toolfront import Browser
@@ -81,7 +134,7 @@ answer = browser.ask("What's our average ticket price?", url=url)
 print(answer)
 ```
 
-### Using MCP
+**MCP**
 
 ```json
 {
@@ -94,18 +147,24 @@ print(answer)
 }
 ```
 
-ToolFront's comes with six core tools your agents can use to interact with environments:
+ToolFront comes with six core tools your agents can use to interact with environments:
 
 - **`run_command`** - Execute commands defined in markdown headers
-- **`read`** - Get the content of a specific page or file
-- **`glob`** - List files matching a pattern
+- **`read`** - Read the content of a specific file
 - **`tree`** - View directory structure
-- **`grep`** - Search files using regex patterns 
-- **`search`** - Find relevant documents or lines*
+- **`glob`** - List files matching a glob pattern
+- **`grep`** - Search files using regex patterns
+- **`search`** - Find relevant documents using BM25 full-text search*
 
-*requires indexing environment files.
+*`search` requires indexing environment files.
 
-## ToolFront Cloud
+## Installation
+
+```bash
+pip install toolfront
+```
+
+## Deploy with ToolFront Cloud
 
 Instantly deploy your environments with **ToolFront Cloud**.
 

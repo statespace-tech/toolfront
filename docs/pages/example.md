@@ -350,7 +350,7 @@ Lastly, add sample receipts under `receipts/` to complete the environment.
 
 ## 9. Query the Environment
 
-Initialize a browser and ask questions. The agent will navigate to the appropriate pages and uses the available tools to answer questiosn in the format you specify.
+Initialize a browser and ask questions. The agent will navigate to the appropriate pages and uses the available tools to answer questions in the format you specify.
 
 ```python
 from toolfront import Browser
@@ -371,7 +371,7 @@ answer = browser.ask(
 
 # Get a list of floats as response
 products = browser.ask(
-    "What is the tax amount paid by our latest customers?"
+    "What is the tax amount paid by our latest customers?",
     url=url,
     output_type=list[float]
 )
