@@ -4,24 +4,18 @@
   </a>
 </p>
 
-<p align="center">
-    <strong><em>Data environments for AI agents</em></strong>
-</p>
+<div align="center">
 
-<p align="center">
-<a href="https://github.com/statespace-ai/toolfront/actions/workflows/test.yml" target="_blank">
-    <img src="https://github.com/statespace-ai/toolfront/actions/workflows/test.yml/badge.svg" alt="Test Suite">
-</a>
-<a href="https://pypi.org/project/toolfront/" target="_blank">
-    <img src="https://img.shields.io/pypi/v/toolfront?color=%2334D058&label=pypi%20package" alt="PyPI package">
-</a>
-<a href="https://discord.gg/rRyM7zkZTf" target="_blank">
-    <img src="https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&style=flat-square" alt="Discord">
-</a>
-<a href="https://x.com/statespace_ai" target="_blank">
-    <img src="https://img.shields.io/badge/Statespace-black?style=flat-square&logo=x&logoColor=white" alt="X">
-</a>
-</p>
+# ToolFront
+
+*Data environments for AI agents*
+
+[![Test Suite](https://github.com/statespace-ai/toolfront/actions/workflows/test.yml/badge.svg)](https://github.com/statespace-ai/toolfront/actions/workflows/test.yml)
+[![PyPI package](https://img.shields.io/pypi/v/toolfront?color=%2334D058&label=pypi%20package)](https://pypi.org/project/toolfront/)
+[![Discord](https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/rRyM7zkZTf)
+[![X](https://img.shields.io/badge/ToolFront-black?style=flat-square&logo=x&logoColor=white)](https://x.com/statespace_ai)
+
+</div>
 
 ---
 
@@ -160,8 +154,24 @@ ToolFront comes with six core tools your agents can use to interact with environ
 
 ## Installation
 
+To get started, install `toolfront` using your favorite PyPI package manager.
+
+**pip**
+
 ```bash
 pip install toolfront
+```
+
+**uv**
+
+```bash
+uv add toolfront
+```
+
+**poetry**
+
+```bash
+poetry add toolfront
 ```
 
 ## Deploy with ToolFront Cloud
