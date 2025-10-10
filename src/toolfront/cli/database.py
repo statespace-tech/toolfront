@@ -76,26 +76,27 @@ def is_read_only_query(sql) -> bool:
 
 
 @click.group()
-def database():
+@click.argument("db", type=click.STRING, required=True)
+@click.pass_context
+def database(ctx, db):
     """Database commands for ToolFront CLI."""
-    pass
+    ctx.ensure_object(dict)
+    ctx.obj["db"] = db
 
 
 @database.command()
-@click.argument("db", type=click.STRING, required=True)
-def list_tables(db) -> None:
+@click.pass_context
+def list_tables(ctx) -> None:
     """List all tables available in the database.
-
-    Arguments:
-      DB  Database connection string or environment variable name
 
     Notes:
       - Use this to discover what tables exist in the database
       - For multi-database systems, tables are shown as: catalog.database.table
 
     Example:
-      toolfront database list-tables postgres://user:password@localhost:5432/mydb
+      toolfront database $POSTGRES_URL list-tables
     """
+    db = ctx.obj["db"]
     click.echo(os.environ.get(db, db))
     connection = create_connection(db)
 
@@ -122,13 +123,12 @@ def list_tables(db) -> None:
 
 
 @database.command()
-@click.argument("db", type=click.STRING, required=True)
 @click.argument("path", type=click.STRING, required=True)
-def inspect_table(db, path) -> None:
+@click.pass_context
+def inspect_table(ctx, path) -> None:
     """Inspect table schema and view sample data.
 
     Arguments:
-      DB    Database connection string or environment variable name
       PATH  Table path (format: [catalog.][database.]table)
 
     Notes:
@@ -137,8 +137,9 @@ def inspect_table(db, path) -> None:
       - Use this to discover what data is available in each table
 
     Example:
-      uvx toolfront database inspect-table postgres://user:password@localhost:5432/mydb mydb.mytable
+      toolfront database $POSTGRES_URL inspect-table mydb.mytable
     """
+    db = ctx.obj["db"]
 
     parts = path.split(".")
     if not 1 <= len(parts) <= 3:
@@ -161,13 +162,12 @@ def inspect_table(db, path) -> None:
 
 
 @database.command()
-@click.argument("db", type=click.STRING, required=True)
 @click.argument("sql", type=click.STRING, required=True)
-def query(db, sql) -> None:
+@click.pass_context
+def query(ctx, sql) -> None:
     """Execute read-only SQL queries against the database.
 
     Arguments:
-      DB   Database connection string or environment variable name
       SQL  SQL query to execute (must be read-only)
 
     Notes:
@@ -178,8 +178,9 @@ def query(db, sql) -> None:
       - If query fails, inspect the table schema and retry with corrections
 
     Example:
-      toolfront database query postgres://user:password@localhost:5432/mydb "SELECT * FROM mytable"
+      toolfront database $POSTGRES_URL query "SELECT * FROM mytable"
     """
+    db = ctx.obj["db"]
 
     if not is_read_only_query(sql):
         raise click.ClickException("SQL query must be read-only.")
