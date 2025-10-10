@@ -2,20 +2,17 @@
 title: "Quickstart"
 ---
 
-<!-- <style>
-.md-content .md-typeset h1 { display: none; }
-</style> -->
-
-
 <p align="center">
   <a href="https://github.com/statespace-ai/toolfront">
     <img src="assets/images/logo.svg" alt="ToolFront" style="width:20%;">
   </a>
 </p>
 <div align="center">
-    <h1><b>ToolFront</b></h1>
-    <h2><em>Data environments for AI agents</em></h2>
+    <h1 style="font-weight: 800;"><b>ToolFront</b></h1>
 </div>
+<p align="center">
+    <em>Data environments for AI agents</em>
+</p>
 <p align="center">
 <a href="https://github.com/statespace-ai/toolfront/actions/workflows/test.yml" target="_blank">
     <img src="https://github.com/statespace-ai/toolfront/actions/workflows/test.yml/badge.svg" alt="Test Suite">
