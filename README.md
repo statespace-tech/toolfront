@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/statespace-ai/toolfront">
-    <img src="https://raw.githubusercontent.com/statespace-ai/toolfront/main/docs/assets/images/logo.svg" width="150" alt="ToolFront Logo">
+    <img src="https://raw.githubusercontent.com/statespace-ai/toolfront/main/docs/assets/images/logo.png" width="150" alt="ToolFront Logo">
   </a>
 </p>
 
@@ -27,19 +27,21 @@
 
 ToolFront helps you build and deploy environments for AI agents. Think of environments as interactive directories that agents can explore and take actions in.
 
-```markdown
-environment
+```bash
+environment/
 ├── index.md
 ├── pages/
-│   ├── database.md
+│   ├── text2sql.md
 │   ├── document.md
 │   └── api.md
+├── tools/
+│   └─ extract.py
 └── data/
-    ├── receipt_20240115_001.txt
-    └── receipt_20240118_002.txt
+    ├── invoices/
+    └── logs/
 ```
 
-To add actions to an environment, simply define commands in any markdown header. As agents browse files, they will discover these tools and learn how to use them with the `--help` flag.
+Agents can run commands listed in markdown headers. As they browse files, they will discover these tools and learn how to use them with the `--help` flag.
 
 **Landing Page**
 
@@ -49,53 +51,57 @@ To add actions to an environment, simply define commands in any markdown header.
 ---
 tools:
   - [date, +%Y-%m-%d]
-
 ---
 
 # Landing Page
 
-Your landing page sets global instructions and tools for agents.
-Add links to specialized pages (e.g., `./pages`) for different workflows.
-Define tools like `date` that work everywhere.
+Add instructions and tools to markdown pages.
+- Agents can only run commands in headers
+- Links to [pages](./pages) help with navigation
 ```
 
-**Text-to-SQL**
+<details>
+<summary><b>Text-to-SQL</b></summary>
 
 ```markdown
-# database.md
+# text2sql.md
 
 ---
 tools:
-  - [toolfront, database]
-
+  - [toolfront, database, $POSTGRES_URL]
 ---
 
-# Database Page
+# Text-to-SQL
 
-Use ToolFront's `database` CLI for text-to-SQL workflows.
-Agents can call subcommands like `list-tables`, `inspect-table`, and `query`,
-passing arguments as needed.
+Build text-to-SQL workflows with the `toolfront database` CLI.
+- Agents may run `list-tables`, `inspect-table`, and `query` subcommands
+- All queries are restricted to read-only operations
 ```
 
-**Document RAG**
+</details>
+
+<details>
+<summary><b>Document RAG</b></summary>
 
 ```markdown
 # document.md
 
 ---
 tools:
-  - [python, extract_totals.py]
-
+  - [python, tools/extract.py]
 ---
 
-# Documents Page
+# Document RAG
 
-Agents use built-in tools like `read`, `glob`, and `grep` to search files.
-Point to document directories like `../data/` where files are stored.
-Add custom commands (e.g., `extract_totals.py`) for structured extraction.
+Link to [directories](./data) where documents are stored.
+- Agents use built-in tools like `read`, `glob`, and `grep` to search files
+- Custom tools can be added for data extraction and processing
 ```
 
-**API Integration**
+</details>
+
+<details>
+<summary><b>API Integration</b></summary>
 
 ```markdown
 # api.md
@@ -103,15 +109,16 @@ Add custom commands (e.g., `extract_totals.py`) for structured extraction.
 ---
 tools:
   - [curl, -X, GET, "https://api.products.com/v1/pricing"]
-
 ---
 
-# API Page
+# API Integration
 
-Define HTTP endpoints as executable tools using `curl` commands.
-Add headers like `-H "Authorization: Bearer $TOKEN"` for authenticated APIs.
-Agents can fetch live data by calling these commands with parameters.
+Define API endpoints as executable tools using `curl` commands.
+- Agents can call external APIs to fetch live data
+- Include environment `$VARIABLES` for authentication
 ```
+
+</details>
 
 You can launch browsing sessions with ToolFront's Python SDK, or build your own browsing agent with the MCP. Browsing is always powered by your own models.
 
@@ -128,7 +135,8 @@ answer = browser.ask("What's our average ticket price?", url=url)
 print(answer)
 ```
 
-**MCP**
+<details>
+<summary><b>MCP</b></summary>
 
 ```json
 {
@@ -140,6 +148,8 @@ print(answer)
   }
 }
 ```
+
+</details>
 
 ToolFront comes with six core tools your agents can use to interact with environments:
 
@@ -156,23 +166,10 @@ ToolFront comes with six core tools your agents can use to interact with environ
 
 To get started, install `toolfront` using your favorite PyPI package manager.
 
-**pip**
-
 ```bash
 pip install toolfront
 ```
 
-**uv**
-
-```bash
-uv add toolfront
-```
-
-**poetry**
-
-```bash
-poetry add toolfront
-```
 
 ## Deploy with ToolFront Cloud
 

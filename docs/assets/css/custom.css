@@ -15,7 +15,7 @@
 }
 
 :root {
-  --md-admonition-icon--toolfront: url(../images/logo.svg);
+  --md-admonition-icon--toolfront: url(../images/logo_bw.svg);
 }
 .md-typeset .admonition.toolfront,
 .md-typeset details.toolfront {

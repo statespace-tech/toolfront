@@ -46,7 +46,7 @@ plugins:
       cards_layout_options:
         background_color: "#10a2b4"
         color: "#ffffff"
-        logo: docs/assets/images/logo.svg
+        logo: docs/assets/images/logo_bw.png
   - autorefs
   - mkdocstrings:
       handlers:
