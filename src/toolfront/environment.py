@@ -45,7 +45,7 @@ def get_frontmatter(markdown: str) -> dict[str, Any]:
     Parameters
     ----------
     markdown : str
-        Raw markdown content with optional frontmatter
+        Raw Markdown content with optional frontmatter
 
     Returns
     -------
@@ -270,11 +270,11 @@ class Environment(BaseModel):
 
         return parsed
 
-    async def run(self, command: list[str], page_url: str) -> CommandOutput:
-        """Execute a command from a markdown page's frontmatter.
+    async def execute(self, command: list[str], page_url: str) -> CommandOutput:
+        """Execute a command from a Markdown page's frontmatter.
 
         Instructions:
-        1. First read the markdown page to see available commands in its frontmatter
+        1. First read the Markdown page to see available commands in its frontmatter
         2. Commands must exactly match those listed in the page's frontmatter
         3. If you don't know what a command does or what arguments it accepts, run it with --help flag first (e.g., ['command', '--help'])
         4. Use the help output to understand the command's usage before running it with actual arguments
@@ -285,7 +285,7 @@ class Environment(BaseModel):
         command : list[str]
             Command and its arguments as a list (e.g., ['python', 'script.py', '--arg', 'value'])
         page_url : str
-            Absolute file URL to the markdown (.md) page containing the command in its frontmatter
+            Absolute file URL to the Markdown (.md) page containing the command in its frontmatter
 
         Returns
         -------
@@ -300,7 +300,7 @@ class Environment(BaseModel):
         parsed = self._validate_url(page_url, require_type="file")
 
         if not parsed.path.endswith(".md"):
-            raise ValueError(f"page_url must point to a markdown (.md) file: {urlunparse(parsed)}")
+            raise ValueError(f"page_url must point to a Markdown (.md) file: {urlunparse(parsed)}")
 
         # Parse frontmatter and validate command
         frontmatter = get_frontmatter(self._fs.read_text(parsed.path))
@@ -415,7 +415,7 @@ class Environment(BaseModel):
 
         Examples:
         - Find Python files locally: path_url='file:///path/to/project', pattern='**/*.py'
-        - Find markdown in remote bucket: path_url='s3://bucket/docs', pattern='**/*.md'
+        - Find Markdown in remote bucket: path_url='s3://bucket/docs', pattern='**/*.md'
         - Find text files via HTTP: path_url='https://example.com/files', pattern='*.txt'
 
         Parameters
