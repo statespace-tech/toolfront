@@ -31,16 +31,12 @@ def mcp():
 def serve(url, params, host, port, transport, env) -> None:
     """Start an MCP server for interacting with environments.
 
-    ToolFront's Model Context Protocol (MCP) server exposes environment browsing tools for use with custom AI agents. The server provides tools for reading files, running commands, and searching content.
-
-    Usage: `toolfront mcp URL [OPTIONS]`
-
     Parameters
     ----------
     url : str
         Environment URL or file path (file://, https://, s3://, etc.)
     params : tuple[str, ...]
-        Authentication parameters for filesystem protocols: KEY=VALUE (can be used multiple times)
+        Authentication parameters for filesystem protocols (KEY=VALUE, can be repeated)
     host : str
         Server host address (default: 127.0.0.1)
     port : int
@@ -48,39 +44,7 @@ def serve(url, params, host, port, transport, env) -> None:
     transport : str
         MCP transport mode: stdio, streamable-http, or sse (default: stdio)
     env : str
-        Environment variables to pass to the server: KEY=VALUE
-
-    Example
-    -------
-    Start with stdio transport for local environments:
-
-    ```bash
-    toolfront mcp file:///path/to/mysite
-    ```
-
-    Example
-    -------
-    Start with HTTP transport for remote access:
-
-    ```bash
-    toolfront mcp file:///path/to/mysite --transport streamable-http --port 8080
-    ```
-
-    Example
-    -------
-    Connect to S3 with authentication:
-
-    ```bash
-    toolfront mcp s3://bucket/mysite --params AWS_ACCESS_KEY_ID=xxx --params AWS_SECRET_ACCESS_KEY=yyy
-    ```
-
-    Example
-    -------
-    Connect to GitHub repository:
-
-    ```bash
-    toolfront mcp github://org/repo/mysite --params GH_TOKEN=xxx
-    ```
+        Environment variables to pass to the server (KEY=VALUE)
     """
     click.echo("Starting MCP server")
 
@@ -88,7 +52,7 @@ def serve(url, params, host, port, transport, env) -> None:
 
     mcp = FastMCP("ToolFront MCP server", host=host, port=port)
 
-    mcp.add_tool(environment.run_command)
+    mcp.add_tool(environment.run)
     mcp.add_tool(environment.read)
     mcp.add_tool(environment.tree)
     mcp.add_tool(environment.glob)
