@@ -52,7 +52,7 @@ def serve(url, params, host, port, transport, env) -> None:
 
     mcp = FastMCP("ToolFront MCP server", host=host, port=port)
 
-    mcp.add_tool(environment.run)
+    mcp.add_tool(environment.execute)
     mcp.add_tool(environment.read)
     mcp.add_tool(environment.tree)
     mcp.add_tool(environment.glob)
