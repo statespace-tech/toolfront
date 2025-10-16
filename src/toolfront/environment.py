@@ -161,8 +161,6 @@ class Environment(BaseModel):
         Authentication parameters for filesystem protocols
     env : dict[str, str] | None
         Environment variables for command execution
-    home_page : str | None
-        Home page URL (file if URL is a file, else index.md in directory)
     """
 
     url: str = Field(..., description="Root URL for the environment")
@@ -170,11 +168,15 @@ class Environment(BaseModel):
         default=None, description="Filesystem authentication parameters", exclude=True
     )
     env: dict[str, str] | None = Field(default=None, description="Environment variables for commands", exclude=True)
-    home_page: str | None = Field(default=None, description="Home page for the environment")
 
     _fs: Any = PrivateAttr(None)
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    def __init__(
+        self, url: str, params: dict[str, str] | None = None, env: dict[str, str] | None = None, **kwargs: Any
+    ) -> None:
+        super().__init__(url=url, params=params, env=env, **kwargs)
 
     @field_validator("params", mode="before")
     @classmethod
@@ -206,17 +208,8 @@ class Environment(BaseModel):
         self._fs = filesystem(parsed.scheme, **kwargs)
 
         # Determine home page and normalize URL
-        if self._fs.isfile(parsed.path):
-            self.home_page = url
-            parent_path = parsed.path.rsplit("/", 1)[0] if "/" in parsed.path else ""
-            self.url = urlunparse((parsed.scheme, parsed.netloc, parent_path, "", "", ""))
-        elif self._fs.isdir(parsed.path):
-            self.url = url
-            home_page = f"{parsed.path.rstrip('/')}/index.md"
-            if self._fs.isfile(home_page):
-                self.home_page = home_page
-        else:
-            raise ValueError(f"URL does not point to a valid file or directory: {url}")
+        parent_path = parsed.path.rsplit("/", 1)[0] if "/" in parsed.path else ""
+        self.url = urlunparse((parsed.scheme, parsed.netloc, parent_path, "", "", ""))
 
         return self
 
@@ -671,7 +664,7 @@ class Environment(BaseModel):
         )
 
         instructions_template = files("toolfront.instructions").joinpath("ask.txt").read_text()
-        instructions = instructions_template.format(self.env, self.url, self.home_page)
+        instructions = instructions_template.format(self.env, self.url)
 
         history_processor_ = history_processor(context_window=context_window)
 
