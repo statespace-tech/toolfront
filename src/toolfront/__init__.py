@@ -1,3 +1,3 @@
-from .browser import Browser
+from .environment import Environment
 
-__all__ = ["Browser"]
+__all__ = ["Environment"]
