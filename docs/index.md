@@ -34,7 +34,7 @@ title: "Quickstart"
 
 ---
 
-ToolFront helps you organize AI workflows into independent tasks with **environments**. 
+ToolFront helps you organize AI workflows into independent tasks with **data environments**. 
 
 === ":material-home:{ .middle } &nbsp; Landing Page"
 

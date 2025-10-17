@@ -35,7 +35,7 @@ pip install toolfront
 
 ## Quickstart
 
-ToolFront helps you organize AI workflows into independent tasks with **environments**.
+ToolFront helps you organize AI workflows into independent tasks with **data environments**.
 
 ```bash
 environment/
