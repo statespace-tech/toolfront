@@ -1,6 +1,6 @@
 [project]
 name = "toolfront"
-version = "0.3.2"
+version = "0.3.3"
 description = "ToolFront helps you organize AI workflows into independent tasks with environments."
 readme = "README.md"
 authors = [
