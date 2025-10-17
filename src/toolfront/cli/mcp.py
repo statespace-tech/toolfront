@@ -46,7 +46,10 @@ def serve(url, param, host, port, transport, env) -> None:
     env : str
         Environment variables to pass to the server (KEY=VALUE)
     """
-    click.echo("Starting MCP server")
+    if transport == "stdio":
+        click.echo("Starting MCP server", err=True)
+    else:
+        click.echo("Starting MCP server")
 
     environment = Environment(url=url, param=param, env=env)
 
@@ -58,7 +61,10 @@ def serve(url, param, host, port, transport, env) -> None:
     mcp.add_tool(environment.glob)
     mcp.add_tool(environment.grep)
 
-    click.echo("MCP server started successfully")
+    if transport == "stdio":
+        click.echo("MCP server started successfully", err=True)
+    else:
+        click.echo("MCP server started successfully")
     mcp.run(transport=transport)
 
 
