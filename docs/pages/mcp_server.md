@@ -48,7 +48,7 @@ Agents use six core tools to interact with environments:
 
 !!! toolfront "Search Tool"
 
-    Environments deployed with **[ToolFront Cloud](/pages/toolfront_cloud.md)** are automatically indexed and get access to the `search` tool:
+    Environments deployed with **[ToolFront Cloud](toolfront_cloud.md)** are automatically indexed and get access to the `search` tool:
 
     ```
     Let me search the environment for documents relevant to "ticket pricing API"...

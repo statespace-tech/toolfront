@@ -10,7 +10,7 @@ Agents run anywhere: locally, in the cloud, or on edge devices. We recommend sep
 
 **When should I use the Python SDK vs MCP Server?**
 
-Use the **[Python SDK](/pages/python_sdk/)** to quickly build and run Python agents. Use the **[MCP Server](/pages/mcp_server/)** to connect your own agents (like Claude Desktop or Cline) to environments.
+Use the **[Python SDK](python_sdk.md)** to quickly build and run Python agents. Use the **[MCP Server](mcp_server.md)** to connect your own agents (like Claude Desktop or Cline) to environments.
 
 **Can I use ToolFront with any AI model?**
 
@@ -18,7 +18,7 @@ Yes! The Python SDK works with any model through **[Pydantic AI](https://ai.pyda
 
 **How do I deploy environments?**
 
-You can run environments locally, host them on your own infrastructure, or securely deploy them to **[ToolFront Cloud](/pages/toolfront_cloud/)** for remote access.
+You can run environments locally, host them on your own infrastructure, or securely deploy them to **[ToolFront Cloud](toolfront_cloud.md)** for remote access.
 
 **Are my ToolFront Cloud environments private?**
 

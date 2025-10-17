@@ -16,7 +16,7 @@ result = env.run(
 ```
 
 !!! question "How does it work?"
-    The SDK connects local [Pydantic AI](https://ai.pydantic.dev/models/overview/) models to environments through the [MCP server](/pages/mcp_server/).
+    The SDK connects local [Pydantic AI](https://ai.pydantic.dev/models/overview/) models to environments through the [MCP server](mcp_server.md).
 
 --- 
 

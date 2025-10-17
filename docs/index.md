@@ -236,7 +236,7 @@ To get started, install `toolfront` with your favorite PyPI package manager.
 
 !!! toolfront "Deploy with ToolFront Cloud 🔥"
 
-    Instantly deploy your environments with **[ToolFront Cloud](/pages/toolfront_cloud.md)**.
+    Instantly deploy your environments with **[ToolFront Cloud](pages/toolfront_cloud.md)**.
 
     ```bash
     toolfront deploy ./path/environment
