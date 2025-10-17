@@ -25,6 +25,16 @@
 
 ---
 
+## Installation
+
+Install `toolfront` with your favorite PyPI package manager.
+
+```bash
+pip install toolfront
+```
+
+## Quickstart
+
 ToolFront helps you organize AI workflows into independent tasks with **environments**.
 
 ```bash
@@ -41,7 +51,8 @@ environment/
 5 directories, 15 files
 ```
 
-### Landing Page
+<details open>
+<summary><b>Landing Page</b></summary>
 
 Declare task instructions and tools in Markdown files.
 
@@ -59,7 +70,10 @@ tools:
 - Agents learn tools with `--help`
 ```
 
-### Text-to-SQL
+</details>
+
+<details>
+<summary><b>Text-to-SQL</b></summary>
 
 Create text-to-SQL tasks with ToolFront's built-in [database CLI](https://docs.toolfront.ai/pages/database_cli/).
 
@@ -77,7 +91,10 @@ tools:
 - All queries are read-only
 ```
 
-### Document RAG
+</details>
+
+<details>
+<summary><b>Document RAG</b></summary>
 
 Retrieve information from data files like `.txt`, `.csv`, and `.json`.
 
@@ -95,7 +112,10 @@ tools:
 - Use custom tools to process data
 ```
 
-### API Integration
+</details>
+
+<details>
+<summary><b>API Integration</b></summary>
 
 Fetch live data with calls to external APIs.
 
@@ -113,9 +133,12 @@ tools:
 - Agents fetch live external data
 ```
 
+</details>
+
 Agents browse environments to get work done, using tools and following instructions as needed.
 
-### Python SDK
+<details open>
+<summary><b>Python SDK</b></summary>
 
 Run Python agents on environments with the [SDK](https://docs.toolfront.ai/pages/python_sdk/).
 
@@ -127,7 +150,10 @@ env = Environment(url="file:///path/environment")
 response = env.run("What's our average ticket size?", model="openai:gpt-5")
 ```
 
-### MCP Server
+</details>
+
+<details>
+<summary><b>MCP Server</b></summary>
 
 Connect your own agents to environments with the [MCP Server](https://docs.toolfront.ai/pages/mcp_server/).
 
@@ -142,21 +168,7 @@ Connect your own agents to environments with the [MCP Server](https://docs.toolf
 }
 ```
 
-## Installation
-
-To get started, install `toolfront` with your favorite PyPI package manager.
-
-```bash
-pip install toolfront
-```
-
-```bash
-uv add toolfront
-```
-
-```bash
-poetry add toolfront
-```
+</details>
 
 ## Deploy with ToolFront Cloud
 
