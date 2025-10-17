@@ -13,11 +13,11 @@ def mcp():
 @mcp.command()
 @click.argument("url", type=click.STRING, required=True)
 @click.option(
-    "--params",
+    "--param",
     "-p",
     multiple=True,
     default=None,
-    help="Authentication parameters for the filesystem protocol: KEY=VALUE",
+    help="Authentication parameter for the remote environment: KEY=VALUE",
 )
 @click.option("--host", type=click.STRING, default="127.0.0.1", help="Host to run the server on")
 @click.option("--port", type=click.INT, default=8000, help="Port to run the server on")
@@ -28,15 +28,15 @@ def mcp():
     help="Transport mode for MCP server",
 )
 @click.option("--env", type=click.STRING, default=None, help="Environment variables to pass to the server")
-def serve(url, params, host, port, transport, env) -> None:
+def serve(url, param, host, port, transport, env) -> None:
     """Start an MCP server for interacting with environments.
 
     Parameters
     ----------
     url : str
         Environment URL or file path (file://, https://, s3://, etc.)
-    params : tuple[str, ...]
-        Authentication parameters for filesystem protocols (KEY=VALUE, can be repeated)
+    param : tuple[str, ...]
+        Authentication parameters for remote environment (KEY=VALUE, can be repeated)
     host : str
         Server host address (default: 127.0.0.1)
     port : int
@@ -48,7 +48,7 @@ def serve(url, params, host, port, transport, env) -> None:
     """
     click.echo("Starting MCP server")
 
-    environment = Environment(url=url, params=params, env=env)
+    environment = Environment(url=url, param=param, env=env)
 
     mcp = FastMCP("ToolFront MCP server", host=host, port=port)
 

@@ -1,28 +1,195 @@
 # Python SDK
 
-ToolFront SDK comes with a simple `Environment` class to launch AI agents on your environments. 
+ToolFront's SDK lets you quickly build and run Python agents on environments. 
 
----
-
-## Basic Usage
-
-Ask questions and an AI agent will browse your environment to find answers.
 
 ```python
 from toolfront import Environment
 
-environment = Environment(url="file:///path/toolsite")
+env = Environment(url="file:///path/toolsite")
 
-result = environment.run(prompt="What's our total revenue this quarter?", 
-                        model="openai:gpt-5")
-# Returns: "Total revenue for Q4 2024 is $2.4M"
+result = env.run(
+    prompt="Email coupons to customers who made purchases last month", 
+    model="openai:gpt-5"
+)
+# Returns: "Done!"
 ```
+
+!!! question "How does it work?"
+    The SDK connects local [Pydantic AI](https://ai.pydantic.dev/models/overview/) models to environments through the [MCP server](/pages/mcp_server/).
+
+--- 
+
+## AI Models
+
+The SDK works with any model providers through [Pydantic AI](https://ai.pydantic.dev/models/overview/). Start by exporting your API key.
+
+=== ":simple-openai:{ .middle } &nbsp; OpenAI"
+
+    ```bash
+    export OPENAI_API_KEY="your-api-key"
+    ```
+
+    Then, specify your model using the `provider:model-name` format.
+
+    ```python hl_lines="5"
+    from toolfront import Environment
+
+    environment = Environment(url="file:///path/to/toolsite")
+
+    result = environment.ask(..., model="openai:gpt-5")
+    ```
+
+=== ":simple-anthropic:{ .middle } &nbsp; Anthropic"
+
+    ```bash
+    export ANTHROPIC_API_KEY="your-api-key"
+    ```
+
+    Then, specify your model using the `provider:model-name` format.
+
+    ```python hl_lines="5"
+    from toolfront import Environment
+
+    environment = Environment(url="file:///path/to/toolsite")
+
+    result = environment.ask(..., model="anthropic:claude-sonnet-4-5")
+    ```
+
+=== ":simple-google:{ .middle } &nbsp; Google"
+
+    ```bash
+    export GOOGLE_API_KEY="your-api-key"
+    ```
+
+    Then, specify your model using the `provider:model-name` format.
+
+    ```python hl_lines="5"
+    from toolfront import Environment
+
+    environment = Environment(url="file:///path/to/toolsite")
+
+    result = environment.ask(..., model="google-gla:gemini-2.5-pro")
+    ```
+
+=== ":simple-mistralai:{ .middle } &nbsp; Mistral"
+
+    ```bash
+    export MISTRAL_API_KEY="your-api-key"
+    ```
+
+    Then, specify your model using the `provider:model-name` format.
+
+    ```python hl_lines="5"
+    from toolfront import Environment
+
+    environment = Environment(url="file:///path/to/toolsite")
+
+    result = environment.ask(..., model="mistral:mistral-large-latest")
+    ```
+
+=== ":simple-huggingface:{ .middle } &nbsp; HuggingFace"
+
+    ```bash
+    export HUGGINGFACE_API_KEY="your-api-key"
+    ```
+
+    Then, specify your model using the `provider:model-name` format.
+
+    ```python hl_lines="5"
+    from toolfront import Environment
+
+    environment = Environment(url="file:///path/to/toolsite")
+
+    result = environment.ask(..., model="huggingface:Qwen/Qwen3-235B-A22B")
+    ```
+
+=== ":material-source-branch:{ .middle } &nbsp; OpenRouter"
+
+    ```bash
+    export OPENROUTER_API_KEY="your-api-key"
+    ```
+
+    Then, specify your model using the `provider:model-name` format.
+
+    ```python hl_lines="5"
+    from toolfront import Environment
+
+    environment = Environment(url="file:///path/to/toolsite")
+
+    result = environment.ask(..., model="openrouter:anthropic/claude-3.5-sonnet")
+    ```
+
+!!! tip "Tip: Default Model"
+
+    Configure a default model for all your runs:
+
+    ```bash
+    export TOOLFRONT_MODEL="openai:gpt-5"
+    ```
+
+
+Alternatively, use [Pydantic AI](https://ai.pydantic.dev/models/overview/) models directly.
+
+=== ":simple-ollama:{ .middle } &nbsp; Ollama"
+
+    ```python
+    from toolfront import Environment
+    from pydantic_ai.models.openai import OpenAIChatModel
+    from pydantic_ai.providers.ollama import OllamaProvider
+
+    ollama_model = OpenAIChatModel(
+        model_name='llama3.2',
+        provider=OllamaProvider(base_url='http://localhost:11434/v1'),
+    )
+
+    environment = Environment(url="file:///path/to/toolsite")
+
+    result = environment.ask(..., model=ollama_model)
+    ```
+
+=== ":simple-vercel:{ .middle } &nbsp; Vercel"
+
+    ```python
+    from toolfront import Environment
+    from pydantic_ai.models.openai import OpenAIChatModel
+    from pydantic_ai.providers.vercel import VercelProvider
+
+    vercel_model = OpenAIChatModel(
+        'anthropic/claude-4-sonnet',
+        provider=VercelProvider(api_key='your-vercel-ai-gateway-api-key'),
+    )
+
+    environment = Environment(url="file:///path/to/toolsite")
+
+    result = environment.ask(..., model=vercel_model)
+    ```
+
+=== ":simple-perplexity:{ .middle } &nbsp; Perplexity"
+
+    ```python
+    from toolfront import Environment
+    from pydantic_ai.models.openai import OpenAIChatModel
+    from pydantic_ai.providers.openai import OpenAIProvider
+
+    perplexity_model = OpenAIChatModel(
+        'sonar-pro',
+        provider=OpenAIProvider(
+            base_url='https://api.perplexity.ai',
+            api_key='your-perplexity-api-key',
+        )
+    )
+
+    environment = Environment(url="file:///path/to/toolsite")
+
+    result = environment.ask(..., model=perplexity_model)
+    ```
 
 ---
 
-## Structured Output
+## Structured Retrieval
 
-Use `output_type` to get back structured data in any format you need.
+Use `output_type` to get retrieve structured data in any format you need.
 
 === ":fontawesome-solid-cube:{ .middle } &nbsp; Scalars"
 
@@ -140,25 +307,29 @@ Use `output_type` to get back structured data in any format you need.
 
 Markdown pages may reference environment variables for authentication or configuration:
 
-``` hl_lines="3-4"
+```markdown hl_lines="3-4"
 ---
 tools:
   - [curl, -X, GET, "https://api.com/data", -H, "Authorization: Bearer $TOKEN"]
-  - [curl, -X, POST, "https://api.com/submit", -H, "X-API-Key: $API_KEY"]
+  - [toolfront, database, $DB_URL]
+
 ---
 
 # My Markdown page
 ...
 ```
 
-You must pass these variables to the Environment using the `env` parameter:
+Pass these variables to the `Environment` using the `env` parameter.
 
 ```python
 from toolfront import Environment
 
 environment = Environment(
     url="file:///path/toolsite",
-    env={"TOKEN": "token123", "API_KEY": "key456"}
+    env={
+        "TOKEN": "token",
+        "DB_URL": "postgresql://user:pass@localhost:5432/mydb"
+    }
 )
 
 result = environment.run("Fetch latest data", model="openai:gpt-5")
@@ -169,23 +340,11 @@ result = environment.run("Fetch latest data", model="openai:gpt-5")
 
 ---
 
-## Verbose Mode
-
-Enable verbose mode to see live AI reasoning and tool calls during execution:
-
-```python
-from toolfront import Environment
-
-environment = Environment(url="file:///path/toolsite")
-
-result = environment.run(
-    "What's our total revenue this quarter?",
-    model="openai:gpt-5",
-    verbose=True
-)
-```
-
----
+::: toolfront.environment.Environment
+    options:
+      show_root_heading: true
+      show_source: true
+      members: []
 
 ::: toolfront.environment.Environment.run
     options:

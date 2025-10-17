@@ -83,6 +83,7 @@ Define tools for querying PostgreSQL.
 ---
 tools:
   - [toolfront, database, $POSTGRES_URL]
+
 ---
 
 # Database
@@ -113,6 +114,7 @@ tools:
   - [curl, -X, GET, "https://api.products.com/v1/products"]
   - [curl, -X, GET, "https://api.products.com/v1/inventory"]
   - [curl, -X, GET, "https://api.products.com/v1/categories"]
+
 ---
 
 # Product API
