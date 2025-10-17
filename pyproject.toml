@@ -21,7 +21,6 @@ dependencies = [
     "fsspec>=2025.9.0",
     "httpx>=0.28.1",
     "mcp[cli]>=1.18.0",
-    "pyasn1-modules>=0.2.1",
     "pydantic>=2.12.3",
     "pydantic-ai-slim[anthropic,bedrock,cohere,google,groq,huggingface,mistral,openai,vertexai]>=1.1.0",
     "pytest>=8.4.1",
