@@ -157,15 +157,15 @@ class Environment(BaseModel):
     ----------
     url : str
         URL/path to environment (file://, https://, s3://, etc.)
-    params : dict[str, str] | None
-        Authentication parameters for filesystem protocols
+    param : dict[str, str] | None
+        Authentication parameter for remote environments
     env : dict[str, str] | None
         Environment variables for command execution
     """
 
     url: str = Field(..., description="Root URL for the environment")
-    params: dict[str, str] | None = Field(
-        default=None, description="Filesystem authentication parameters", exclude=True
+    param: dict[str, str] | None = Field(
+        default=None, description="Authentication parameter for remote environments", exclude=True
     )
     env: dict[str, str] | None = Field(default=None, description="Environment variables for commands", exclude=True)
 
@@ -174,17 +174,17 @@ class Environment(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def __init__(
-        self, url: str, params: dict[str, str] | None = None, env: dict[str, str] | None = None, **kwargs: Any
+        self, url: str, param: dict[str, str] | None = None, env: dict[str, str] | None = None, **kwargs: Any
     ) -> None:
-        super().__init__(url=url, params=params, env=env, **kwargs)
+        super().__init__(url=url, param=param, env=env, **kwargs)
 
-    @field_validator("params", mode="before")
+    @field_validator("param", mode="before")
     @classmethod
-    def validate_params(cls, params: dict[str, str] | list[str] | tuple | None) -> dict[str, str] | None:
+    def validate_param(cls, param: dict[str, str] | list[str] | tuple | None) -> dict[str, str] | None:
         """Convert list of KEY=VALUE strings to dict."""
-        if isinstance(params, list | tuple):
-            return dict(param.split("=", 1) for param in params)
-        return params
+        if isinstance(param, list | tuple):
+            return dict(param.split("=", 1) for param in param)
+        return param
 
     @field_validator("env", mode="before")
     @classmethod
@@ -200,10 +200,10 @@ class Environment(BaseModel):
         url = clean_url(self.url)
         parsed = urlparse(url)
 
-        # Setup filesystem with auth params
+        # Setup filesystem with authentication parameter
         kwargs = dict(parse_qsl(parsed.query, keep_blank_values=True))
-        if self.params:
-            kwargs.update(self.params)
+        if self.param:
+            kwargs.update(self.param)
 
         self._fs = filesystem(parsed.scheme, **kwargs)
 

@@ -36,13 +36,6 @@ title: "Quickstart"
 
 ToolFront helps you organize AI workflows into independent tasks with **environments**. 
 
-<!-- Markdown pages can contain instructions and tools for different tasks. -->
-
-<!-- tasks. Each task is defined by a Markdown with instructions, tools, and data. -->
-
-<!-- ToolFront helps you build and deploy environments for AI agents. Environments let you organize AI workflows into tasks, each defined by a Markdown with instructions, tools, and data. -->
-
-
 === ":material-home:{ .middle } &nbsp; Landing Page"
 
     Declare task instructions and tools in Markdown files.
@@ -67,12 +60,13 @@ ToolFront helps you organize AI workflows into independent tasks with **environm
     ---
     tools:
       - [date, +%Y-%m-%d]
+    
     ---
 
     # Landing Page
 
-    - Add links to other [pages](./pages)
-    - Include tool commands in headers
+    - Include links to [pages](./pages)
+    - Add tool commands to frontmatters
     - Agents learn tools with `--help`
     ```
 
@@ -80,7 +74,7 @@ ToolFront helps you organize AI workflows into independent tasks with **environm
 
 === ":material-database:{ .middle } &nbsp; Text-to-SQL"
 
-    Create text-to-SQL tasks with ToolFront's built-in `database` CLI.
+    Create text-to-SQL tasks with ToolFront's built-in **[database CLI](./pages/database_cli.md)**
 
     <div class="grid cards" markdown>
 
@@ -103,6 +97,7 @@ ToolFront helps you organize AI workflows into independent tasks with **environm
     ---
     tools:
       - [toolfront, database, $DB_URL]
+    
     ---
 
     # Text-to-SQL
@@ -140,6 +135,7 @@ ToolFront helps you organize AI workflows into independent tasks with **environm
     ---
     tools:
       - [python, extract.py]
+    
     ---
 
     # Document RAG
@@ -150,7 +146,6 @@ ToolFront helps you organize AI workflows into independent tasks with **environm
     ```
 
     </div>
-
 
 
 === ":material-api:{ .middle } &nbsp; API Integration"
@@ -177,6 +172,7 @@ ToolFront helps you organize AI workflows into independent tasks with **environm
       ---
       tools:
         - [curl, "https://api.com/v1/user"]
+        
       ---
 
       # API Integration
@@ -192,42 +188,30 @@ Agents browse environments to get work done, using tools and following instructi
 
 === ":simple-python:{ .middle } &nbsp; Python SDK"
 
-    Run Python agents on your environments.
+    Run Python agents on environments with the **[SDK](./pages/python_sdk.md)**
 
     ```python
     from toolfront import Environment
 
-    environment = Environment(url="file:///path/environment")
+    env = Environment(url="file:///path/environment")
 
-    answer = environment.run("What's our best-seller?", model="openai:gpt-5")
+    response = env.run("What's our average ticket size?", model="openai:gpt-5")
     ```
 
 === ":simple-modelcontextprotocol:{ .middle } &nbsp; MCP Server"
 
-    Connect your own agents to environments.
+    Connect your own agents to environments with the **[MCP Server](./pages/mcp_server.md)**
 
     ```json
     {
       "mcpServers": {
         "toolfront": {
           "command": "uvx",
-          "args": ["toolfront", "mcp", "file:///path/toolsite"],
-          "env": {}
+          "args": ["toolfront", "mcp", "file:///path/environment"],
         }
       }
     }
     ```
-
-Agents interact with environments using six core tools:
-
-- :material-play:{ .middle } `execute` - Execute tools commands in headers, optionally passing parameters
-- :material-eye:{ .middle } `read` - Read the content of a specific file
-- :material-file-tree:{ .middle } `tree` - View directory structure
-- :material-folder-search:{ .middle } `glob` - List files matching a glob pattern
-- :material-regex:{ .middle } `grep` - Search files using regex patterns
-- :material-magnify:{ .middle } `search` - Find relevant documents with BM25[^1]
-
-[^1]: `search` requires indexing environment files.
 
 To get started, install `toolfront` with your favorite PyPI package manager.
 
@@ -252,29 +236,16 @@ To get started, install `toolfront` with your favorite PyPI package manager.
 
 !!! toolfront "Deploy with ToolFront Cloud 🔥"
 
-    Instantly deploy your environments with **ToolFront Cloud**.
-    
+    Instantly deploy your environments with **[ToolFront Cloud](/pages/toolfront_cloud.md)**.
+
     ```bash
-    toolfront deploy ./path/environment --api-key "my-api-key"
+    toolfront deploy ./path/environment
     ```
-    
-    Would give you a secure environment URL your agents can browse from anywhere.
+
+    This gives you a secure environment URL your agents can access from anywhere.
 
     ```python
-    environment = Environment(url="https://cloud.toolfront.ai/user/environment")
+    Environment(url="https://cloud.toolfront.ai/user/environment", params={"API_KEY": ...})
     ```
 
-    Environments deployed with **ToolFront Cloud** are automatically indexed and get access to the powerful `search` tool.
-
-    ```
-    Let me search for documents relevant to "ticket pricing API"...
-
-    Found 3 relevant pages:
-      - ./api/pricing.md (highly relevant)
-      - ./guides/analytics.md (relevant)
-      - ./examples/queries.md (somewhat relevant)
-
-    I'll start by reading ./api/pricing.md...
-    ```
-
-    **ToolFront Cloud** is currently in beta. To request access, join our [Discord](https://discord.gg/rRyM7zkZTf) or email `esteban[at]kruskal[dot]ai`.
+    ToolFront Cloud is in beta. To request access, join our **[Discord](https://discord.gg/rRyM7zkZTf)** or email `esteban[at]kruskal[dot]ai`.

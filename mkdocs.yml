@@ -70,10 +70,12 @@ plugins:
 
 nav:
   - Quickstart: index.md
-  - Python SDK: pages/python_sdk.md  
-  - MCP Server: pages/mcp_server.md  
-  - AI Models: pages/ai_models.md
+  - Python SDK: pages/python_sdk.md
+  - MCP Server: pages/mcp_server.md
+  - Database CLI: pages/database_cli.md
   - Example: pages/example.md
+  - ToolFront Cloud: pages/toolfront_cloud.md
+  - FAQ: pages/faq.md
 
 markdown_extensions:
   - admonition
