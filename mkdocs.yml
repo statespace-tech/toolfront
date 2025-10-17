@@ -1,8 +1,8 @@
 site_name: ToolFront
 site_description: Data Environments for AI agents
 site_url: https://docs.toolfront.ai
-repo_url: https://github.com/statespace-ai/toolfront
-repo_name: statespace-ai/toolfront
+repo_url: https://github.com/statespace-tech/toolfront
+repo_name: statespace-tech/toolfront
 
 theme:
   name: material
@@ -70,10 +70,12 @@ plugins:
 
 nav:
   - Quickstart: index.md
-  - Python SDK: pages/python_sdk.md  
-  - Browser MCP: pages/browser_mcp.md  
-  - AI Models: pages/ai_models.md
+  - Python SDK: pages/python_sdk.md
+  - MCP Server: pages/mcp_server.md
+  - Database CLI: pages/database_cli.md
   - Example: pages/example.md
+  - ToolFront Cloud: pages/toolfront_cloud.md
+  - FAQ: pages/faq.md
 
 markdown_extensions:
   - admonition
@@ -114,7 +116,7 @@ extra:
       link: https://x.com/statespace_ai
       name: Follow us on X (Twitter)
     - icon: fontawesome/brands/github
-      link: https://github.com/statespace-ai/toolfront
+      link: https://github.com/statespace-tech/toolfront
       name: Star us on GitHub
 
 copyright: Copyright &copy; 2025 Statespace AI, Inc.

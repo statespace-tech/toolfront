@@ -1,16 +1,38 @@
+import asyncio
+import json
 import logging
 import re
 import subprocess
 import tomllib
 from enum import Enum
+from importlib.resources import files
 from typing import Any
 from urllib.parse import parse_qsl, urlparse, urlunparse
 
 import yaml
 from fsspec import filesystem
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator, model_validator
+from pydantic_ai import Agent, UnexpectedModelBehavior, models
+from pydantic_ai.mcp import MCPServerStdio
+from pydantic_ai.messages import (
+    FunctionToolCallEvent,
+    FunctionToolResultEvent,
+    PartDeltaEvent,
+    PartStartEvent,
+    TextPart,
+    TextPartDelta,
+    ThinkingPart,
+    ThinkingPartDelta,
+)
+from rich.console import Console
+from rich.live import Live
+from rich.markdown import Markdown
 
-from toolfront.utils import clean_url
+from toolfront.utils import clean_url, get_model_from_env, history_processor
+
+DEFAULT_TIMEOUT_SECONDS = 10
+DEFAULT_MAX_RETRIES = 3
+
 
 logger = logging.getLogger("toolfront")
 
@@ -23,7 +45,7 @@ def get_frontmatter(markdown: str) -> dict[str, Any]:
     Parameters
     ----------
     markdown : str
-        Raw markdown content with optional frontmatter
+        Raw Markdown content with optional frontmatter
 
     Returns
     -------
@@ -134,33 +156,35 @@ class Environment(BaseModel):
     Attributes
     ----------
     url : str
-        Root URL for the environment - all operations must be within this URL
-    params : dict[str, str] | None
-        Authentication parameters for filesystem protocols
+        URL/path to environment (file://, https://, s3://, etc.)
+    param : dict[str, str] | None
+        Authentication parameter for remote environments
     env : dict[str, str] | None
         Environment variables for command execution
-    home_page : str | None
-        Home page URL (file if URL is a file, else index.md in directory)
     """
 
     url: str = Field(..., description="Root URL for the environment")
-    params: dict[str, str] | None = Field(
-        default=None, description="Filesystem authentication parameters", exclude=True
+    param: dict[str, str] | None = Field(
+        default=None, description="Authentication parameter for remote environments", exclude=True
     )
     env: dict[str, str] | None = Field(default=None, description="Environment variables for commands", exclude=True)
-    home_page: str | None = Field(default=None, description="Home page for the environment")
 
     _fs: Any = PrivateAttr(None)
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    @field_validator("params", mode="before")
+    def __init__(
+        self, url: str, param: dict[str, str] | None = None, env: dict[str, str] | None = None, **kwargs: Any
+    ) -> None:
+        super().__init__(url=url, param=param, env=env, **kwargs)
+
+    @field_validator("param", mode="before")
     @classmethod
-    def validate_params(cls, params: dict[str, str] | list[str] | tuple | None) -> dict[str, str] | None:
+    def validate_param(cls, param: dict[str, str] | list[str] | tuple | None) -> dict[str, str] | None:
         """Convert list of KEY=VALUE strings to dict."""
-        if isinstance(params, list | tuple):
-            return dict(param.split("=", 1) for param in params)
-        return params
+        if isinstance(param, list | tuple):
+            return dict(param.split("=", 1) for param in param)
+        return param
 
     @field_validator("env", mode="before")
     @classmethod
@@ -176,25 +200,16 @@ class Environment(BaseModel):
         url = clean_url(self.url)
         parsed = urlparse(url)
 
-        # Setup filesystem with auth params
+        # Setup filesystem with authentication parameter
         kwargs = dict(parse_qsl(parsed.query, keep_blank_values=True))
-        if self.params:
-            kwargs.update(self.params)
+        if self.param:
+            kwargs.update(self.param)
 
         self._fs = filesystem(parsed.scheme, **kwargs)
 
         # Determine home page and normalize URL
-        if self._fs.isfile(parsed.path):
-            self.home_page = url
-            parent_path = parsed.path.rsplit("/", 1)[0] if "/" in parsed.path else ""
-            self.url = urlunparse((parsed.scheme, parsed.netloc, parent_path, "", "", ""))
-        elif self._fs.isdir(parsed.path):
-            self.url = url
-            home_page = f"{parsed.path.rstrip('/')}/index.md"
-            if self._fs.isfile(home_page):
-                self.home_page = home_page
-        else:
-            raise ValueError(f"URL does not point to a valid file or directory: {url}")
+        parent_path = parsed.path.rsplit("/", 1)[0] if "/" in parsed.path else ""
+        self.url = urlunparse((parsed.scheme, parsed.netloc, parent_path, "", "", ""))
 
         return self
 
@@ -248,11 +263,11 @@ class Environment(BaseModel):
 
         return parsed
 
-    async def run_command(self, command: list[str], page_url: str) -> CommandOutput:
-        """Execute a command from a markdown page's frontmatter.
+    async def execute(self, command: list[str], page_url: str) -> CommandOutput:
+        """Execute a command from a Markdown page's frontmatter.
 
         Instructions:
-        1. First read the markdown page to see available commands in its frontmatter
+        1. First read the Markdown page to see available commands in its frontmatter
         2. Commands must exactly match those listed in the page's frontmatter
         3. If you don't know what a command does or what arguments it accepts, run it with --help flag first (e.g., ['command', '--help'])
         4. Use the help output to understand the command's usage before running it with actual arguments
@@ -263,7 +278,7 @@ class Environment(BaseModel):
         command : list[str]
             Command and its arguments as a list (e.g., ['python', 'script.py', '--arg', 'value'])
         page_url : str
-            Absolute file URL to the markdown (.md) page containing the command in its frontmatter
+            Absolute file URL to the Markdown (.md) page containing the command in its frontmatter
 
         Returns
         -------
@@ -278,7 +293,7 @@ class Environment(BaseModel):
         parsed = self._validate_url(page_url, require_type="file")
 
         if not parsed.path.endswith(".md"):
-            raise ValueError(f"page_url must point to a markdown (.md) file: {urlunparse(parsed)}")
+            raise ValueError(f"page_url must point to a Markdown (.md) file: {urlunparse(parsed)}")
 
         # Parse frontmatter and validate command
         frontmatter = get_frontmatter(self._fs.read_text(parsed.path))
@@ -393,7 +408,7 @@ class Environment(BaseModel):
 
         Examples:
         - Find Python files locally: path_url='file:///path/to/project', pattern='**/*.py'
-        - Find markdown in remote bucket: path_url='s3://bucket/docs', pattern='**/*.md'
+        - Find Markdown in remote bucket: path_url='s3://bucket/docs', pattern='**/*.md'
         - Find text files via HTTP: path_url='https://example.com/files', pattern='*.txt'
 
         Parameters
@@ -611,3 +626,148 @@ class Environment(BaseModel):
             If no search index exists
         """
         raise NotImplementedError("Search is not implemented yet")
+
+    def run(
+        self,
+        prompt: str,
+        model: models.Model | models.KnownModelName | str | None = None,
+        output_type: Any = str,
+        context_window: int = 30,
+        verbose: bool = False,
+    ) -> Any:
+        """Run an agent on an environment and get structured responses.
+
+        Parameters
+        ----------
+        prompt : str
+            Natural language instruction or command
+        output_type : Any | None, optional
+            Desired output type (str, int, list, Pydantic model, etc.)
+        context_window : int, default 30
+            Number of messages to keep in conversation history.
+        verbose : bool, default False
+            Whether to show live AI reasoning and tool calls
+
+        Returns
+        -------
+        Any
+            Response in the requested output_type format. If no type specified,
+            uses type hint from caller or defaults to string.
+        """
+
+        server = MCPServerStdio(
+            "uv",
+            args=["run", "toolfront", "mcp", "serve", self.url, "--transport", "stdio"],
+            env=self.env,
+            max_retries=DEFAULT_MAX_RETRIES,
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+        )
+
+        instructions_template = files("toolfront.instructions").joinpath("ask.txt").read_text()
+        instructions = instructions_template.format(self.env, self.url)
+
+        history_processor_ = history_processor(context_window=context_window)
+
+        agent = Agent(
+            model=model or get_model_from_env(),
+            system_prompt=instructions,
+            toolsets=[server],
+            output_retries=DEFAULT_MAX_RETRIES,
+            output_type=output_type,
+            retries=DEFAULT_MAX_RETRIES,
+            history_processors=[history_processor_] if history_processor_ else None,
+        )
+
+        return asyncio.run(Environment._run_async(prompt, agent, verbose))
+
+    @staticmethod
+    async def _run_async(
+        prompt: str,
+        agent: Agent,
+        verbose: bool = False,
+    ) -> Any:
+        """Execute the AI agent with optional live streaming display.
+
+        This internal method handles the actual agent execution with two modes:
+        - Verbose: Shows live AI reasoning, tool calls, and responses in terminal
+        - Quiet: Runs silently and returns only the final result
+
+        Parameters
+        ----------
+        prompt : str
+            The user's natural language instruction or command
+        agent : Agent
+            Configured AI agent with tools and system prompt
+        verbose : bool, default False
+            Whether to show live updates during execution
+
+        Returns
+        -------
+        Any
+            The final agent response in the requested output format
+
+        Raises
+        ------
+        RuntimeError
+            If there's unexpected model behavior during execution
+        """
+
+        console = Console()
+
+        try:
+            if verbose:
+                # Streaming mode with Rich Live display
+                with Live(
+                    console=console,
+                    vertical_overflow="visible",
+                    auto_refresh=True,
+                ) as live:
+                    accumulated_content = ""
+
+                    def update_display(content: str):
+                        live.update(Markdown(content))
+
+                    async with agent.iter(prompt) as run:
+                        async for node in run:
+                            if Agent.is_model_request_node(node):
+                                async with node.stream(run.ctx) as model_stream:
+                                    async for event in model_stream:
+                                        if isinstance(event, PartStartEvent):
+                                            if isinstance(event.part, (TextPart | ThinkingPart)):
+                                                accumulated_content += f"\n{event.part.content}"
+                                                update_display(accumulated_content)
+                                        elif isinstance(event, PartDeltaEvent) and isinstance(
+                                            event.delta, (TextPartDelta | ThinkingPartDelta)
+                                        ):
+                                            accumulated_content += event.delta.content_delta or ""
+                                            update_display(accumulated_content)
+
+                            elif Agent.is_call_tools_node(node):
+                                async with node.stream(run.ctx) as handle_stream:
+                                    async for event in handle_stream:
+                                        if isinstance(event, FunctionToolCallEvent):
+                                            try:
+                                                args_str = (
+                                                    event.part.args
+                                                    if isinstance(event.part.args, str)
+                                                    else str(event.part.args)
+                                                )
+                                                accumulated_content += f"\n\n>Called tool `{event.part.tool_name}` with args:\n\n```yaml\n{yaml.dump(json.loads(args_str))}\n```\n\n"
+                                            except Exception:
+                                                accumulated_content += str(event.part.args)
+                                            update_display(accumulated_content)
+                                        elif isinstance(event, FunctionToolResultEvent):
+                                            accumulated_content += f"\n\n>Tool `{event.result.tool_name}` returned:\n\n{event.result.content}\n\n"
+                                            update_display(accumulated_content)
+
+                            elif Agent.is_end_node(node):
+                                return node.data.output
+            else:
+                # Quiet mode
+                async with agent.iter(prompt) as run:
+                    async for node in run:
+                        if Agent.is_end_node(node):
+                            return node.data.output
+        except UnexpectedModelBehavior as e:
+            logger.error(f"Unexpected model behavior: {e}", exc_info=True)
+            raise RuntimeError(f"Unexpected model behavior: {e}")

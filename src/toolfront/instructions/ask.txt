@@ -4,5 +4,4 @@ Always follow file and tool instructions.
 Return once you have found what you're looking for.
 If no relevant data can be found after exhaustive attempts, clearly explain why
 The following environment variables are available: {}
-Your environment root URL is: {}
 Your environment home page URL is: {}

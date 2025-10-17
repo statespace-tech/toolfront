@@ -1,16 +1,12 @@
 # The Only Example You'll Ever Need
 
-In this example, we'll build a sales analytics environment for an e-commerce company, powered by GPT-5. The agent will answer business questions by pulling data from three sources:
-
-- A PostgreSQL database with transaction data
-- A REST API for real-time pricing
-- Local receipt files stored as JSON documents
+Build a sales analytics environment for an e-commerce company where agents answer business questions by pulling data from a PostgreSQL database, REST API, and local receipt files.
 
 ---
 
 ## 1. Install ToolFront
 
-Start by install ToolFront with PostgreSQL support.
+Install ToolFront with PostgreSQL support.
 
 ```bash
 pip install "toolfront[postgres]"
@@ -30,48 +26,51 @@ export OPENAI_API_KEY="your-openai-api-key"
 
 ## 3. Set Up Your Environment
 
-Create a directory structure for the sales analytics environment. Each markdown page will provide tools to access a different data source.
+Create a directory structure with a Markdown page for every data source.
 
 ```bash
-sales-analytics/
+environment/
 ├── index.md
-├── database/
-│   └── index.md
-├── api/
-│   └── index.md
-└── documents/
-    ├── index.md
+├── pages/
+│   ├── database.md
+│   ├── api.md
+│   └── documents.md
+└── data/
     └── receipts/
         ├── receipt_20240115_001.txt
         ├── receipt_20240118_002.txt
         └── receipt_20240225_003.txt
+
+4 directories, 7 files
 ```
 
 ---
 
 ## 4. Create the Home Page
 
-The home page serves as the entry point and explains what data is available.
+Create an entry point that explains available data sources and guidelines.
 
-```markdown title="sales-analytics/index.md"
+```markdown title="environment/index.md"
 # Sales Analytics Environment
 
-You are a business analyst at an e-commerce company. Answer questions about sales performance, customer behavior, and inventory using company data.
+You are a business analyst at an e-commerce company.
+Answer questions about sales performance, customer behavior,
+and inventory using company data.
 
-**Important**: Use ONLY data explicitly retrieved through the provided tools. Never make assumptions or use general knowledge.
+**Important**: Use ONLY data explicitly retrieved through
+the provided tools. Never make assumptions or use general knowledge.
 
-## Available Resources
+## Available Pages
 
-- **[Database](./database)** - Query PostgreSQL with sales transactions, product catalog, and customer records
-- **[API](./api)** - Fetch real-time pricing and inventory from the product management API
-- **[Documents](./documents)** - Read customer receipts
+- [Database](./pages/database.md) - User accounts and profiles
+- [API](./pages/api.md) - Product catalog and inventory
+- [Documents](./pages/documents.md) - Transaction receipts
 
-## Guidelines
+## Global Instructions
 
 1. Read the user's question carefully
 2. Navigate to the appropriate page based on what data you need
-3. Use the tools on that page to retrieve the data
-4. Return answers based only on retrieved data
+3. Use the tools on the page page to retrieve the data
 ```
 
 ---
@@ -80,104 +79,101 @@ You are a business analyst at an e-commerce company. Answer questions about sale
 
 Define tools for querying PostgreSQL.
 
-```markdown title="sales-analytics/database/index.md"
+```markdown title="environment/pages/database.md"
 ---
 tools:
-  - [toolfront, database, list-tables]
-  - [toolfront, database, inspect-table]
-  - [toolfront, database, query]
+  - [toolfront, database, $POSTGRES_URL]
+
 ---
 
 # Database
 
-Query the sales database for transaction history, product details, and customer information.
+Query the Postgres database for user accounts and profile information.
 
 ## Available Tables
 
-- `transactions` - Sales transactions with dates, amounts, and product IDs
-- `products` - Product catalog with names, categories, and current inventory
-- `customers` - Customer records with demographics and contact information
+- `users` - User accounts with emails and registration dates
+- `profiles` - User profiles with names and preferences
 
 ## Instructions
 
-1. Use `list-tables` to see all available tables
-2. Use `inspect-table` to understand table structure and columns
-3. Use `query` to run SQL queries and retrieve data
-
-Always verify table structure before writing queries.
+1. Use `list-tables` to see available tables
+2. Use `inspect-table` to understand structure
+3. Use `query` to run SQL and retrieve data
 ```
 
 ---
 
 ## 6. Create the API Page
 
-Provide access to real-time data from an external product management system.
+Define tools for fetching real-time data from an external product management API.
 
-```markdown title="sales-analytics/api/index.md"
+```markdown title="environment/pages/api.md"
 ---
 tools:
-  - [curl, -X, GET, "https://api.products.com/v1/pricing"]
-  - [curl, -X, GET, "https://api.products.com/v1/inventory/warehouse-01"]
-  - [curl, -X, GET, "https://api.products.com/v1/promotions/active"]
+  - [curl, -X, GET, "https://api.products.com/v1/products"]
+  - [curl, -X, GET, "https://api.products.com/v1/inventory"]
+  - [curl, -X, GET, "https://api.products.com/v1/categories"]
+
 ---
 
 # Product API
 
-Fetch current pricing and inventory data from the external product management system.
+Fetch product catalog and inventory data from the product management system.
 
 ## Available Endpoints
 
-- **GET /v1/pricing** - Current pricing for all products
-- **GET /v1/inventory/warehouse-01** - Real-time warehouse inventory
-- **GET /v1/promotions/active** - Active promotional campaigns
+- `GET /v1/categories` - Product categories
+- `GET /v1/products?category=<category_name>` - Products in a category
+- `GET /v1/inventory?sku=<product_sku>` - Current inventory levels for a product
 
 ## Instructions
 
-1. Use curl commands to make API requests
-2. API returns JSON responses with product data
-3. Combine API data with database records when needed
-
-The API provides the most up-to-date pricing and inventory information.
+1. Use curl to make API requests
+2. Append query parameters as needed
+3. API returns JSON with product data
 ```
 
 ---
 
 ## 7. Create the Documents Page
 
-Describe the file structure and formats. The browser handles file reading and searching.
+Describe the file structure and formats for transaction receipts.
 
-```markdown title="sales-analytics/documents/index.md"
-# Documents
+```markdown title="environment/pages/documents.md"
+# Transaction Receipts
 
-Customer receipts are stored as plain text files in the documents directory.
+Transaction receipts are stored as plain text files in
+the `data/receipts/` directory.
 
 ## Available Files
 
-**Receipts** (in `receipts/`)
+**Receipts** (in `../data/receipts/`)
 
-Receipt filenames indicate transaction dates (e.g., `receipt_20240115_001.txt` is from January 15, 2024).
+Receipt filenames indicate transaction dates
+(e.g., `receipt_20240115_001.txt` is from January 15, 2024).
 
 ## File Format
 
 Receipts are plain text files containing:
 
-- Receipt ID and transaction timestamp
+- Transaction ID and timestamp
 - Store location and ID
-- Customer details (name, email, member ID)
-- Line items with SKUs, product names, quantities, prices, and discounts
-- Subtotals, tax, and totals
-- Payment method
+- Line items with SKUs, quantities, and prices
+- Subtotals, tax, and payment method
 
-## Notes
+## Instructions
 
-These documents contain detailed transaction-level data not available in the database, including customer emails and SKU-level pricing details.
+1. List files to find receipts by date
+2. Read individual files for transaction details
+3. Parse receipt data for specific information
 ```
 
 ---
 
 ## 8. Add Sample Documents
 
-Lastly, add sample receipts under `receipts/` to complete the environment.
+Add sample receipt files under `data/receipts/` to complete the environment.
 
 === "receipt_20240115_001.txt"
     ```text
@@ -350,41 +346,33 @@ Lastly, add sample receipts under `receipts/` to complete the environment.
 
 ## 9. Query the Environment
 
-Initialize a browser and ask questions. The agent will navigate to the appropriate pages and uses the available tools to answer questions in the format you specify.
+Initialize an environment and ask questions in any output format you need.
 
 ```python
-from toolfront import Browser
+from toolfront import Environment
 
-# Configure browser with model and database credentials
-browser = Browser(
-    model="openai:gpt-5",
-    env={"POSTGRES_URL": "postgres://user:pass@localhost:5432/salesdb"}
-)
+# Initialize environment
+environment = Environment(url="file:///path/to/environment")
 
-url = "file:///path/to/sales-analytics"
-
-# Get string as reponse
-answer = browser.ask(
-    "What was the total for receipt RCP-2024-001?",
-    url=url
+# Get string as response
+answer = environment.run(
+    prompt="What was the total for receipt RCP-2024-001?",
+    model="openai:gpt-5"
 )
 
 # Get a list of floats as response
-products = browser.ask(
-    "What is the tax amount paid by our latest customers?",
-    url=url,
+products = environment.run(
+    prompt="What is the tax amount paid by our latest customers?",
+    model="openai:gpt-5",
     output_type=list[float]
 )
 ```
-
-!!! tip "Environment Variables"
-    Database credentials are passed through the `env` parameter. The agent can reference environment variable names like `$POSTGRES_URL` when calling tools but never sees the actual values.
 
 ---
 
 ## 10. Use Structured Output
 
-Specify output types to get structured objects.
+Use Pydantic models to get structured output objects.
 
 ```python
 from pydantic import BaseModel, Field
@@ -395,9 +383,9 @@ class SalesReport(BaseModel):
     top_product: str = Field(description="Best-selling product name")
     avg_transaction: float = Field(description="Average transaction value")
 
-report = browser.ask(
-    "Generate a sales report combining database transactions and receipts",
-    url=url,
+report = environment.run(
+    prompt="Generate a sales report combining transactions and receipts",
+    model="openai:gpt-5",
     output_type=SalesReport
 )
 
