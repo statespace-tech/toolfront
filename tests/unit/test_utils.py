@@ -1,6 +1,6 @@
 """Unit tests for get_frontmatter function."""
 
-from toolfront.environment import get_frontmatter
+from toolfront.application import get_frontmatter
 
 
 def test_parse_markdown_with_tools():
