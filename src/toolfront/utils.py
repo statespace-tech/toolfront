@@ -1,8 +1,6 @@
 import os
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse, urlunparse
 
 from pydantic_ai.messages import ModelMessage, ToolReturnPart
 
@@ -29,19 +27,6 @@ def get_model_from_env() -> str:
     elif os.getenv("COHERE_API_KEY"):
         return DEFAULT_COHERE_MODEL
     raise ValueError("Please specify an API key and model to use")
-
-
-def clean_url(url: str) -> str:
-    """Get the full URL for a given URL."""
-
-    parsed = urlparse(url)
-
-    if parsed.scheme == "" and parsed.netloc == "":
-        parsed = urlparse(Path(url).resolve().as_uri())
-
-    parsed = parsed._replace(path=parsed.path.rstrip("/"))
-
-    return urlunparse(parsed)
 
 
 async def message_at_index_contains_tool_return_parts(messages: list[ModelMessage], index: int) -> bool:

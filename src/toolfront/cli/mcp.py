@@ -4,13 +4,7 @@ from mcp.server.fastmcp import FastMCP
 from toolfront.application import Application
 
 
-@click.group()
-def mcp():
-    """ToolFront CLI"""
-    pass
-
-
-@mcp.command()
+@click.command()
 @click.argument("url", type=click.STRING, required=True)
 @click.option(
     "--param",
@@ -28,13 +22,13 @@ def mcp():
     help="Transport mode for MCP server",
 )
 @click.option("--env", type=click.STRING, default=None, help="Application variables to pass to the server")
-def serve(url, param, host, port, transport, env) -> None:
+def mcp(url, param, host, port, transport, env) -> None:
     """Start an MCP server for interacting with applications.
 
     Parameters
     ----------
     url : str
-        Application URL or file path (file://, https://, s3://, etc.)
+        Application directory path
     param : tuple[str, ...]
         Authentication parameters for remote application (KEY=VALUE, can be repeated)
     host : str
@@ -55,18 +49,10 @@ def serve(url, param, host, port, transport, env) -> None:
 
     mcp = FastMCP("ToolFront MCP server", host=host, port=port)
 
-    mcp.add_tool(application.execute)
-    mcp.add_tool(application.read)
-    mcp.add_tool(application.tree)
-    mcp.add_tool(application.glob)
-    mcp.add_tool(application.grep)
+    mcp.add_tool(application.action)
 
     if transport == "stdio":
         click.echo("MCP server started successfully", err=True)
     else:
         click.echo("MCP server started successfully")
     mcp.run(transport=transport)
-
-
-if __name__ == "__main__":
-    mcp()

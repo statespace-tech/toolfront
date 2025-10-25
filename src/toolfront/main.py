@@ -2,6 +2,7 @@ import click
 
 from .cli.database import database
 from .cli.mcp import mcp
+from .cli.serve import serve
 
 
 @click.group()
@@ -10,6 +11,7 @@ def main():
     pass
 
 
+main.add_command(serve)
 main.add_command(mcp)
 main.add_command(database)
 
