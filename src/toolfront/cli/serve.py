@@ -10,7 +10,7 @@ import uvicorn
 import yaml
 from fastapi import Body, FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class ActionRequest(BaseModel):
@@ -18,6 +18,14 @@ class ActionRequest(BaseModel):
 
     command: list[str]
     args: dict[str, str] | None = None
+    env: dict[str, str] | None = None
+
+    @field_validator("args", mode="before")
+    @classmethod
+    def validate_args(cls, args: dict[str, str] | None) -> dict[str, str]:
+        if args is None:
+            return {}
+        return args
 
 
 def get_frontmatter(markdown: str) -> dict[str, Any]:
@@ -93,7 +101,7 @@ def serve(directory, host, port):
     async def action(file_path: str, action: ActionRequest = Body(...)):
         """Execute a command defined in a file's frontmatter"""
         command = action.command
-        args = action.args or {}
+        args = action.args
 
         # Resolve file path
         full_path = resolve_file_path(directory, file_path)
@@ -114,7 +122,7 @@ def serve(directory, host, port):
         # Expand placeholders in command and replace arguments with values
         expanded_command = [os.path.expandvars(c).format(**args) for c in command]
 
-        result = subprocess.run(expanded_command, cwd=path.parent, capture_output=True, text=True)
+        result = subprocess.run(expanded_command, cwd=path.parent, env=action.env, capture_output=True, text=True)
 
         return JSONResponse(
             {"stdout": result.stdout or "", "stderr": result.stderr or "", "returncode": result.returncode}
