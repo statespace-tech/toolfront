@@ -28,7 +28,6 @@ DEFAULT_TIMEOUT_SECONDS = 30
 DEFAULT_MAX_RETRIES = 3
 
 
-
 class Application(BaseModel):
     """Application for interacting with HTTP-served documentation and tools.
 
@@ -111,12 +110,12 @@ class Application(BaseModel):
 
         try:
             async with httpx.AsyncClient() as client:
-                response = client.post(
+                response = await client.post(
                     url, json={"command": command, "args": args, "env": self.env}, timeout=DEFAULT_TIMEOUT_SECONDS
                 )
                 response.raise_for_status()
                 output = json.loads(response.text)
-                return f"stdout: {output.get("stdout", "N/A")}\nstderr: {output.get("stderr", "N/A")}"
+                return f"stdout: {output.get('stdout', 'N/A')}\nstderr: {output.get('stderr', 'N/A')}"
         except Exception as e:
             raise RuntimeError(f"Error executing command: {e}") from e
 
