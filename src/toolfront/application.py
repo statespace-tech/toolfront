@@ -28,8 +28,6 @@ DEFAULT_TIMEOUT_SECONDS = 30
 DEFAULT_MAX_RETRIES = 3
 
 
-logger = logging.getLogger("toolfront")
-
 
 class Application(BaseModel):
     """Application for interacting with HTTP-served documentation and tools.
@@ -71,7 +69,7 @@ class Application(BaseModel):
             return dict(env_var.split("=", 1) for env_var in env)
         return env
 
-    def action(self, url: str, command: list[str], args: dict[str, str] | None = None) -> str:
+    async def action(self, url: str, command: list[str], args: dict[str, str] | None = None) -> str:
         """Execute a command from a Markdown page's frontmatter.
 
         This tool executes commands that must be listed in the page's frontmatter.
@@ -112,23 +110,13 @@ class Application(BaseModel):
             raise ValueError("command is required")
 
         try:
-            with httpx.Client() as client:
-                response = client.post(url, json={"command": command, "args": args}, timeout=DEFAULT_TIMEOUT_SECONDS)
+            async with httpx.AsyncClient() as client:
+                response = client.post(
+                    url, json={"command": command, "args": args, "env": self.env}, timeout=DEFAULT_TIMEOUT_SECONDS
+                )
                 response.raise_for_status()
                 output = json.loads(response.text)
-                return output.get("stdout", "") + output.get("stderr", "")
-
-                result = ""
-
-                # if returncode := output.get("returncode"):
-                #     result += f"returncode: {returncode}\n"
-                # if stdout := output.get("stdout"):
-                #     result += f"stdout:\n\n{stdout}\n"
-                # if stderr := output.get("stderr"):
-                #     result += f"stderr:\n\n{stderr}\n"
-
-                return result
-
+                return f"stdout: {output.get("stdout", "N/A")}\nstderr: {output.get("stderr", "N/A")}"
         except Exception as e:
             raise RuntimeError(f"Error executing command: {e}") from e
 
@@ -280,5 +268,4 @@ class Application(BaseModel):
                         if Agent.is_end_node(node):
                             return node.data.output
         except UnexpectedModelBehavior as e:
-            logger.error(f"Unexpected model behavior: {e}", exc_info=True)
             raise RuntimeError(f"Unexpected model behavior: {e}")
