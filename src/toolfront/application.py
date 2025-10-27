@@ -118,7 +118,7 @@ class Application(BaseModel):
         except Exception as e:
             raise RuntimeError(f"Error executing command: {e}") from e
 
-    def run(
+    def ask(
         self,
         prompt: str,
         model: models.Model | models.KnownModelName | str | None = None,
@@ -178,7 +178,7 @@ class Application(BaseModel):
         return asyncio.run(Application._run_async(prompt, agent, verbose))
 
     @staticmethod
-    async def _run_async(
+    async def _ask_async(
         prompt: str,
         agent: Agent,
         verbose: bool = False,
