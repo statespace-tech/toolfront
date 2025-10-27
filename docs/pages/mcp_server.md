@@ -63,7 +63,7 @@ Agents use six core tools to interact with applications:
 
 ---
 
-::: toolfront.cli.mcp.serve
+::: toolfront.cli.serve
     options:
       show_root_heading: true
       show_source: true
