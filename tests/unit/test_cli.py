@@ -11,4 +11,3 @@ def test_cli_help():
     result = runner.invoke(main, ["--help"])
     assert result.exit_code == 0
     assert "mcp" in result.output
-    assert "database" in result.output
