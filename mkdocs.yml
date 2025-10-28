@@ -70,10 +70,7 @@ plugins:
 
 nav:
   - Quickstart: index.md
-  - Tools: pages/tools.md
-  - Python SDK: pages/python_sdk.md
-  - MCP Server: pages/mcp_server.md
-  # - Example: pages/example.md
+  - Documentation: pages/documentation.md
   - ToolFront Cloud: pages/toolfront_cloud.md
   - FAQ: pages/faq.md
 

@@ -1,12 +1,111 @@
-# Python SDK
+# Documentation
 
-ToolFront's SDK lets you quickly run AI applications from Python.
+This page provides detailed documentation for ToolFront's core features: declaring tools in Markdown frontmatters, using the Python SDK to run applications programmatically, and setting up the MCP server to connect agents to your applications.
 
+---
+
+## Tools
+
+Tools are commands that AI agents can call to take actions. 
+They can be standard CLI programs like `grep` and `curl`, or custom scripts written in any language.
+
+```markdown title="page.md"
+---
+tools:
+  - [grep]
+  - [curl]
+  - [python3, script.py]
+
+---
+
+Call the tools to ...
+```
+
+There are three ways to pass variables to tools:
+
+=== ":material-code-braces:{ .middle } &nbsp; `{parameters}`"
+
+    ```markdown hl_lines="3"
+    ---
+    tools:
+      - [curl, "https://api.com/products/{product_id}"]
+      - [gh, issue, create]
+      - [stripe, products, list, --api-key, $STRIPE_KEY]
+
+    ---
+
+    Call the tools to ...
+    ```
+
+    Agents automatically replace placeholders with actual values when calling tools.
+
+    ```bash
+    Calling "curl https://api.com/products/prod-123"
+    ```
+
+
+    !!! tip "Parameter Instructions"
+        Provide clear instructions to your agent in the Markdown body explaining how to fill in and pass the tool parameters.
+
+
+=== ":material-flag:{ .middle } &nbsp; `--arguments`"
+
+    ```markdown hl_lines="4"
+    ---
+    tools:
+      - [curl, "https://api.com/products/{product_id}"]
+      - [gh, issue, create]
+      - [stripe, products, list, --api-key, $STRIPE_KEY]
+
+    ---
+
+    Call the tools to ...
+    ```
+
+    Agents can append arguments like flags and options to tool calls.
+
+    ```bash
+    Calling "gh issue create --title 'Bug report' --repo owner/repo"
+    ```
+
+    !!! tip "Learning Tools"
+        Agents learn how to use tools by passing the `--help` flag.
+
+    
+
+=== ":material-variable:{ .middle } &nbsp; `$ENV_VARIABLES`"
+
+    ```markdown hl_lines="5"
+    ---
+    tools:
+      - [curl, "https://api.com/products/{product_id}"]
+      - [gh, issue, create]
+      - [stripe, products, list, --api-key, $STRIPE_KEY]
+
+    ---
+
+    Call the tools to ...
+    ```
+
+    Include environment variables to keep credentials and configurations private.
+
+    ```bash
+    Calling "stripe products list --api-key sk_fake_placeholder_key"
+    ```
+
+    !!! warning "Managing secrets"
+        Use environment variables to prevent exposing secrets to LLMs
+
+---
+
+## Python SDK
+
+ToolFront's Python SDK provides a simple interface for running AI applications programmatically. It supports all major model providers through Pydantic AI, with built-in structured output.
 
 ```python
 from toolfront import Application
 
-app = Application(url="file:///path/to/project")
+app = Application(url=" http://127.0.0.1:8000")
 
 result = app.run(
     prompt="Email coupons to customers who made purchases last month",
@@ -15,12 +114,9 @@ result = app.run(
 # Returns: "Done!"
 ```
 
-!!! question "How does it work?"
-    The SDK connects local [Pydantic AI](https://ai.pydantic.dev/models/overview/) agents to applications through ToolFront's [MCP server](mcp_server.md).
+---
 
---- 
-
-## AI Models
+### AI Models
 
 The SDK supports all major model providers through [Pydantic AI](https://ai.pydantic.dev/models/overview/). Start by exporting your API key.
 
@@ -35,7 +131,7 @@ The SDK supports all major model providers through [Pydantic AI](https://ai.pyda
     ```python hl_lines="5"
     from toolfront import Application
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     result = app.run(..., model="openai:gpt-5")
     ```
@@ -51,7 +147,7 @@ The SDK supports all major model providers through [Pydantic AI](https://ai.pyda
     ```python hl_lines="5"
     from toolfront import Application
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     result = app.run(..., model="anthropic:claude-sonnet-4-5")
     ```
@@ -67,7 +163,7 @@ The SDK supports all major model providers through [Pydantic AI](https://ai.pyda
     ```python hl_lines="5"
     from toolfront import Application
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     result = app.run(..., model="google-gla:gemini-2.5-pro")
     ```
@@ -83,7 +179,7 @@ The SDK supports all major model providers through [Pydantic AI](https://ai.pyda
     ```python hl_lines="5"
     from toolfront import Application
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     result = app.run(..., model="mistral:mistral-large-latest")
     ```
@@ -99,7 +195,7 @@ The SDK supports all major model providers through [Pydantic AI](https://ai.pyda
     ```python hl_lines="5"
     from toolfront import Application
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     result = app.run(..., model="huggingface:Qwen/Qwen3-235B-A22B")
     ```
@@ -115,14 +211,14 @@ The SDK supports all major model providers through [Pydantic AI](https://ai.pyda
     ```python hl_lines="5"
     from toolfront import Application
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     result = app.run(..., model="openrouter:anthropic/claude-3.5-sonnet")
     ```
 
 !!! tip "Tip: Default Model"
 
-    Set a default model with the `TOOLFRONT_MODEL` environment variable: `export TOOLFRONT_MODEL="openai:gpt-5`
+    Set a default model with the `TOOLFRONT_MODEL` environment variable: `export TOOLFRONT_MODEL="openai:gpt-5"`
 
 
 Alternatively, use [Pydantic AI](https://ai.pydantic.dev/models/overview/) directly for local or custom models.
@@ -139,7 +235,7 @@ Alternatively, use [Pydantic AI](https://ai.pydantic.dev/models/overview/) direc
         provider=OllamaProvider(base_url='http://localhost:11434/v1'),
     )
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     result = app.run(..., model=ollama_model)
     ```
@@ -156,7 +252,7 @@ Alternatively, use [Pydantic AI](https://ai.pydantic.dev/models/overview/) direc
         provider=VercelProvider(api_key='your-vercel-ai-gateway-api-key'),
     )
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     result = app.run(..., model=vercel_model)
     ```
@@ -176,14 +272,14 @@ Alternatively, use [Pydantic AI](https://ai.pydantic.dev/models/overview/) direc
         )
     )
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     result = app.run(..., model=perplexity_model)
     ```
 
 ---
 
-## Structured Retrieval
+### Structured Output
 
 Retrieve structured data in any format by using the `output_type` parameter.
 
@@ -192,7 +288,7 @@ Retrieve structured data in any format by using the `output_type` parameter.
     ```python
     from toolfront import Application
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     avg_price = app.run(
         prompt="What's our average ticket price?",
@@ -214,7 +310,7 @@ Retrieve structured data in any format by using the `output_type` parameter.
     ```python
     from toolfront import Application
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     product_names = app.run(
         "What products do we sell?",
@@ -236,7 +332,7 @@ Retrieve structured data in any format by using the `output_type` parameter.
     ```python
     from toolfront import Application
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     result = app.run(
         "Best-sellers this month?",
@@ -259,7 +355,7 @@ Retrieve structured data in any format by using the `output_type` parameter.
     from toolfront import Application
     from pydantic import BaseModel, Field
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     class Product(BaseModel):
         name: str = Field(description="Product name")
@@ -280,11 +376,11 @@ Retrieve structured data in any format by using the `output_type` parameter.
     ```python
     from toolfront import Application
 
-    app = Application(url="file:///path/to/project")
+    app = Application(url=" http://127.0.0.1:8000")
 
     def my_func(price: float, quantity: int):
         """
-        Returns a product's revenue of based on price and quantity sold
+        Returns a product's revenue based on price and quantity sold
         """
         return price * quantity
 
@@ -299,13 +395,50 @@ Retrieve structured data in any format by using the `output_type` parameter.
 
 ---
 
+## MCP Server
+
+ToolFront's MCP (Model Context Protocol) server exposes your applications as tools for AI agents in MCP-compatible clients like Claude Desktop and Cline. The server supports multiple transport protocols (stdio, HTTP, SSE) and can be configured via JSON or run directly from the command line.
+
+=== ":material-code-json:{ .middle } &nbsp; JSON"
+
+    Configure MCP clients like Claude Desktop or Cline.
+
+    ```json
+    {
+      "mcpServers": {
+        "toolfront": {
+          "command": "uvx",
+          "args": ["toolfront", "mcp", " http://127.0.0.1:8000"]
+        }
+      }
+    }
+    ```
+
+=== ":material-console:{ .middle } &nbsp; CLI"
+
+    Run the server directly from the command line.
+
+    ```bash
+    toolfront mcp  http://127.0.0.1:8000
+    ```
+
+Available options:
+
+- `--transport` - Communication protocol: `stdio` (default), `streamable-http`, or `sse`
+- `--host` - Server host address (default: `127.0.0.1`)
+- `--port` - Server port number (default: `8000`)
+- `--params` / `-p` - Authentication for remote application (e.g., `--params KEY=value`)
+- `--env` - Environment variables for tools (e.g., `--env TOKEN=value`)
+
+---
+
 ::: toolfront.application.Application
     options:
       show_root_heading: true
       show_source: true
       members: []
 
-::: toolfront.application.Application.run
+::: toolfront.application.Application.ask
     options:
       show_root_heading: true
       show_source: true

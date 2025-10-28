@@ -2,7 +2,7 @@
 
 **When should I use the Python SDK vs MCP Server?**
 
-Use the **[Python SDK](python_sdk.md)** to run applications directly with built-in agents. Use the **[MCP Server](mcp_server.md)** to connect your own agents (like Claude Desktop or Cline) to applications.
+Use the Python SDK to run applications directly with built-in agents. Use the MCP Server to connect your own agents (like Claude Desktop or Cline) to applications.
 
 **Can I use ToolFront with any AI model?**
 

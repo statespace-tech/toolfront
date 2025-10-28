@@ -24,7 +24,7 @@ Deploy your application:
 toolfront deploy ./path/to/project
 ```
 
-Connect agents using the secure URL with the **[Python SDK](./python_sdk.md)** or **[MCP Server](./mcp_server.md)**:
+Connect agents using the secure URL with the Python SDK or MCP Server:
 
 === ":simple-python:{ .middle } &nbsp; Python SDK"
 
@@ -57,19 +57,6 @@ Connect agents using the secure URL with the **[Python SDK](./python_sdk.md)** o
       }
     }
     ```
-
-Cloud applications are indexed with BM25 and get access to the `search` tool:
-
-```
-Let me search for documents relevant to "ticket pricing API"...
-
-Found 3 relevant pages:
-  - ./api/pricing.md (highly relevant)
-  - ./guides/analytics.md (relevant)
-  - ./examples/queries.md (somewhat relevant)
-
-I'll start by reading ./api/pricing.md...
-```
 
 ---
 

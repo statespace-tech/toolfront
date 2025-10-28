@@ -1,20 +1,20 @@
-# The Only Example You'll Ever Need
+# Example: Sales Analytics
 
-Build a sales analytics environment for an e-commerce company where agents answer business questions by pulling data from a PostgreSQL database, REST API, and local receipt files.
+In this example, you'll learn how to build a sales analytics application where an AI agent (OpenAI's GPT-5) answers business questions by querying a PostgreSQL database, calling REST APIs, and reading receipt files.
 
 ---
 
 ## 1. Install ToolFront
 
-Install ToolFront with PostgreSQL support.
+Install ToolFront.
 
 ```bash
-pip install "toolfront[postgres]"
+pip install toolfront
 ```
 
 ---
 
-## 2. Configure AI model
+## 2. Configure Your AI Model
 
 Set your OpenAI API key to use GPT-5.
 
@@ -24,13 +24,13 @@ export OPENAI_API_KEY="your-openai-api-key"
 
 ---
 
-## 3. Set Up Your Environment
+## 3. Create Your Project Structure
 
 Create a directory structure with a Markdown page for every data source.
 
 ```bash
-environment/
-├── index.md
+sales-analytics/
+├── README.md
 ├── pages/
 │   ├── database.md
 │   ├── api.md
@@ -46,12 +46,19 @@ environment/
 
 ---
 
-## 4. Create the Home Page
+## 4. Create the Entry Point
 
-Create an entry point that explains available data sources and guidelines.
+Create `README.md` as the home page with instructions and navigation tools.
 
-```markdown title="environment/index.md"
-# Sales Analytics Environment
+```markdown title="sales-analytics/README.md"
+---
+tools:
+  - [ls]
+  - [cat]
+
+---
+
+# Sales Analytics
 
 You are a business analyst at an e-commerce company.
 Answer questions about sales performance, customer behavior,
@@ -66,29 +73,29 @@ the provided tools. Never make assumptions or use general knowledge.
 - [API](./pages/api.md) - Product catalog and inventory
 - [Documents](./pages/documents.md) - Transaction receipts
 
-## Global Instructions
+## Instructions
 
 1. Read the user's question carefully
 2. Navigate to the appropriate page based on what data you need
-3. Use the tools on the page page to retrieve the data
+3. Use the tools on the page to retrieve the data
 ```
 
 ---
 
 ## 5. Create the Database Page
 
-Define tools for querying PostgreSQL.
+Create `pages/database.md` with tools for querying PostgreSQL.
 
-```markdown title="environment/pages/database.md"
+```markdown title="sales-analytics/pages/database.md"
 ---
 tools:
-  - [toolfront, database, $POSTGRES_URL]
+  - [psql, -U, $USER, -d, $DATABASE, -c, {query}]
 
 ---
 
 # Database
 
-Query the Postgres database for user accounts and profile information.
+Query the PostgreSQL database for user accounts and profile information.
 
 ## Available Tables
 
@@ -97,23 +104,21 @@ Query the Postgres database for user accounts and profile information.
 
 ## Instructions
 
-1. Use `list-tables` to see available tables
-2. Use `inspect-table` to understand structure
-3. Use `query` to run SQL and retrieve data
+1. Pass SQL queries using the `{query}` placeholder
+2. Start with `SELECT * FROM users LIMIT 5;` to explore data
+3. Join `users` and `profiles` for complete customer information
 ```
 
 ---
 
 ## 6. Create the API Page
 
-Define tools for fetching real-time data from an external product management API.
+Create `pages/api.md` with tools for fetching product data from a REST API.
 
-```markdown title="environment/pages/api.md"
+```markdown title="sales-analytics/pages/api.md"
 ---
 tools:
-  - [curl, -X, GET, "https://api.products.com/v1/products"]
-  - [curl, -X, GET, "https://api.products.com/v1/inventory"]
-  - [curl, -X, GET, "https://api.products.com/v1/categories"]
+  - [curl, -X, GET, "https://api.products.com/{endpoint}"]
 
 ---
 
@@ -123,14 +128,14 @@ Fetch product catalog and inventory data from the product management system.
 
 ## Available Endpoints
 
-- `GET /v1/categories` - Product categories
-- `GET /v1/products?category=<category_name>` - Products in a category
-- `GET /v1/inventory?sku=<product_sku>` - Current inventory levels for a product
+- `v1/categories` - Product categories
+- `v1/products?category=<category_name>` - Products in a category
+- `v1/inventory?sku=<product_sku>` - Current inventory levels for a product
 
 ## Instructions
 
-1. Use curl to make API requests
-2. Append query parameters as needed
+1. Pass the `{endpoint}` parameter to make API requests
+2. Include query parameters in the endpoint as needed
 3. API returns JSON with product data
 ```
 
@@ -138,9 +143,15 @@ Fetch product catalog and inventory data from the product management system.
 
 ## 7. Create the Documents Page
 
-Describe the file structure and formats for transaction receipts.
+Create `pages/documents.md` describing the receipt file structure for agents to read.
 
-```markdown title="environment/pages/documents.md"
+```markdown title="sales-analytics/pages/documents.md"
+---
+tools:
+  - [grep]
+
+---
+
 # Transaction Receipts
 
 Transaction receipts are stored as plain text files in
@@ -164,16 +175,16 @@ Receipts are plain text files containing:
 
 ## Instructions
 
-1. List files to find receipts by date
-2. Read individual files for transaction details
-3. Parse receipt data for specific information
+1. Use `grep` to search through receipts in `../data/receipts/`
+2. Search by transaction ID, customer name, SKU, or date
+3. Read individual files for complete transaction details
 ```
 
 ---
 
-## 8. Add Sample Documents
+## 8. Add Sample Receipts
 
-Add sample receipt files under `data/receipts/` to complete the environment.
+Add sample receipt files in `data/receipts/` for the agent to analyze.
 
 === "receipt_20240115_001.txt"
     ```text
@@ -344,24 +355,24 @@ Add sample receipt files under `data/receipts/` to complete the environment.
 
 ---
 
-## 9. Query the Environment
+## 9. Run Your Application
 
-Initialize an environment and ask questions in any output format you need.
+Use the Python SDK to load and interact with your application.
 
 ```python
-from toolfront import Environment
+from toolfront import Application
 
-# Initialize environment
-environment = Environment(url="file:///path/to/environment")
+# Initialize application
+app = Application(url="file:///path/to/sales-analytics")
 
 # Get string as response
-answer = environment.run(
+answer = app.run(
     prompt="What was the total for receipt RCP-2024-001?",
     model="openai:gpt-5"
 )
 
 # Get a list of floats as response
-products = environment.run(
+taxes = app.run(
     prompt="What is the tax amount paid by our latest customers?",
     model="openai:gpt-5",
     output_type=list[float]
@@ -370,9 +381,9 @@ products = environment.run(
 
 ---
 
-## 10. Use Structured Output
+## 10. Get Structured Output
 
-Use Pydantic models to get structured output objects.
+Use Pydantic models to retrieve structured data from your application.
 
 ```python
 from pydantic import BaseModel, Field
@@ -383,8 +394,8 @@ class SalesReport(BaseModel):
     top_product: str = Field(description="Best-selling product name")
     avg_transaction: float = Field(description="Average transaction value")
 
-report = environment.run(
-    prompt="Generate a sales report combining transactions and receipts",
+report = app.run(
+    prompt="Generate a sales report from all receipts",
     model="openai:gpt-5",
     output_type=SalesReport
 )
@@ -392,3 +403,7 @@ report = environment.run(
 print(f"Revenue: ${report.total_revenue}")
 print(f"Top Product: {report.top_product}")
 ```
+
+---
+
+You now have a complete sales analytics application! The agent can navigate between pages, query databases, call APIs, and analyze documents to answer complex business questions.
