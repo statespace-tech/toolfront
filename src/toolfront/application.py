@@ -175,7 +175,7 @@ class Application(BaseModel):
             history_processors=[history_processor_] if history_processor_ else None,
         )
 
-        return asyncio.run(Application._run_async(prompt, agent, verbose))
+        return asyncio.run(Application._ask_async(prompt, agent, verbose))
 
     @staticmethod
     async def _ask_async(
