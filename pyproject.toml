@@ -39,9 +39,6 @@ include-package-data = true
 where = ["src"]
 include = ["toolfront*"]
 
-[tool.setuptools.package-data]
-"toolfront" = ["instructions/*.txt"]
-
 [project.urls]
 Homepage = "https://github.com/statespace-tech/toolfront"
 Repository = "https://github.com/statespace-tech/toolfront"
