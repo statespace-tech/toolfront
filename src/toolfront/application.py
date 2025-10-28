@@ -114,7 +114,7 @@ class Application(BaseModel):
                 )
                 response.raise_for_status()
                 output = json.loads(response.text)
-                return f"stdout: {output.get('stdout', 'N/A')}\nstderr: {output.get('stderr', 'N/A')}"
+                return f"# stdout:\n\n{output.get('stdout', 'N/A')}\n\n# stderr:\n\n{output.get('stderr', 'N/A')}"
         except Exception as e:
             raise RuntimeError(f"Error executing command: {e}") from e
 
@@ -254,7 +254,7 @@ class Application(BaseModel):
                                                 accumulated_content += str(event.part.args)
                                             update_display(accumulated_content)
                                         elif isinstance(event, FunctionToolResultEvent):
-                                            accumulated_content += f"\n\n>Tool `{event.result.tool_name}` returned:\n\n{event.result.content}\n\n"
+                                            accumulated_content += f"\n\n>Tool `{event.result.tool_name}` returned:\n\n```markdown\n{event.result.content}\n```\n\n"
                                             update_display(accumulated_content)
 
                             elif Agent.is_end_node(node):
