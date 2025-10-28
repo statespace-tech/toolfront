@@ -1,11 +1,11 @@
 [project]
 name = "toolfront"
 version = "0.3.3"
-description = "Design AI applications in Markdown."
+description = "Build AI applications in Markdown."
 readme = "README.md"
 authors = [
-    { name = "Esteban Safranchik", email = "esteban@kruskal.ai" },
-    { name = "Gavin Chan", email = "gavin@kruskal.ai" }
+    { name = "Esteban Safranchik", email = "esteban@statespace.com" },
+    { name = "Gavin Chan", email = "gavin@statespace.com" }
 ]
 license = { text = "MIT" }
 classifiers = [
