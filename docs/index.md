@@ -1,19 +1,23 @@
 ---
-title: "Quickstart"
+icon: material/lightning-bolt
 ---
+
+
 
 <p align="center">
   <a href="https://github.com/statespace-tech/toolfront">
-    <img src="assets/images/logo.png" alt="ToolFront" style="width:20%;">
+    <img src="assets/images/favicon.svg" alt="ToolFront" style="width:20%;">
   </a>
 </p>
 <div align="center">
     <h1 style="font-weight: 800;"><b>ToolFront</b></h1>
 </div>
 <p align="center">
-    <em>Build AI Agents in Markdown</em>
+    <em>Build and deploy AI apps in minutes. All in pure Markdown. Zero boilerplate.
+</em>
 </em>
 </p>
+
 <p align="center">
 <a href="https://github.com/statespace-tech/toolfront/actions/workflows/test.yml" target="_blank">
     <img src="https://github.com/statespace-tech/toolfront/actions/workflows/test.yml/badge.svg" alt="Test Suite">
@@ -35,17 +39,13 @@ title: "Quickstart"
 
 ---
 
-**ToolFront is a declarative framework for building AI agents in Markdown.**
-
-Write tools and instructions in `.md` files. Run the project and get a live AI application.
-
----
+ToolFront is a declarative framework for building modular AI applications in Markdown. Write tools and instructions in `.md` files, run the project, and get a live AI application.
 
 ## Simple Example
 
 ### Create it
 
-  Start with **one file**: `README.md`
+  Start with one file: `README.md`
 
 
   ```markdown title="README.md"
@@ -68,9 +68,9 @@ toolfront run .
 
 ### Ask it
 
-Ask your agents about the application
+Ask your AI application.
 
-=== ":simple-python:{ .middle } &nbsp; Python SDK"
+=== ":simple-python: &nbsp; Python SDK"
 
     ```python
     from toolfront import Application
@@ -83,7 +83,7 @@ Ask your agents about the application
     # Answer: yes
     ```
 
-=== ":simple-modelcontextprotocol:{ .middle } &nbsp; MCP Server"
+=== ":simple-modelcontextprotocol: &nbsp; MCP Server"
 
     ```json
     {
@@ -104,7 +104,7 @@ Your full project can grow like this:
 
 ```bash
 project/
-├── README.md
+├── README.md #(1)!
 ├── src/
 │   ├── api.md
 │   ├── rag.md
@@ -114,9 +114,11 @@ project/
 └── tools/
 ```
 
+1. All applications must have a `README.md`
+
 ### Add Navigation
 
-  Update `README.md` with tools to explore the project
+  Update `README.md` with tools to explore the project.
 
   ```markdown title="README.md" hl_lines="4-5 11"
   ---
@@ -134,7 +136,7 @@ project/
 
 ### Add Document RAG
 
-  Give your agent tools to search documents
+  Give your agent tools to search documents.
 
   ```markdown title="src/rag.md"
   ---
@@ -148,7 +150,7 @@ project/
 
 ### Add Text-to-SQL
 
-  Connect your databases for SQL workflows
+  Connect your databases for SQL workflows.
 
 
   ```markdown title="src/text2sql.md"
@@ -181,37 +183,55 @@ project/
 
 Install `toolfront` with your favorite PyPI package manager.
 
-=== ":fontawesome-brands-python:{ .middle } &nbsp; pip"
+=== ":fontawesome-brands-python: &nbsp; pip"
 
     ```bash
     pip install toolfront
     ```
 
-=== ":simple-uv:{ .middle } &nbsp; uv"
+=== ":simple-uv: &nbsp; uv"
 
     ```bash
     uv add toolfront
     ```
 
-=== ":simple-poetry:{ .middle } &nbsp; poetry"
+=== ":simple-poetry: &nbsp; poetry"
 
     ```bash
     poetry add toolfront
     ```
 
+!!! toolfront "Deploy your Apps 🔥"
 
-!!! toolfront "Deploy to ToolFront Cloud 🔥"
-
-    Instantly deploy your AI applications with **[ToolFront Cloud](pages/toolfront_cloud.md)**.
+    Instantly deploy your AI applications:
 
     ```bash
     toolfront deploy ./path/to/project
     ```
 
-    This gives you a secure application URL you can access from anywhere.
+    Gives you a shareable application URL:
 
-    ```python
-    app = Application(url="https://cloud.toolfront.ai/user/project", params={"API_KEY": ...})
-    ```
+    === ":material-web: Community Cloud (Free)"
 
-    ToolFront Cloud is in beta. To request access, join our **[Discord](https://discord.gg/rRyM7zkZTf)** or email `esteban[at]statespace[dot]com`.
+        ```python
+        # Up to 5 public apps, totally free
+        app = Application("https://cloud.statespace.com/you/status-checker")
+        ```
+
+    === ":material-account-group: Statespace Cloud (Pro)"
+
+        ```python
+        # Up to 20 public or private apps with authentication
+        app = Application("https://cloud.statespace.com/team/project", params={"API_KEY": "..."})
+        ```
+
+    === ":material-lock: Self-Hosted (Enterprise)"
+
+        ```python
+        # Unlimited on-prem apps with Docker or K8s  
+        app = Application("https://custom.com/agent")
+        ```
+    
+    [Get started for free](#){ .md-button .md-button--primary }
+        
+<p align="right"><strong>Made with ❤️ by <a href="https://statespace.com" target="_blank">Statespace</a></strong>.</p>

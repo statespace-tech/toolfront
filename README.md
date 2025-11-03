@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/statespace-tech/toolfront">
-    <img src="https://raw.githubusercontent.com/statespace-tech/toolfront/main/docs/assets/images/logo.png" width="150" alt="ToolFront Logo">
+    <img src="https://raw.githubusercontent.com/statespace-tech/toolfront/main/docs/assets/images/favicon.svg" width="150" alt="ToolFront">
   </a>
 </p>
 
@@ -8,7 +8,7 @@
 
 # ToolFront
 
-*Build AI Applications in Markdown*
+**Build and deploy AI apps in minutes. All in pure Markdown. Zero boilerplate.**
 
 [![Test Suite](https://github.com/statespace-tech/toolfront/actions/workflows/test.yml/badge.svg)](https://github.com/statespace-tech/toolfront/actions/workflows/test.yml)
 [![PyPI package](https://img.shields.io/pypi/v/toolfront?color=%2334D058&label=pypi%20package)](https://pypi.org/project/toolfront/)
@@ -27,9 +27,7 @@
 
 ## Quickstart
 
-**ToolFront is a declarative framework for building AI agents in Markdown.**
-
-Write tools and instructions in `.md` files. Run the project and get a live AI application.
+ToolFront is a declarative framework for building modular AI applications in Markdown. Write tools and instructions in `.md` files, run the project, and get a live AI application.
 
 ### Create it
 
@@ -55,7 +53,7 @@ toolfront run .
 
 ### Ask it
 
-Ask your agents about the application:
+Ask your AI application.
 
 <details open>
 <summary><b>Python SDK</b></summary>
@@ -172,27 +170,76 @@ tools:
 
 Install `toolfront` with your favorite PyPI package manager.
 
+<details open>
+<summary><b>pip</b></summary>
+
 ```bash
 pip install toolfront
 ```
 
+</details>
+
+<details>
+<summary><b>uv</b></summary>
+
+```bash
+uv add toolfront
+```
+
+</details>
+
+<details>
+<summary><b>poetry</b></summary>
+
+```bash
+poetry add toolfront
+```
+
+</details>
+
 ---
 
-## Deploy with ToolFront Cloud
+## Deploy your Apps
 
-Deploy your AI applications with [ToolFront Cloud](https://docs.toolfront.ai/pages/toolfront_cloud/).
+Instantly deploy your AI applications:
 
 ```bash
 toolfront deploy ./path/to/project
 ```
 
-This gives you a secure application URL you can access from anywhere.
+Gives you a shareable application URL:
+
+<details open>
+<summary><b>Community Cloud (Free)</b></summary>
 
 ```python
-app = Application(url="https://cloud.toolfront.ai/user/project", params={"API_KEY": ...})
+# Up to 5 public apps, totally free
+app = Application("https://cloud.statespace.com/you/status-checker")
 ```
 
-ToolFront Cloud is in beta. To request access, join our [Discord](https://discord.gg/rRyM7zkZTf) or email `esteban[at]statespace[dot]com`.
+</details>
+
+<details>
+<summary><b>Statespace Cloud (Pro)</b></summary>
+
+```python
+# Up to 20 public or private apps with authentication
+app = Application("https://cloud.statespace.com/team/project", params={"API_KEY": "..."})
+```
+
+</details>
+
+<details>
+<summary><b>Self-Hosted (Enterprise)</b></summary>
+
+```python
+# Unlimited on-prem apps with Docker or K8s
+app = Application("https://custom.com/agent")
+```
+
+</details>
+
+[Get started for free](https://cloud.statespace.com/signup)
 
 
 ## Community & Contributing

@@ -1,7 +1,50 @@
 {% extends "base.html" %}
 
 {% block announce %}
-  <a href="/pages/toolfront_cloud/">
-    🔥 <b>ToolFront Cloud</b> is now in open beta. Go check it out!
+  <a href="/pages/toolfront_cloud/" id="rotating-announcement">
+    <span class="announcement-text">🔥 Deploy your AI apps to the community cloud</span>
   </a>
+  <script>
+    (function() {
+      const staticPrefix = '🔥 Deploy your AI apps ';
+      const messages = [
+        'to the community cloud',
+        'privately or on-prem'
+      ];
+      let currentIndex = 0;
+      const element = document.querySelector('.announcement-text');
+
+      function typeMessage(message, charIndex = 0) {
+        if (!element) return;
+
+        if (charIndex <= message.length) {
+          element.textContent = staticPrefix + message.substring(0, charIndex);
+          setTimeout(() => typeMessage(message, charIndex + 1), 50);
+        } else {
+          setTimeout(() => untypeMessage(message, message.length), 5000);
+        }
+      }
+
+      function untypeMessage(message, charIndex) {
+        if (!element) return;
+
+        if (charIndex >= 0) {
+          element.textContent = staticPrefix + message.substring(0, charIndex);
+          setTimeout(() => untypeMessage(message, charIndex - 1), 50);
+        } else {
+          currentIndex = (currentIndex + 1) % messages.length;
+          setTimeout(() => typeMessage(messages[currentIndex]), 200);
+        }
+      }
+
+      typeMessage(messages[0]);
+    })();
+  </script>
+  <style>
+    .announcement-text {
+      display: inline-block;
+      min-width: 350px;
+      color: white;
+    }
+  </style>
 {% endblock %}

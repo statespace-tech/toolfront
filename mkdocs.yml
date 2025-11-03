@@ -9,8 +9,8 @@ theme:
   custom_dir: docs/overrides
   icon:
     repo: fontawesome/brands/git-alt
-  logo: assets/images/logo_bw.svg
-  favicon: assets/images/favicon.png
+  logo: assets/images/logo_white.svg
+  favicon: assets/images/favicon.svg
   palette:
     - scheme: default
       primary: custom
@@ -27,7 +27,6 @@ theme:
   features:
     - navigation.sections
     - navigation.expand
-    - navigation.tabs.sticky
     - navigation.top
     - search.highlight
     - search.share
@@ -44,9 +43,9 @@ plugins:
   - social:
       cards: false
       cards_layout_options:
-        background_color: "#10a2b4"
+        background_color: "#00bb77"
         color: "#ffffff"
-        logo: docs/assets/images/logo_bw.png
+        logo: docs/assets/images/logo_white.png
   - autorefs
   - mkdocstrings:
       handlers:
@@ -70,9 +69,13 @@ plugins:
 
 nav:
   - Quickstart: index.md
-  - Documentation: pages/documentation.md
-  - ToolFront Cloud: pages/toolfront_cloud.md
-  - FAQ: pages/faq.md
+  - Concepts: 
+    - Applications: pages/concepts/applications.md
+    - Python SDK: pages/concepts/python_sdk.md
+    - MCP Server: pages/concepts/mcp_server.md
+  - Community:
+    - FAQ: pages/community/faq.md
+    - Contributing: pages/community/contributing.md
 
 markdown_extensions:
   - admonition
@@ -114,10 +117,10 @@ extra:
       link: https://discord.gg/rRyM7zkZTf
       name: Join our Discord community
     - icon: fontawesome/brands/x-twitter
-      link: https://x.com/statespace_ai
+      link: https://x.com/statespace_tech
       name: Follow us on X (Twitter)
     - icon: fontawesome/brands/github
       link: https://github.com/statespace-tech/toolfront
       name: Star us on GitHub
 
-copyright: Copyright &copy; 2025 Statespace AI, Inc.
+copyright: "&copy; 2025 Statespace Technologies, Inc."
