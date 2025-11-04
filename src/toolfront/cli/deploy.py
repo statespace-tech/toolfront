@@ -45,7 +45,7 @@ def deploy(path: Path, api_key: str, gateway_url: str, name: str | None, verify:
         if verify and result.auth_token:
             verify_url = result.fly_url or result.url
             if verify_url:
-                click.echo(f"\n⏳ Verifying environment...")
+                click.echo("\n⏳ Verifying environment...")
                 if client.verify_environment(verify_url, result.auth_token):
                     click.echo("✅ Environment is ready!")
                 else:
