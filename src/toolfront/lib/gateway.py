@@ -66,3 +66,26 @@ class GatewayClient:
             url=data.get("url"),
             fly_url=data.get("fly_url"),
         )
+
+    def verify_environment(self, url: str, auth_token: str, max_attempts: int = 30) -> bool:
+        import time
+
+        time.sleep(15)
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = httpx.get(
+                    f"{url}/index.md",
+                    headers={"Authorization": f"Bearer {auth_token}"},
+                    timeout=5.0,
+                    follow_redirects=True,
+                )
+                if response.is_success and len(response.text) > 0:
+                    return True
+            except (httpx.RequestError, httpx.TimeoutException):
+                pass
+
+            if attempt < max_attempts:
+                time.sleep(2)
+
+        return False
