@@ -52,6 +52,9 @@ This is a test environment for e2e verification.
     assert env_url
 
     try:
+        # Wait for environment to be ready
+        assert client.verify_environment(env_url, result.auth_token)
+
         # Test AI agent
         app = Application(url=f"{env_url}/index.md", param={"Authorization": f"Bearer {result.auth_token}"})
         response = app.ask("List all files", model="openai:gpt-4o-mini")
