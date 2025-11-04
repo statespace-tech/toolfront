@@ -41,7 +41,7 @@ theme:
 plugins:
   - search
   - social:
-      cards: false
+      cards: true
       cards_layout_options:
         background_color: "#00bb77"
         color: "#ffffff"
