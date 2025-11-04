@@ -168,13 +168,22 @@ class Application(BaseModel):
             timeout=DEFAULT_TIMEOUT_SECONDS,
         )
 
-        try:
-            with httpx.Client() as client:
-                response = client.get(str(self.url), headers=self.param or {})
-                response.raise_for_status()
-                instructions = response.text + f"\n\n Your current URL is: {self.url}"
-        except Exception as e:
-            raise RuntimeError(f"Failed to read instructions from {self.url}: {e}") from e
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                with httpx.Client() as client:
+                    response = client.get(str(self.url), headers=self.param or {}, timeout=10.0)
+                    response.raise_for_status()
+                    instructions = response.text + f"\n\n Your current URL is: {self.url}"
+                    break
+            except (httpx.ConnectError, httpx.TimeoutException) as e:
+                if attempt < max_retries - 1:
+                    import time
+                    time.sleep(5)
+                    continue
+                raise RuntimeError(f"Failed to read instructions from {self.url}: {e}") from e
+            except Exception as e:
+                raise RuntimeError(f"Failed to read instructions from {self.url}: {e}") from e
 
         history_processor_ = history_processor(context_window=context_window)
 
