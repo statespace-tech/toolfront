@@ -21,6 +21,16 @@ class DeployResult:
     fly_url: str | None
 
 
+@dataclass
+class Environment:
+    id: str
+    name: str
+    status: str
+    url: str | None
+    fly_url: str | None
+    created_at: str
+
+
 class GatewayClient:
     def __init__(self, base_url: str, api_key: str):
         self.base_url = base_url.rstrip("/")
@@ -67,25 +77,87 @@ class GatewayClient:
             fly_url=data.get("fly_url"),
         )
 
-    def verify_environment(self, url: str, auth_token: str, max_attempts: int = 30) -> bool:
+    def verify_environment(
+        self, url: str, auth_token: str, max_attempts: int = 20, progress_callback=None
+    ) -> bool:
         import time
-
-        time.sleep(15)
 
         for attempt in range(1, max_attempts + 1):
             try:
                 response = httpx.get(
-                    f"{url}/index.md",
+                    f"{url}/README.md",
                     headers={"Authorization": f"Bearer {auth_token}"},
-                    timeout=5.0,
+                    timeout=10.0,
                     follow_redirects=True,
                 )
-                if response.is_success and len(response.text) > 0:
+                if response.is_success:
                     return True
-            except (httpx.RequestError, httpx.TimeoutException):
+            except (httpx.ConnectError, httpx.TimeoutException, httpx.RemoteProtocolError) as e:
+                if progress_callback:
+                    progress_callback(attempt, max_attempts, str(e))
+            except httpx.HTTPStatusError:
                 pass
 
             if attempt < max_attempts:
-                time.sleep(2)
+                wait_time = min(2 * attempt, 10)
+                time.sleep(wait_time)
 
         return False
+
+    def list_environments(self) -> list[Environment]:
+        response = httpx.get(
+            f"{self.base_url}/api/v1/environments",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            timeout=30.0,
+        )
+
+        if not response.is_success:
+            raise RuntimeError(f"Failed to list environments: {response.status_code}\n{response.text}")
+
+        json_response = response.json()
+        
+        # Handle both wrapped {"data": [...]} and direct list responses
+        if isinstance(json_response, dict):
+            data = json_response.get("data", json_response)
+        else:
+            data = json_response
+            
+        if not isinstance(data, list):
+            data = [data]
+
+        return [
+            Environment(
+                id=env["id"],
+                name=env["name"],
+                status=env["status"],
+                url=env.get("url"),
+                fly_url=env.get("fly_url"),
+                created_at=env["created_at"],
+            )
+            for env in data
+        ]
+
+    def delete_environment(self, environment_id: str) -> None:
+        response = httpx.delete(
+            f"{self.base_url}/api/v1/environments/{environment_id}",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            timeout=30.0,
+        )
+
+        if not response.is_success:
+            raise RuntimeError(f"Failed to delete environment: {response.status_code}\n{response.text}")
+
+    def update_environment(self, environment_id: str, files: list[EnvironmentFile]) -> None:
+        payload = {
+            "files": [{"path": f.path, "content": f.content, "checksum": f.checksum} for f in files],
+        }
+
+        response = httpx.post(
+            f"{self.base_url}/api/v1/environments/{environment_id}/publish",
+            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+            json=payload,
+            timeout=30.0,
+        )
+
+        if not response.is_success:
+            raise RuntimeError(f"Failed to update environment: {response.status_code}\n{response.text}")
