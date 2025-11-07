@@ -115,10 +115,7 @@ class GatewayClient:
         json_response = response.json()
 
         # Handle both wrapped {"data": [...]} and direct list responses
-        if isinstance(json_response, dict):
-            data = json_response.get("data", json_response)
-        else:
-            data = json_response
+        data = json_response.get("data", json_response) if isinstance(json_response, dict) else json_response
 
         if not isinstance(data, list):
             data = [data]

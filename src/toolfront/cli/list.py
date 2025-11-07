@@ -11,7 +11,7 @@ from toolfront.lib.gateway import GatewayClient
     envvar="TOOLFRONT_GATEWAY_URL",
     help="Gateway base URL",
 )
-def list(api_key: str, gateway_url: str):
+def list_deployments(api_key: str, gateway_url: str):
     """List all deployments"""
     try:
         client = GatewayClient(gateway_url, api_key)

@@ -15,10 +15,9 @@ from toolfront.lib.gateway import GatewayClient
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
 def delete(deployment_id: str, api_key: str, gateway_url: str, yes: bool):
     """Delete a deployment by ID"""
-    if not yes:
-        if not click.confirm(f"Are you sure you want to delete deployment {deployment_id}?"):
-            click.echo("Cancelled")
-            return
+    if not yes and not click.confirm(f"Are you sure you want to delete deployment {deployment_id}?"):
+        click.echo("Cancelled")
+        return
 
     try:
         client = GatewayClient(gateway_url, api_key)
