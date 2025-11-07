@@ -7,7 +7,7 @@ from toolfront.lib.gateway import GatewayClient
 
 @click.command()
 @click.argument("path", type=click.Path(exists=True, path_type=Path))
-@click.option("--api-key", envvar="TOOLFRONT_API_KEY", required=False, help="Gateway API key")
+@click.option("--api-key", envvar="TOOLFRONT_API_KEY", required=True, help="Gateway API key")
 @click.option(
     "--gateway-url",
     default="https://api.toolfront.ai",
