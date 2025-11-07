@@ -13,7 +13,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -145,3 +144,7 @@ output/
 
 # IDEs
 .idea/
+# Test files with secrets/internal URLs
+test_deployed_env.py
+test_*.py
+tests/integration/demo.py

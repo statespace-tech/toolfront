@@ -29,7 +29,7 @@ jobs:
       run: uv python install ${{ matrix.python-version }}
     
     - name: Install dependencies
-      run: uv pip install -e ".[all]"
+      run: uv pip install -e ".[test]"
     
     - name: Run unit tests
       run: uv run pytest tests/unit/ -v --tb=short -x

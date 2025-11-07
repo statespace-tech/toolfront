@@ -109,8 +109,17 @@ class Application(BaseModel):
 
         try:
             async with httpx.AsyncClient() as client:
+                payload = {"command": command}
+                if args is not None:
+                    payload["args"] = args
+                if self.env is not None:
+                    payload["env"] = self.env
+
                 response = await client.post(
-                    url, json={"command": command, "args": args, "env": self.env}, timeout=DEFAULT_TIMEOUT_SECONDS
+                    url,
+                    json=payload,
+                    headers=self.param or {},
+                    timeout=DEFAULT_TIMEOUT_SECONDS,
                 )
                 response.raise_for_status()
                 output = json.loads(response.text)
@@ -146,22 +155,37 @@ class Application(BaseModel):
             uses type hint from caller or defaults to string.
         """
 
+        mcp_args = ["run", "toolfront", "mcp", str(self.url), "--transport", "stdio"]
+        if self.param:
+            for key, value in self.param.items():
+                mcp_args.extend(["--param", f"{key}={value}"])
+
         server = MCPServerStdio(
             "uv",
-            args=["run", "toolfront", "mcp", str(self.url), "--transport", "stdio"],
+            args=mcp_args,
             env=self.env,
             max_retries=DEFAULT_MAX_RETRIES,
             timeout=DEFAULT_TIMEOUT_SECONDS,
         )
 
-        # Read the instructions from the application URL
-        try:
-            with httpx.Client() as client:
-                response = client.get(str(self.url))
-                response.raise_for_status()
-                instructions = response.text + f"\n\n Your current URL is: {self.url}"
-        except Exception as e:
-            raise RuntimeError(f"Failed to read instructions from {self.url}: {e}") from e
+        import time
+
+        last_error = None
+        for attempt in range(3):
+            try:
+                with httpx.Client() as client:
+                    response = client.get(str(self.url), headers=self.param or {}, timeout=10.0)
+                    response.raise_for_status()
+                    instructions = response.text + f"\n\n Your current URL is: {self.url}"
+                    break
+            except (httpx.ConnectError, httpx.TimeoutException) as e:
+                last_error = e
+                if attempt < 2:
+                    time.sleep(5)
+            except Exception as e:
+                raise RuntimeError(f"Failed to read instructions from {self.url}: {e}") from e
+        else:
+            raise RuntimeError(f"Failed to read instructions from {self.url}: {last_error}") from last_error
 
         history_processor_ = history_processor(context_window=context_window)
 
@@ -213,7 +237,6 @@ class Application(BaseModel):
 
         try:
             if verbose:
-                # Streaming mode with Rich Live display
                 with Live(
                     console=console,
                     vertical_overflow="visible",
@@ -260,7 +283,6 @@ class Application(BaseModel):
                             elif Agent.is_end_node(node):
                                 return node.data.output
             else:
-                # Quiet mode
                 async with agent.iter(prompt) as run:
                     async for node in run:
                         if Agent.is_end_node(node):
