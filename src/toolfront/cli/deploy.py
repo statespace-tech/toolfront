@@ -38,9 +38,7 @@ def deploy(path: Path, api_key: str, gateway_url: str, name: str | None, verify:
         click.echo("\n" + "─" * 80)
         click.echo(f"  Deployment ID:  {click.style(result.id, fg='green')}")
         if result.fly_url:
-            click.echo(f"  URL (ready):    {click.style(result.fly_url, fg='blue', bold=True)}")
-        if result.url and result.url != result.fly_url:
-            click.echo(f"  URL (custom):   {click.style(result.url, dim=True)} (DNS propagating...)")
+            click.echo(f"  URL:    {click.style(result.url, fg='blue', bold=True)}")
         if result.auth_token:
             click.echo(f"  Auth Token:     {result.auth_token}")
         click.echo("─" * 80)
