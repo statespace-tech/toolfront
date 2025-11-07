@@ -147,3 +147,4 @@ output/
 # Test files with secrets/internal URLs
 test_deployed_env.py
 test_*.py
+tests/integration/demo.py
