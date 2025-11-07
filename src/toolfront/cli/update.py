@@ -11,7 +11,7 @@ from toolfront.lib.gateway import GatewayClient
 @click.option("--api-key", envvar="TOOLFRONT_API_KEY", required=True, help="Gateway API key")
 @click.option(
     "--gateway-url",
-    default="https://toolfront-gateway-staging.fly.dev",
+    default="https://api.toolfront.ai",
     envvar="TOOLFRONT_GATEWAY_URL",
     help="Gateway base URL",
 )
