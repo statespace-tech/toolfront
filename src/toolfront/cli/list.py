@@ -23,11 +23,9 @@ def list_deployments(api_key: str, gateway_url: str):
 
         click.echo(f"📦 {len(envs)} deployment(s)\n")
 
-        # Print table header
         click.echo(f"{'NAME':<30} {'STATUS':<12} {'ID':<38} {'URL'}")
         click.echo("─" * 120)
 
-        # Print table rows
         for env in envs:
             status_emoji = "✅" if env.status == "running" else "⏳" if env.status == "pending" else "❌"
             status_display = f"{status_emoji} {env.status}"

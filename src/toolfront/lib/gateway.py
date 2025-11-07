@@ -113,8 +113,6 @@ class GatewayClient:
             raise RuntimeError(f"Failed to list environments: {response.status_code}\n{response.text}")
 
         json_response = response.json()
-
-        # Handle both wrapped {"data": [...]} and direct list responses
         data = json_response.get("data", json_response) if isinstance(json_response, dict) else json_response
 
         if not isinstance(data, list):
