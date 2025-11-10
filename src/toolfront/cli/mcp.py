@@ -49,7 +49,11 @@ def mcp(url, param, host, port, transport, env) -> None:
 
     mcp = FastMCP("ToolFront MCP server", host=host, port=port)
 
-    mcp.add_tool(application.action)
+    # Pre-bind the URL so the AI only sees command and args parameters
+    async def action_wrapper(command: list[str], args: dict[str, str] | None = None) -> str:
+        return await application.action(url=str(application.url), command=command, args=args)
+    
+    mcp.add_tool(action_wrapper)
 
     if transport == "stdio":
         click.echo("MCP server started successfully", err=True)
