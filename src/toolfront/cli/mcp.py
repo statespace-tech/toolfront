@@ -49,7 +49,38 @@ def mcp(url, param, host, port, transport, env) -> None:
 
     mcp = FastMCP("ToolFront MCP server", host=host, port=port)
 
-    mcp.add_tool(application.action)
+    # CRITICAL: Pre-bind the application URL to prevent LLM confusion
+    #
+    # Problem: The LLM was extracting URLs from command arguments (e.g., from curl commands)
+    # and using them as the 'url' parameter for the action() tool, causing POSTs to go to
+    # the wrong endpoint (405 errors) pretty consistently.
+    #
+    # Root cause: When the LLM sees action(url, command, args) as a tool signature, and then
+    # encounters a command like ["curl", "-X", "GET", "https://api.toolfront.ai/health"], it
+    # incorrectly assumes the URL in the command is what should be passed to the 'url' parameter.
+    #
+    # Incorrect flow (before this fix):
+    #   1. LLM sees: action(url, command, args)
+    #   2. LLM reads command: ["curl", "-X", "GET", "https://api.toolfront.ai/health"]
+    #   3. LLM calls: action(url="https://api.toolfront.ai/health", command=[...])
+    #   4. POST goes to https://api.toolfront.ai/health instead of the markdown file URL
+    #   5. Server returns 405 Method Not Allowed (GET endpoint, not POST)
+    #
+    # Corrected flow (with this wrapper):
+    #   1. LLM sees: action_wrapper(command, args) - url parameter is hidden
+    #   2. LLM reads command: ["curl", "-X", "GET", "https://api.toolfront.ai/health"]
+    #   3. LLM calls: action_wrapper(command=["curl", ...], args=None)
+    #   4. Wrapper automatically injects: url=str(application.url)
+    #   5. POST goes to correct markdown file URL (e.g., https://env-abc123.toolfront.ai/README.md)
+    #   6. Environment server validates command is in frontmatter, executes it, returns result
+    #
+    # By hiding the 'url' parameter from the LLM's view, we prevent it from making incorrect
+    # assumptions about which URL to use. The application URL is always the markdown file where
+    # the tool is defined, never a URL that happens to appear in the command arguments.
+    async def action_wrapper(command: list[str], args: dict[str, str] | None = None) -> str:
+        return await application.action(url=str(application.url), command=command, args=args)
+
+    mcp.add_tool(action_wrapper)
 
     if transport == "stdio":
         click.echo("MCP server started successfully", err=True)

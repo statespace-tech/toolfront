@@ -1,6 +1,6 @@
 ---
 tools:
-  - [curl, -X, GET, https://httpbin.org/json]
+  - [curl, -X, GET, https://api.toolfront.ai/health]
   - [ls]
   - [cat]
 ---
