@@ -34,7 +34,7 @@ def load_config() -> dict:
             f"Run 'dev-tools setup --save' to create it, or set TOOLFRONT_API_KEY and TOOLFRONT_GATEWAY_URL env vars."
         )
 
-    with open(config_path, "rb") as f:
+    with config_path.open("rb") as f:
         return tomllib.load(f)
 
 
