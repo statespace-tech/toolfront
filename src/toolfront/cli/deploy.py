@@ -2,8 +2,8 @@ from pathlib import Path
 
 import click
 
-from toolfront.lib.gateway import GatewayClient
 from toolfront.lib.config import get_api_credentials
+from toolfront.lib.gateway import GatewayClient
 
 
 @click.command()

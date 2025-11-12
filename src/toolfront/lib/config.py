@@ -1,8 +1,7 @@
 """Shared config reader for toolfront CLI - reads from dev-tools config.toml"""
 
-from pathlib import Path
-from typing import Optional
 import sys
+from pathlib import Path
 
 try:
     import tomllib  # Python 3.11+
@@ -56,10 +55,10 @@ def get_current_context() -> dict:
     return context
 
 
-def get_api_credentials(api_key: Optional[str] = None, gateway_url: Optional[str] = None) -> tuple[str, str]:
+def get_api_credentials(api_key: str | None = None, gateway_url: str | None = None) -> tuple[str, str]:
     """
     Get API credentials, preferring explicit args, then config file, then env vars.
-    
+
     Returns: (gateway_url, api_key)
     """
     import os
