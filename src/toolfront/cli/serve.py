@@ -19,6 +19,7 @@ class ActionRequest(BaseModel):
     command: list[str]
     args: dict[str, str] | None = None
     env: dict[str, str] | None = None
+    path: str | None = None
 
     @field_validator("args", mode="before")
     @classmethod
@@ -98,14 +99,15 @@ def serve(directory, host, port):
     @app.get("/{file_path:path}")
     async def read_file(file_path: str):
         """Read a file from the served directory"""
-        full_path = resolve_file_path(directory, file_path)
+        full_path = resolve_file_path(directory, file_path or "")
         return FileResponse(full_path)
 
-    @app.post("/{file_path:path}")
-    async def action(file_path: str, action: ActionRequest = Body(...)):
-        """Execute a command defined in a file's frontmatter"""
+    @app.post("/action")
+    async def action_endpoint(action: ActionRequest = Body(...)):
+        """Execute a command defined in a file's frontmatter (dedicated endpoint)"""
         command = action.command
-        args = action.args
+        args = action.args or {}
+        file_path = action.path or ""
 
         # Resolve file path
         full_path = resolve_file_path(directory, file_path)
@@ -120,11 +122,20 @@ def serve(directory, host, port):
         if not tools:
             raise HTTPException(status_code=400, detail=f"No tools found in frontmatter of: {path}")
 
-        if not any(command[: len(t)] == t for t in tools):
-            raise HTTPException(status_code=400, detail=f"Invalid command: {command}. Must be one of: {tools}")
+        # Validate command name matches a tool (first element only)
+        if not any(command[0] == t[0] for t in tools if len(t) > 0):
+            raise HTTPException(
+                status_code=400, detail=f"Invalid command: {command[0]}. Must be one of: {[t[0] for t in tools]}"
+            )
 
-        # Expand placeholders in command and replace arguments with values
-        expanded_command = [os.path.expandvars(c).format(**args) for c in command]
+        # Expand placeholders; skip unfilled placeholders like {path}
+        expanded_command = []
+        for part in command:
+            try:
+                expanded_command.append(os.path.expandvars(part).format(**args))
+            except KeyError:
+                if not (part.startswith("{") and part.endswith("}")):
+                    expanded_command.append(part)
 
         result = subprocess.run(expanded_command, cwd=path.parent, env=action.env, capture_output=True, text=True)
 
@@ -134,7 +145,8 @@ def serve(directory, host, port):
 
     click.echo(f"Starting ToolFront server on {host}:{port}")
     click.echo(f"Serving files from: {directory}")
-    click.echo(f"GET  http://{host}:{port}/path/to/file.md - Read file")
-    click.echo(f"POST http://{host}:{port}/path/to/file.md - Execute command")
+    click.echo(f"GET  http://{host}:{port}/           - Read root README.md")
+    click.echo(f"GET  http://{host}:{port}/path       - Read path/README.md")
+    click.echo(f"POST http://{host}:{port}/action     - Execute command")
 
     uvicorn.run(app, host=host, port=port)

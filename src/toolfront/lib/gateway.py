@@ -83,7 +83,7 @@ class GatewayClient:
         for attempt in range(1, max_attempts + 1):
             try:
                 response = httpx.get(
-                    f"{url}/README.md",
+                    url,
                     headers={"Authorization": f"Bearer {auth_token}"},
                     timeout=10.0,
                     follow_redirects=True,

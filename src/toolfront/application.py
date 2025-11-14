@@ -34,7 +34,7 @@ class Application(BaseModel):
     Attributes
     ----------
     url : str
-        HTTP/HTTPS URL to the application (e.g., https://example.com/docs/index.md)
+        HTTP/HTTPS URL to the application (e.g., https://example.com)
     param : dict[str, str] | None
         Authentication parameter for remote applications
     env : dict[str, str] | None
@@ -75,18 +75,17 @@ class Application(BaseModel):
         Commands can parse directories, query databases, call APIs, etc.
 
         Instructions:
-        1. url MUST ALWAYS be a complete HTTP/HTTPS URL to a file (e.g., 'https://example.com/docs/index.md')
-        2. The URL must point to the specific .md file where the command is defined in the frontmatter
-        3. To discover available commands and their URLs, use previously discovered/read tools and documentation
-        4. IMPORTANT: You can ONLY execute commands explicitly listed in the page's frontmatter. Never call a command you haven't found in the .md file
-        5. Commands must exactly match those in the frontmatter (they may include placeholders like '{endpoint}' or '{id}')
-        6. If you don't know what a command does, run it with --help first (e.g., ['command', '--help'])
-        7. Replace command placeholders with actual values from the args dict when executing
+        1. url MUST ALWAYS be a complete HTTP/HTTPS URL to the base application (e.g., 'https://example.com')
+        2. To discover available commands and their URLs, use previously discovered/read tools and documentation
+        3. IMPORTANT: You can ONLY execute commands explicitly listed in the page's frontmatter. Never call a command you haven't found in the .md file
+        4. Commands must exactly match those in the frontmatter (they may include placeholders like '{endpoint}' or '{id}')
+        5. If you don't know what a command does, run it with --help first (e.g., ['command', '--help'])
+        6. Replace command placeholders with actual values from the args dict when executing
 
         Parameters
         ----------
         url : str
-            Complete HTTP/HTTPS URL to the .md file where the command is defined (e.g., 'https://example.com/docs/index.md')
+            Complete HTTP/HTTPS URL to the base application (e.g., 'https://example.com')
             MUST always be a full URL, never a file:// path
         command : list[str]
             Command and its arguments (e.g., ['curl', '-X', 'GET', 'https://api.com/{endpoint}']). REQUIRED.
@@ -116,8 +115,9 @@ class Application(BaseModel):
                 if self.env is not None:
                     payload["env"] = self.env
 
+                action_url = f"{str(url).rstrip('/')}/action"
                 response = await client.post(
-                    url,
+                    action_url,
                     json=payload,
                     headers=self.param or {},
                     timeout=DEFAULT_TIMEOUT_SECONDS,
