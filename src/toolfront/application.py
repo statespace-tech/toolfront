@@ -33,7 +33,7 @@ class Application(BaseModel):
     Attributes
     ----------
     url : str
-        HTTP/HTTPS URL to the application (e.g., https://example.com/docs/index.md)
+        HTTP/HTTPS URL to the application (e.g., https://example.com)
     param : dict[str, str] | None
         Authentication parameter for remote applications
     env : dict[str, str] | None
