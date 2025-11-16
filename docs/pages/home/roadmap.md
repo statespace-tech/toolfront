@@ -1,0 +1,5 @@
+---
+icon: lucide/map
+---
+
+# FAQ

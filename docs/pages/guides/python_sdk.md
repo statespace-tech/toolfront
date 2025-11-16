@@ -18,6 +18,10 @@ result = app.run(
 # Returns: "Done!"
 ```
 
+## Installation
+
+
+
 ## AI models
 
 The SDK supports all major model providers through [Pydantic AI](https://ai.pydantic.dev/models/overview/).
@@ -293,6 +297,40 @@ Retrieve structured data in any format by using the `output_type` parameter.
     )
     # Returns: 127.000
     ```
+
+## Environment Variables
+
+Pass environment variables to your application for secure credential management. Tools can reference these variables using the `$VARIABLE` syntax without exposing them to agents.
+
+```python
+from toolfront import Application
+
+app = Application(
+    url="http://127.0.0.1:8000",
+    env={
+        "USER": "admin",
+        "DATABASE": "production",
+        "API_KEY": "secret-key-123"
+    }
+)
+
+result = app.run(
+    prompt="Query the production database for recent orders",
+    model="openai:gpt-5"
+)
+```
+
+When tools are declared with `$VARIABLE` placeholders, the SDK automatically substitutes them with values from the `env` dictionary:
+
+```markdown title="tools.md"
+---
+tools:
+  - [psql, -U, $USER, -d, $DATABASE, -c, {query}]
+  - [curl, -H, "Authorization: Bearer $API_KEY", "https://api.example.com/{endpoint}"]
+---
+```
+
+The agent sees `$USER`, `$DATABASE`, and `$API_KEY` as literals, while the server injects the actual values during execution.
 
 ::: toolfront.application.Application
     options:

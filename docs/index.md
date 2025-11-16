@@ -1,8 +1,6 @@
 ---
-icon: material/lightning-bolt
+icon: lucide/home
 ---
-
-
 
 <p align="center">
   <a href="https://github.com/statespace-tech/toolfront">
@@ -16,22 +14,24 @@ icon: material/lightning-bolt
     <em>
       Build and deploy AI apps in minutes. All in pure Markdown. Zero boilerplate.
     </em>
-</em>
 </p>
 
 <p align="center">
-<a href="https://github.com/statespace-tech/toolfront/actions/workflows/test.yml" target="_blank">
+  <a href="https://github.com/statespace-tech/toolfront/actions/workflows/test.yml" target="_blank" style="text-decoration: none;">
     <img src="https://github.com/statespace-tech/toolfront/actions/workflows/test.yml/badge.svg" alt="Test Suite">
-</a>
-<a href="https://pypi.org/project/toolfront/" target="_blank">
-    <img src="https://img.shields.io/pypi/v/toolfront?color=%2334D058&label=pypi%20package" alt="PyPI package">
-</a>
-<a href="https://discord.gg/rRyM7zkZTf" target="_blank">
-    <img src="https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&style=flat-square" alt="Discord">
-</a>
-<a href="https://x.com/statespace_tech" target="_blank">
+  </a>
+  <a href="https://pypi.org/project/toolfront/" target="_blank" style="text-decoration: none;">
+    <img src="https://img.shields.io/pypi/v/toolfront?color=3775A9&label=pypi%20package&style=flat-square" alt="PyPI package">
+  </a>
+  <a href="https://github.com/statespace-tech/toolfront/blob/main/LICENSE" target="_blank" style="text-decoration: none;">
+    <img src="https://img.shields.io/badge/license-MIT-007ec6?style=flat-square" alt="License">
+  </a>
+  <a href="https://discord.gg/rRyM7zkZTf" target="_blank" style="text-decoration: none;">
+    <img src="https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&color=5865F2&style=flat-square" alt="Discord">
+  </a>
+  <a href="https://x.com/statespace_tech" target="_blank" style="text-decoration: none;">
     <img src="https://img.shields.io/badge/Statespace-black?style=flat-square&logo=x&logoColor=white" alt="X">
-</a>
+  </a>
 </p>
 
 ---
@@ -40,7 +40,7 @@ icon: material/lightning-bolt
 
 ---
 
-ToolFront is a declarative framework for building modular AI applications in Markdown. Write tools and instructions in `.md` files, run the project, and get a live AI application.
+ToolFront is a declarative framework for building modular AI applications in Markdown. Write tools and instructions in `.md` files, and get a live AI application.
 
 ## Simple Example
 
@@ -59,12 +59,13 @@ ToolFront is a declarative framework for building modular AI applications in Mar
   - Use `curl` to check if the service is up
   ```
 
-### Run it
+### Serve it
 
-Run the application with:
+Serve your application locally.
 
 ```bash
 toolfront run .
+# Running on 127.0.0.1:8000
 ```
 
 ### Ask it
@@ -79,9 +80,6 @@ Ask your AI application.
     app = Application(url="http://127.0.0.1:8000")
 
     result = app.ask("Is the service up?", model="openai:gpt-5")
-    
-    print(result)
-    # Answer: yes
     ```
 
 === ":simple-modelcontextprotocol: &nbsp; MCP Server"
@@ -96,6 +94,12 @@ Ask your AI application.
       }
     }
     ```
+  
+=== ":lucide-play: &nbsp; Command Line"
+
+    ```bash
+    toolfront ask http://127.0.0.1:8000 "Is the service up?"
+    ```
 
 ---
 
@@ -105,17 +109,14 @@ Your full project can grow like this:
 
 ```bash
 project/
-├── README.md #(1)!
+├── README.md
 ├── src/
-│   ├── api.md
 │   ├── rag.md
 │   ├── text2sql.md
 │   └── toolkit.md
 ├── data/
 └── tools/
 ```
-
-1. All applications must have a `README.md`
 
 ### Add Navigation
 
@@ -146,7 +147,7 @@ project/
   ---
 
   # Search Docs
-  - Use `grep` to search files in `/data/`
+  - Use `grep` to search files in `data/`
   ```
 
 ### Add Text-to-SQL
@@ -178,11 +179,45 @@ project/
   - Run `status.py` to check delayed orders
   ```
 
+### Deploy it
+
+Instantly deploy your AI application:
+
+```bash
+toolfront deploy ./path/to/project
+```
+
+### Share it
+
+Share your app with the community or your team:
+
+=== ":material-web: Community Cloud (Free)"
+
+    ```python
+    # Up to 5 public apps, totally free
+    app = Application("https://fte499.toolfront.app")
+    ```
+
+=== ":material-account-group: Statespace Cloud (Pro)"
+
+    ```python
+    # Up to 20 public or private apps with authentication
+    app = Application("https://fte499.toolfront.app", param={"Authorization": ...})
+    ```
+
+=== ":material-lock: Self-Hosted (Enterprise)"
+
+    ```python
+    # Unlimited on-prem apps with Docker or K8s
+    app = Application("https://fte499.toolfront.app", param={"Authorization": ...})
+    ```
+
+
 ---
 
 ## Installation
 
-Install `toolfront` with your favorite PyPI package manager.
+Install `toolfront` with your favorite PyPI package manager[^1].
 
 === ":fontawesome-brands-python: &nbsp; pip"
 
@@ -202,37 +237,4 @@ Install `toolfront` with your favorite PyPI package manager.
     poetry add toolfront
     ```
 
-!!! toolfront "Deploy your Apps 🔥"
-
-    Instantly deploy your AI applications:
-
-    ```bash
-    toolfront deploy ./path/to/project
-    ```
-
-    Gives you a shareable application URL:
-
-    === ":material-web: Community Cloud (Free)"
-
-        ```python
-        # Up to 5 public apps, totally free
-        app = Application("https://cloud.statespace.com/you/status-checker")
-        ```
-
-    === ":material-account-group: Statespace Cloud (Pro)"
-
-        ```python
-        # Up to 20 public or private apps with authentication
-        app = Application("https://cloud.statespace.com/team/project", params={"API_KEY": "..."})
-        ```
-
-    === ":material-lock: Self-Hosted (Enterprise)"
-
-        ```python
-        # Unlimited on-prem apps with Docker or K8s  
-        app = Application("https://custom.com/agent")
-        ```
-    
-    [Get started for free](#){ .md-button .md-button--primary }
-        
-<p align="right"><strong>Made with ❤️ by <a href="https://statespace.com" target="_blank">Statespace</a></strong>.</p>
+[^1]: Requires Python 3.10+

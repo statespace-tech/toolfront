@@ -1,3 +1,7 @@
+---
+icon: lucide/book-open-check
+---
+
 # Example: Sales Analytics
 
 In this example, you'll learn how to build a sales analytics application where an AI agent (OpenAI's GPT-5) answers business questions by querying a PostgreSQL database, calling REST APIs, and reading receipt files.

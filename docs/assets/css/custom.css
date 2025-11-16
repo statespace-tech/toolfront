@@ -2,6 +2,7 @@
 :root {
     --md-primary-fg-color: #00bb77;
     --md-primary-fg-color--dark: #00bb77;
+    --md-accent-fg-color: #006d55;
 }
 
 
@@ -12,32 +13,7 @@
 
 [data-md-color-scheme="slate"] {
     --md-primary-fg-color: #00bb77;
-    --md-accent-fg-color:  #006d55;
-}
-
-:root {
-  --md-admonition-icon--toolfront: url(../images/favicon.svg);
-}
-.md-typeset .admonition.toolfront,
-.md-typeset details.toolfront {
-  border-color: rgb(0, 187, 119);
-}
-.md-typeset .toolfront > .admonition-title,
-.md-typeset .toolfront > summary {
-  background-color: rgba(0, 187, 119, 0.1);
-}
-.md-typeset .toolfront > .admonition-title::before,
-.md-typeset .toolfront > summary::before {
-  background-color: rgb(0, 187, 119);
-  -webkit-mask-image: var(--md-admonition-icon--toolfront);
-          mask-image: var(--md-admonition-icon--toolfront);
-}
-
-/* Custom grid layout for code examples - desktop only */
-@media screen and (min-width: 76.25em) {
-  .grid.cards {
-    grid-template-columns: 35% 1fr;
-  }
+    --md-accent-fg-color:  #6ee2b3;
 }
 
 /* Equal width tabs for all tabbed sets */

@@ -1,0 +1,82 @@
+[project]
+site_name = "ToolFront"
+site_description = "Build AI applications in Markdown"
+site_url = "https://docs.toolfront.ai"
+repo_url = "https://github.com/statespace-tech/toolfront"
+repo_name = "statespace-tech/toolfront"
+extra_css = [
+  "assets/css/custom.css"
+]
+extra_javascript = [
+  "assets/js/gtag-init.js",
+  "assets/js/analytics.js"
+]
+nav = [
+  {"Home" = [
+    {"Home" = "index.md"},
+    {"FAQ" = "pages/home/faq.md"},
+    {"Roadmap" = "pages/home/roadmap.md"},
+  ]},
+  {"Documentation" = [
+    {"Applications" = "pages/documentation/applications.md"},
+    {"Python SDK" = "pages/documentation/python_sdk.md"},
+    {"MCP Server" = "pages/documentation/mcp_server.md"}
+  ]},
+  {"Reference" = [
+    {"App Server" = "pages/reference/app_server.md"},
+    {"Commands" = "pages/reference/commands.md"},
+    {"Cloud API" = "pages/reference/toolfront_cloud.md"}
+  ]}
+]
+copyright = "Copyright &copy; 2025 Statespace Technologies, Inc."
+
+[project.theme]
+icon = { repo = "fontawesome/brands/git-alt" }
+logo = "assets/images/favicon.svg"
+favicon = "assets/images/favicon.svg"
+palette = [
+  { scheme = "default", primary = "custom", accent = "green", toggle = { icon = "material/lightbulb", name = "Switch to dark mode" } },
+  { scheme = "slate", primary = "custom", accent = "green", toggle = { icon = "material/lightbulb", name = "Switch to light mode" } }
+]
+features = [
+  "navigation.sections",
+  "navigation.expand",
+  "navigation.top",
+  "search.highlight",
+  "search.share",
+  "content.code.copy",
+  "content.code.annotate",
+  "navigation.indexes",
+  "search.suggest",
+  "announce.dismiss",
+  "navigation.tracking",
+  "navigation.prune"
+]
+
+[project.extra]
+generator = false
+
+[[project.extra.social]]
+  icon = "fontawesome/brands/github"
+  link = "https://github.com/statespace-tech/toolfront/"
+  name = "Star us on GitHub"
+
+[[project.extra.social]]
+  icon = "fontawesome/brands/python"
+  link = "https://pypi.org/project/toolfront/"
+  name = "Install from PyPI"
+
+[[project.extra.social]]
+  icon = "fontawesome/brands/discord"
+  link = "https://discord.gg/rRyM7zkZTf"
+  name = "Join our Discord community"
+
+[[project.extra.social]]
+  icon = "fontawesome/brands/linkedin"
+  link = "https://www.linkedin.com/company/statespace-tech/"
+  name = "Follow us on LinkedIn"
+
+[[project.extra.social]]
+  icon = "fontawesome/brands/x-twitter"
+  link = "https://x.com/statespace_tech"
+  name = "Follow us on X (Twitter)"
