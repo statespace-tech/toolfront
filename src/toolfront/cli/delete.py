@@ -16,7 +16,7 @@ def delete(deployment_id: str, api_key: str | None, gateway_url: str | None, yes
         return
 
     try:
-        gateway_url, api_key = get_api_credentials(api_key, gateway_url)
+        gateway_url, api_key, _ = get_api_credentials(api_key, gateway_url)
         client = GatewayClient(gateway_url, api_key)
         client.delete_environment(deployment_id)
         click.echo(f"✅ Deployment {deployment_id} deleted successfully")

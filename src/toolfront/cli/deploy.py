@@ -15,7 +15,7 @@ from toolfront.lib.gateway import GatewayClient
 def deploy(path: Path, api_key: str | None, gateway_url: str | None, name: str | None, verify: bool):
     """Deploy markdown repository to Gateway"""
     try:
-        gateway_url, api_key = get_api_credentials(api_key, gateway_url)
+        gateway_url, api_key, _ = get_api_credentials(api_key, gateway_url)
     except ValueError as e:
         raise click.ClickException(str(e)) from e
 

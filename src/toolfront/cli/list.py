@@ -10,7 +10,7 @@ from toolfront.lib.gateway import GatewayClient
 def list_deployments(api_key: str | None, gateway_url: str | None):
     """List all deployments"""
     try:
-        gateway_url, api_key = get_api_credentials(api_key, gateway_url)
+        gateway_url, api_key, _ = get_api_credentials(api_key, gateway_url)
         client = GatewayClient(gateway_url, api_key)
         envs = client.list_environments()
 

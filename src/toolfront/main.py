@@ -5,6 +5,7 @@ from .cli.deploy import deploy
 from .cli.list import list_deployments
 from .cli.mcp import mcp
 from .cli.serve import serve
+from .cli.tokens import tokens
 from .cli.update import update
 
 
@@ -20,6 +21,7 @@ main.add_command(deploy)
 main.add_command(list_deployments, name="list")
 main.add_command(update)
 main.add_command(delete)
+main.add_command(tokens)
 
 if __name__ == "__main__":
     main()
