@@ -77,25 +77,42 @@ def list_tokens(api_key: str | None, gateway_url: str | None, org_id: str | None
             click.echo("No tokens found")
             return
 
-        click.echo(f"\nFound {len(tokens_list)} token(s):\n")
-        click.echo("─" * 100)
-        click.echo(f"{'ID':<38} {'NAME':<25} {'SCOPE':<10} {'STATUS':<10} {'CREATED'}")
-        click.echo("─" * 100)
+        click.echo(f"\n{len(tokens_list)} token(s):\n")
 
         for token in tokens_list:
             status = "active" if token.get('is_active', True) else "revoked"
-            status_color = 'green' if status == "active" else 'red'
-            created = token['created_at'].split('T')[0]
-
-            click.echo(
-                f"{token['id']:<38} "
-                f"{token['name'][:24]:<25} "
-                f"{token['scope']:<10} "
-                f"{click.style(status, fg=status_color):<19} "
-                f"{created}"
-            )
-
-        click.echo("─" * 100)
+            status_icon = click.style("✓", fg='green') if status == "active" else click.style("✗", fg='red')
+            
+            # Extract scope type (read/execute/admin)
+            scope = token['scope'].replace('environments:', '')
+            scope_color = 'yellow' if scope == 'admin' else 'cyan' if scope == 'execute' else 'white'
+            
+            # Shorten ID to last 8 chars
+            short_id = token['id'][-12:]
+            
+            # Calculate relative time
+            from datetime import datetime, timezone
+            created_dt = datetime.fromisoformat(token['created_at'].replace('Z', '+00:00'))
+            now = datetime.now(timezone.utc)
+            delta = now - created_dt
+            
+            if delta.days > 0:
+                time_ago = f"{delta.days}d ago"
+            elif delta.seconds >= 3600:
+                time_ago = f"{delta.seconds // 3600}h ago"
+            elif delta.seconds >= 60:
+                time_ago = f"{delta.seconds // 60}m ago"
+            else:
+                time_ago = "just now"
+            
+            # Print compact card-style
+            click.echo(f"{status_icon} {click.style(token['name'], bold=True)}")
+            click.echo(f"  {click.style(scope, fg=scope_color)} • {time_ago} • {click.style(short_id, dim=True)}")
+            
+            if token.get('usage_count', 0) > 0:
+                click.echo(f"  Used {token['usage_count']} time(s), last: {token.get('last_used_at', 'never')}")
+            
+            click.echo()  # Blank line between tokens
 
     except Exception as e:
         raise click.ClickException(f"Failed to list tokens: {e}") from e
