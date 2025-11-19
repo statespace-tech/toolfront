@@ -40,7 +40,7 @@ icon: lucide/home
 
 ---
 
-ToolFront is a declarative framework for building modular AI applications in Markdown. Write tools and instructions in `.md` files, and get a live AI application.
+ToolFront is a declarative framework for building modular AI applications in Markdown. Write tools and instructions in `.md` files and get a live AI application.
 
 ## Simple Example
 
@@ -53,24 +53,25 @@ ToolFront is a declarative framework for building modular AI applications in Mar
   ---
   tools:
     - [curl, -X, GET, "https://httpbin.org/status/200"]
+  
   ---
 
-  # Status Checker
+  # Instructions
   - Use `curl` to check if the service is up
   ```
 
 ### Serve it
 
-Serve your application locally.
+Run your app on your machine:
 
 ```bash
-toolfront run .
-# Running on 127.0.0.1:8000
+toolfront serve .
+# Running on http://127.0.0.1:8000
 ```
 
 ### Ask it
 
-Ask your AI application.
+Export your `OPENAI_API_KEY` and query your app:
 
 === ":simple-python: &nbsp; Python SDK"
 
@@ -89,36 +90,36 @@ Ask your AI application.
       "mcpServers": {
         "toolfront": {
           "command": "uvx",
-          "args": ["toolfront", "mcp", "http://127.0.0.1:8000"],
+          "args": ["toolfront", "mcp", "http://127.0.0.1:8000"]
         }
       }
     }
     ```
   
-=== ":lucide-play: &nbsp; Command Line"
+=== ":lucide-terminal: &nbsp; Command Line"
 
     ```bash
     toolfront ask http://127.0.0.1:8000 "Is the service up?"
     ```
 
----
-
 ## Upgraded Example
 
-Your full project can grow like this: 
+Your app can grow into a full project:
 
 ```bash
 project/
-├── README.md
+├── README.md          # Main instructions & navigation tools
 ├── src/
-│   ├── rag.md
-│   ├── text2sql.md
-│   └── toolkit.md
+│   ├── rag.md         # Document search
+│   ├── text2sql.md    # Database query
+│   └── toolkit.md     # Custom workflow
 ├── data/
 └── tools/
+
+4 directories, 10 files
 ```
 
-### Add Navigation
+### Add Navigation Tools
 
   Update `README.md` with tools to explore the project.
 
@@ -131,65 +132,64 @@ project/
 
   ---
 
-  # Status Checker
+  # Instructions
   - Use `curl` to check if the service is up
   - Use `ls` and `cat` to browse other files
   ```
 
-### Add Document RAG
+### Add Specialized Tools
 
-  Give your agent tools to search documents.
+Expand your app with specialized workflows.
 
-  ```markdown title="src/rag.md"
-  ---
-  tools:
-    - [grep]
-  ---
+=== ":lucide-folder-search: &nbsp; Document Search"
 
-  # Search Docs
-  - Use `grep` to search files in `data/`
-  ```
+      ```markdown title="src/rag.md"
+      ---
+      tools:
+        - [grep]
 
-### Add Text-to-SQL
+      ---
 
-  Connect your databases for SQL workflows.
+      # Document Search
+      - Use `grep` for keyword searches in `data/`.
+      ```
 
+=== ":lucide-database: &nbsp; Text-to-SQL"
 
-  ```markdown title="src/text2sql.md"
-  ---
-  tools:
-    - [psql, -U, $USER, -d, $DATABASE, -c, {query}]
-  ---
+    ```markdown title="src/text2sql.md"
+    ---
+    tools:
+      - [psql, -U, $USER, -d, $DB, -c, {{ "^SELECT\b.*" }}]
 
-  # Database Access
-  - Call the `psql` tool to query the PostgreSQL database
-  ```
+    ---
 
-### Add Custom Tools
+    # Database Access
+    - Call `psql` to query the database with read-only SELECT statements
+    ```
 
-  Build custom tools in any programming language.
+=== ":lucide-file-code: &nbsp; Custom Scripts"
 
-  ```markdown title="src/toolkit.md"
-  ---
-  tools:
-    - [python, tools/status.py, --delayed]
-  ---
-  
-  # Custom Tools
-  - Run `status.py` to check delayed orders
-  ```
+    ```markdown title="src/toolkit.md"
+    ---
+    tools:
+      - [python3, tools/analyze.py"]
 
-### Deploy it
+    ---
+    
+    # Custom Tools
+    - Run `analyze.py` to process data, passing `--input` as needed
+    ```
 
-Instantly deploy your AI application:
+### Deploy It
+
+Deploy your app in one command.
 
 ```bash
-toolfront deploy ./path/to/project
+toolfront deploy .
+# Deployed to: https://your-app.toolfront.app
 ```
 
-### Share it
-
-Share your app with the community or your team:
+Then, share it with the community or your team.
 
 === ":material-web: Community Cloud (Free)"
 
@@ -212,8 +212,6 @@ Share your app with the community or your team:
     app = Application("https://fte499.toolfront.app", param={"Authorization": ...})
     ```
 
-
----
 
 ## Installation
 

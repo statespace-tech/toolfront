@@ -4,7 +4,7 @@ icon: material/account-group
 
 # Contributing
 
-Thank you for your interest in contributing to ToolFront! We welcome contributions from the community.
+Thank you for your interest in contributing to ToolFront! We :heart: contributions.
 
 ## Getting Started
 
@@ -67,7 +67,7 @@ Documentation improvements are always welcome! Help us make ToolFront easier to 
 
 - **Discord**: Join our [community server](https://discord.gg/rRyM7zkZTf) for discussions
 - **GitHub Issues**: Use issues for bug reports and feature requests
-- **X**: Follow [@toolfront](https://x.com/toolfront) for updates
+- **X**: Follow [@statespace_tech](https://x.com/statespace_tech) for updates
 
 ## Questions?
 

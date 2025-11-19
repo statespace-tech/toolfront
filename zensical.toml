@@ -9,23 +9,55 @@ extra_css = [
 ]
 extra_javascript = [
   "assets/js/gtag-init.js",
-  "assets/js/analytics.js"
+  "assets/js/analytics.js",
+  "assets/js/api-tester.js"
 ]
 nav = [
   {"Home" = [
-    {"Home" = "index.md"},
-    {"FAQ" = "pages/home/faq.md"},
-    {"Roadmap" = "pages/home/roadmap.md"},
+    {"Home" = "index.md"}
+  ]},
+  {"Get Started" = [
+    {"Quickstart" = [
+      {"Install ToolFront" = "pages/get_started/quickstart/install.md"},
+      {"Build Your First App" = "pages/get_started/quickstart/build.md"},
+      {"Deploy Your App" = "pages/get_started/quickstart/deploy.md"},
+      {"Connect AI Agents" = "pages/get_started/quickstart/connect.md"},
+    ]},
+    {"Community" = [
+      {"FAQ" = "pages/get_started/community/faq.md"},
+      {"Contributing" = "pages/get_started/community/contributing.md"},
+      {"Roadmap" = "pages/get_started/community/roadmap.md"},
+      {"License" = "pages/get_started/community/license.md"}
+    ]},
+
   ]},
   {"Documentation" = [
-    {"Applications" = "pages/documentation/applications.md"},
-    {"Python SDK" = "pages/documentation/python_sdk.md"},
-    {"MCP Server" = "pages/documentation/mcp_server.md"}
+    {"Building Apps" = [
+      {"Markdown" = "pages/documentation/application/markdown.md"},
+      {"Tools" = "pages/documentation/application/tools.md"},
+      {"Architecture" = "pages/documentation/application/architecture.md"}
+    ]},
+    {"Deploying Apps" = [
+      {"Cloud Deployment" = "pages/documentation/deployment/cloud_deploy.md"},
+      {"Self-Hosting" = "pages/documentation/deployment/self_host.md"},
+    ]},
+    {"Integrating Agents" = [
+      {"Python SDK" = "pages/documentation/integration/python_sdk.md"},
+      {"MCP Server" = "pages/documentation/integration/mcp_server.md"},
+      {"Command Line" = "pages/documentation/integration/command_line.md"},
+      {"REST API" = "pages/documentation/integration/rest_api.md"}
+    ]}
   ]},
   {"Reference" = [
-    {"App Server" = "pages/reference/app_server.md"},
-    {"Commands" = "pages/reference/commands.md"},
-    {"Cloud API" = "pages/reference/toolfront_cloud.md"}
+    {"Client Library" = [
+      {"Python" = "pages/reference/client_library/python.md"},
+      {"CLI Commands" = "pages/reference/client_library/cli_commands.md"},
+      {"Environment Variables" = "pages/reference/client_library/environment_variables.md"}
+    ]},
+    {"Applications" = [
+      {"Server API" = "pages/reference/application/server_api.md"},
+      {"Management API" = "pages/reference/application/management_api.md"}
+    ]}
   ]}
 ]
 copyright = "Copyright &copy; 2025 Statespace Technologies, Inc."
@@ -39,6 +71,8 @@ palette = [
   { scheme = "slate", primary = "custom", accent = "green", toggle = { icon = "material/lightbulb", name = "Switch to light mode" } }
 ]
 features = [
+  "navigation.tabs",
+  "navigation.footer",
   "navigation.sections",
   "navigation.expand",
   "navigation.top",
