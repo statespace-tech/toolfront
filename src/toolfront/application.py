@@ -44,7 +44,7 @@ class Application(BaseModel):
     Attributes
     ----------
     url : str
-        HTTP/HTTPS URL to the application (e.g., https://example.com/docs/index.md)
+        HTTP/HTTPS URL to the application (e.g., https://example.com)
     param : dict[str, str] | None
         Authentication parameter for remote applications
     env : dict[str, str] | None
@@ -131,8 +131,9 @@ class Application(BaseModel):
                 if self.env is not None:
                     payload["env"] = self.env
 
+                action_url = f"{str(url).rstrip('/')}/action"
                 response = await client.post(
-                    url,
+                    action_url,
                     json=payload,
                     headers=self.param or {},
                     timeout=DEFAULT_TIMEOUT_SECONDS,
