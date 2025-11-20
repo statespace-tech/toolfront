@@ -180,7 +180,7 @@ tools:
 
 ### Deploy It
 
-Create a free [Statespace account](https://statespace.com) and deploy your app in one command.
+Create a free [Statespace account](#deploy-it)[^1] and deploy your app in one command.
 
 ```bash
 toolfront deploy .
@@ -228,3 +228,5 @@ poetry add toolfront
 ## License
 
 This project is licensed under the terms of the MIT license.
+
+[^1]: Statespace is currently in beta. Email `esteban[at]statespace[dot]com` or join our [Discord](https://discord.gg/rRyM7zkZTf) to get an API key
