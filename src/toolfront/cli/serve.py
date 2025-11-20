@@ -24,6 +24,7 @@ class ActionRequest(BaseModel):
 
     command: list[str]
     env: dict[str, str] | None = None
+    path: str | None = None
 
 
 def _parse_frontmatter(markdown: str) -> dict[str, Any]:
