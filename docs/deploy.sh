@@ -9,7 +9,7 @@ echo "Preparing deployment files..."
 cp ../pyproject.toml .
 cp ../uv.lock . 2>/dev/null || true  # uv.lock might not exist
 cp -r ../src .
-cp ../mkdocs.yml .
+cp ../zensical.toml .
 
 # Deploy to Fly
 echo "Deploying to Fly.io..."
@@ -17,7 +17,7 @@ flyctl deploy
 
 # Clean up copied files
 echo "Cleaning up..."
-rm -f pyproject.toml uv.lock mkdocs.yml
+rm -f pyproject.toml uv.lock zensical.toml
 rm -rf src
 
 echo "Deployment complete!"
