@@ -190,7 +190,7 @@ toolfront deploy .
 
 ## Installation
 
-Install `toolfront` with your favorite PyPI package manager*[^1]*.
+Install `toolfront` with your favorite PyPI package manager (Requires Python 3.10+).
 
 <details open>
 <summary><b>pip</b></summary>
@@ -219,13 +219,10 @@ poetry add toolfront
 
 </details>
 
-*Requires Python 3.10+
-
-
 ## Community & Contributing
 
 - **Discord**: Join our [community server](https://discord.gg/rRyM7zkZTf) for real-time help and discussions
-- **X**: Follow us [@toolfront](https://x.com/toolfront) for updates and news
+- **X**: Follow us [@statespace_tech](https://x.com/statespace_tech) for updates and news
 - **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/statespace-tech/toolfront/issues)
 
 ## License

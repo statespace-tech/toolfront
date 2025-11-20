@@ -169,7 +169,7 @@ Expand your app with specialized workflows.
     ```yaml title="src/toolkit.md"
     ---
     tools:
-      - [python3, tools/analyze.py"]
+      - [python3, tools/analyze.py]
     ---
     
     # Custom Tools
