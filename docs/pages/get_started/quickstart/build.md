@@ -10,25 +10,26 @@ Let's build a status checker that lets AI agents health check an API and search 
 
 Start with this folder structure:
 
-```
+```bash
 app/
 ├── README.md       # Navigation
 ├── src/
 │   ├── health.md   # API status
 │   └── search.md   # Document RAG
 └── data/           # Log files
+
+2 directories, 3 files
 ```
 
 ## Set Up README
 
 Add general instructions and tools.
 
-```markdown title="README.md"
+```yaml title="README.md"
 ---
 tools:
   - [ls]
   - [cat]
-
 ---
 
 # My First Application
@@ -45,24 +46,22 @@ You're a helpful assistant that monitors service health.
 
 Create pages with specific tools. Start with `health.md` for service checks.
 
-```markdown title="src/health.md"
+```yaml title="src/health.md"
 ---
 tools:
   - [curl, -X, GET, "https://httpbin.org/status/200"]
-
 ---
 
 # API Health Check
 Use `curl` to check service health (returns 200 OK if healthy).
 ```
 
-Then, create `search.md` for log search with `{{ }}` as a placeholder for arguments.
+Then, create `search.md` for log search with `{ }` as a placeholder for arguments.
 
-```markdown title="src/search.md"
+```yaml title="src/search.md"
 ---
 tools:
-  - [grep, -r, {{ }}, data/]
-
+  - [grep, -r, { }, data/]
 ---
 
 # Log Search

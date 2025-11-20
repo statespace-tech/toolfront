@@ -12,17 +12,18 @@ Run your app locally:
 
 ```bash
 toolfront serve my-app --port 8000
-# Returns: 127.0.0.1:8000
 ```
+> Your app will be running on `http://127.0.0.1:8000`
 
 ## Cloud Deployment
 
 Create a free [Statespace account](statespace.com) and get an API key. Then, deploy to ToolFront Cloud:
 
 ```bash
-toolfront deploy my-app --name "status-checker"
-# Returns: `https://<app_id>.toolfront.app`
+toolfront deploy my-app  --api-key <your-statespace-key>
 ```
+> Your app will be deployed to `https://<app_id>.toolfront.app`
+
 
 ## Test Your Deployment
 

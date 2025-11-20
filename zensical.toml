@@ -19,9 +19,9 @@ nav = [
   {"Get Started" = [
     {"Quickstart" = [
       {"Install ToolFront" = "pages/get_started/quickstart/install.md"},
-      {"Build Your First App" = "pages/get_started/quickstart/build.md"},
-      {"Deploy Your App" = "pages/get_started/quickstart/deploy.md"},
-      {"Connect AI Agents" = "pages/get_started/quickstart/connect.md"},
+      {"Build your first app" = "pages/get_started/quickstart/build.md"},
+      {"Deploy your app" = "pages/get_started/quickstart/deploy.md"},
+      {"Connect AI agents" = "pages/get_started/quickstart/connect.md"},
     ]},
     {"Community" = [
       {"FAQ" = "pages/get_started/community/faq.md"},
@@ -32,27 +32,27 @@ nav = [
 
   ]},
   {"Documentation" = [
-    {"Building Apps" = [
+    {"Building apps" = [
       {"Markdown" = "pages/documentation/application/markdown.md"},
       {"Tools" = "pages/documentation/application/tools.md"},
       {"Architecture" = "pages/documentation/application/architecture.md"}
     ]},
-    {"Deploying Apps" = [
-      {"Cloud Deployment" = "pages/documentation/deployment/cloud_deploy.md"},
-      {"Self-Hosting" = "pages/documentation/deployment/self_host.md"},
+    {"Deploying apps" = [
+      {"Cloud deployment" = "pages/documentation/deployment/cloud_deploy.md"},
+      {"Self-hosting" = "pages/documentation/deployment/self_host.md"},
     ]},
-    {"Integrating Agents" = [
+    {"Integrating agents" = [
       {"Python SDK" = "pages/documentation/integration/python_sdk.md"},
-      {"MCP Server" = "pages/documentation/integration/mcp_server.md"},
-      {"Command Line" = "pages/documentation/integration/command_line.md"},
+      {"MCP server" = "pages/documentation/integration/mcp_server.md"},
+      {"Command line" = "pages/documentation/integration/command_line.md"},
       {"REST API" = "pages/documentation/integration/rest_api.md"}
     ]}
   ]},
   {"Reference" = [
-    {"Client Library" = [
+    {"Client library" = [
       {"Python" = "pages/reference/client_library/python.md"},
-      {"CLI Commands" = "pages/reference/client_library/cli_commands.md"},
-      {"Environment Variables" = "pages/reference/client_library/environment_variables.md"}
+      {"CLI commands" = "pages/reference/client_library/cli_commands.md"},
+      {"Environment variables" = "pages/reference/client_library/environment_variables.md"}
     ]},
     {"Applications" = [
       {"Server API" = "pages/reference/application/server_api.md"},

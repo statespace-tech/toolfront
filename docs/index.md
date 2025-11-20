@@ -49,11 +49,10 @@ ToolFront is a declarative framework for building modular AI applications in Mar
   Start with one file: `README.md`
 
 
-  ```markdown title="README.md"
+  ```yaml title="README.md"
   ---
   tools:
     - [curl, -X, GET, "https://httpbin.org/status/200"]
-  
   ---
 
   # Instructions
@@ -66,8 +65,9 @@ Run your app on your machine:
 
 ```bash
 toolfront serve .
-# Running on http://127.0.0.1:8000
 ```
+> Runs at `http://127.0.0.1:8000`
+
 
 ### Ask it
 
@@ -123,13 +123,12 @@ project/
 
   Update `README.md` with tools to explore the project.
 
-  ```markdown title="README.md" hl_lines="4-5 11"
+  ```yaml title="README.md" hl_lines="4-5 10"
   ---
   tools:
     - [curl, -X, GET, "https://httpbin.org/status/200"]
     - [ls]
     - [cat]
-
   ---
 
   # Instructions
@@ -143,11 +142,10 @@ Expand your app with specialized workflows.
 
 === ":lucide-folder-search: &nbsp; Document Search"
 
-      ```markdown title="src/rag.md"
+      ```yaml title="src/rag.md"
       ---
       tools:
         - [grep]
-
       ---
 
       # Document Search
@@ -156,11 +154,10 @@ Expand your app with specialized workflows.
 
 === ":lucide-database: &nbsp; Text-to-SQL"
 
-    ```markdown title="src/text2sql.md"
+    ```yaml title="src/text2sql.md"
     ---
     tools:
-      - [psql, -U, $USER, -d, $DB, -c, {{ "^SELECT\b.*" }}]
-
+      - [psql, -U, $USER, -d, $DB, -c, { regex: "^SELECT\b.*" }]
     ---
 
     # Database Access
@@ -169,11 +166,10 @@ Expand your app with specialized workflows.
 
 === ":lucide-file-code: &nbsp; Custom Scripts"
 
-    ```markdown title="src/toolkit.md"
+    ```yaml title="src/toolkit.md"
     ---
     tools:
       - [python3, tools/analyze.py"]
-
     ---
     
     # Custom Tools
@@ -182,35 +178,12 @@ Expand your app with specialized workflows.
 
 ### Deploy It
 
-Deploy your app in one command.
+Create a free [Statespace account](https://statespace.com) and deploy your app in one command.
 
 ```bash
 toolfront deploy .
-# Deployed to: https://your-app.toolfront.app
 ```
-
-Then, share it with the community or your team.
-
-=== ":material-web: Community Cloud (Free)"
-
-    ```python
-    # Up to 5 public apps, totally free
-    app = Application("https://fte499.toolfront.app")
-    ```
-
-=== ":material-account-group: Statespace Cloud (Pro)"
-
-    ```python
-    # Up to 20 public or private apps with authentication
-    app = Application("https://fte499.toolfront.app", param={"Authorization": ...})
-    ```
-
-=== ":material-lock: Self-Hosted (Enterprise)"
-
-    ```python
-    # Unlimited on-prem apps with Docker or K8s
-    app = Application("https://fte499.toolfront.app", param={"Authorization": ...})
-    ```
+> Deploys to `https://your-app.toolfront.app`. Share it with the community or your team!
 
 
 ## Installation
@@ -236,3 +209,4 @@ Install `toolfront` with your favorite PyPI package manager[^1].
     ```
 
 [^1]: Requires Python 3.10+
+

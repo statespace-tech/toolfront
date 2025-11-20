@@ -6,8 +6,6 @@ icon: lucide/terminal
 
 Full CLI syntax, arguments, and options.
 
----
-
 ## [`toolfront ask`](#toolfront-ask)
 
 Query a running application.
@@ -33,8 +31,6 @@ toolfront ask [OPTIONS] URL PROMPT
 `--model`
 
 : AI model for query, using the provider:model format (e.g., `openai:gpt-5`)
-
----
 
 ## [`toolfront mcp`](#toolfront-serve)
 
@@ -74,8 +70,6 @@ toolfront mcp [OPTIONS] URL
 
 : Transport mode: `stdio`, `streamable-http`, or `sse` (default: `stdio`)
 
----
-
 ## [`toolfront serve`](#toolfront-serve)
 
 Run your application locally for development and testing.
@@ -101,8 +95,6 @@ toolfront serve [OPTIONS] PATH
 `--port`
 
 : Port to bind the server to (default: `8000`)
-
----
 
 ## [`toolfront deploy`](#toolfront-serve)
 
@@ -138,8 +130,6 @@ toolfront deploy [OPTIONS] PATH
 
 : Wait and verify environment is accessible after deployment
 
----
-
 ## [`toolfront list`](#toolfront-list)
 
 View all your deployed applications.
@@ -159,8 +149,6 @@ toolfront list [OPTIONS]
 `--gateway-url`
 
 : Gateway base URL (overrides config)
-
----
 
 ## [`toolfront update`](#toolfront-serve)
 
@@ -191,8 +179,6 @@ toolfront update [OPTIONS] DEPLOYMENT_ID PATH
 `--gateway-url`
 
 : Gateway base URL (overrides config)
-
----
 
 ## [`toolfront delete`](#toolfront-serve)
 

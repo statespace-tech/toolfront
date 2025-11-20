@@ -44,7 +44,7 @@ Pass via `param` (e.g., Authorization: Bearer token)
 ```bash
 curl -X GET \
   -H "Authorization: Bearer token" \
-  https://fte499.toolfront.app/README.md
+  https://127.0.0.1:8000/README.md
 ```
 
 **Response**
@@ -120,7 +120,7 @@ Execute tool from frontmatter.
 curl -X POST \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer token" \
-  https://app.toolfront.app/tools.md \
+  https://127.0.0.1:8000/README.md \
   -d '{
     "command": ["echo", "hello"]
   }'

@@ -4,11 +4,11 @@ icon: lucide/network
 
 # Architecture
 
-ToolFront applications expose Markdown-defined tools to AI agents over HTTP.
+ToolFront applications serve tools over HTTP.
 
-## Core Components
+## Core components
 
-**AI agents** make HTTP tool requests to the **app server**, which validates them against the **Markdown repository** specs, executes them (optionally accessing **external resources**), and returns the results.
+**AI agents** make HTTP tool requests to the **app server**, which validates them against the **Markdown repository** specs, executes them, and returns the results.
 
 ```mermaid
 graph LR
@@ -45,7 +45,7 @@ graph LR
 
 
 
-## AI Agent Flow
+## AI agent flow
 
 Agents operate by making repeated POST requests to execute tools as needed.
 
@@ -75,7 +75,7 @@ sequenceDiagram
 4. **Execute command** - Runs validated command with environment variables
 5. **Return results** - Sends stdout/stderr/returncode to agent
 
-## Command Validation
+## Command validation
 
 Tool commands are validated against three checks.
 
@@ -83,23 +83,23 @@ Tool commands are validated against three checks.
 : Command must start with tool's base (e.g., `["ls", "-l"]` matches `[ls]`)
 
 **2. Placeholder Validation**
-: `{{ }}` accepts any argument, `{{ "regex" }}` validates against pattern
+: `{ }` accepts any argument, `{ regex: ... }` validates them against pattern
 
 **3. Options Control**
-: Additional flags and arguments disabled if `--` marker present
+: Additional flags and arguments disabled if `;` marker present
 
 **Example validation:**
 
 ```yaml
 tools:
-  - [cat, {{ ".*\.txt$" }}, --]
+  - [cat, { regex: ".*\.txt$" }, ;]
 ```
 
 - ✅ `["cat", "data.txt"]` - Matches base, passes regex
-- ❌ `["cat", "data.py"]` - Fails regex constraint (not .txt file)
-- ❌ `["cat", "data.txt", "-n"]` - Additional flags disabled by `--`
+- ❌ `["cat", "data.py"]` - Fails regex constraint (not `.txt` file)
+- ❌ `["cat", "data.txt", "-n"]` - Additional flags disabled by `;`
 
-## Security Model
+## Security model
 
 ToolFront uses multiple layers of protection to prevent malicious execution and keep your data safe
 

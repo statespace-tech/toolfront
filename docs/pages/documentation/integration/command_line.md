@@ -2,83 +2,90 @@
 icon: lucide/terminal
 ---
 
-# Command Line Integration
+# Command line
 
-The ToolFront CLI is perfect for quick tests and deployments. No Python needed for basic use. Full commands in [Reference](../reference/commands.md).
+The ToolFront CLI provides a fast way to query applications directly from your terminal.
 
-## Quick Prototyping
+## Basic usage
 
-Serve and query in one go:
-
-```bash
-# Serve
-toolfront serve .
-# http://127.0.0.1:8000
-
-# Query (in another terminal)
-toolfront ask http://127.0.0.1:8000 "What's in the project?" --model openai:gpt-4o-mini
-```
-
-- `--model`: Provider:model (default: env TOOLFRONT_MODEL).
-- `--output-type str|json`: Structured CLI output.
-- `--verbose`: Show agent reasoning/tools.
-
-## Core Commands Tutorial
-
-### Serve Locally
+Query a running application using the `ask` command.
 
 ```bash
-toolfront serve ./app --host 0.0.0.0 --port 8001
+toolfront ask http://127.0.0.1:8000 "What's in the project?" --model openai:gpt-5
 ```
 
-Hot-reloads Markdown changes. For production: Use Docker.
+## AI models
 
-### Ask (Query App)
+### Cloud providers
+
+Specify your model using the `provider:model-name` format with the `--model` flag.
 
 ```bash
-toolfront ask URL "prompt" [OPTIONS]
+toolfront ask http://127.0.0.1:8000 \
+  "Your question" \
+  --model openai:gpt-5
 ```
 
-Examples:
-- Basic: `toolfront ask http://127.0.0.1:8000 "List files"`
-- Structured: `toolfront ask URL "Top product?" --output-type json`
-- With env: `toolfront ask URL "Query DB" --env DB_URL=...`
+### Default model
 
-Integrates `application.py` ask(): Fetches instructions, runs agent.
-
-### Deploy to Cloud
+Set a default model using the `TOOLFRONT_MODEL` environment variable.
 
 ```bash
-toolfront deploy ./app --name "MyApp" --verify
-# https://myapp.toolfront.app
+export TOOLFRONT_MODEL="openai:gpt-5"
 ```
 
-- `--api-key`: Override config.
-- `--gateway-url`: Custom cloud.
-- Free: 5 public apps; Pro: Private.
-
-List/update/delete:
-```bash
-toolfront list
-toolfront update DEPLOY_ID ./new-app
-toolfront delete DEPLOY_ID -y
-```
-
-### MCP (From CLI)
+Once set, you can omit the `--model` flag:
 
 ```bash
-toolfront mcp URL --transport stdio
+toolfront ask http://127.0.0.1:8000 "Your question"
 ```
 
-For IDEs—see [MCP Server Guide](../documentation/mcp_server.md).
+## Authentication
 
-## Tips & Troubleshooting
+Pass authentication parameters for protected applications.
 
-- **No output?** Check model key: `echo $OPENAI_API_KEY`.
-- **Tool errors?** Verbose: `--verbose` shows calls (e.g., "Called ls with .").
-- **Deploy fails?** Verify API key; check quotas in [Cloud API](../reference/toolfront_cloud.md).
-- **Scripting?** Pipe: `echo "prompt" | toolfront ask URL`.
+```bash
+toolfront ask https://cloud.statespace.com/you/my-app \
+  "Your question" \
+  --param "Authorization=Bearer your-token-here"
+```
 
-CLI shines for iteration: Edit Markdown → serve → ask → repeat.
+## Environment variables
 
-> If new to agents, see [Applications](../documentation/applications.md#ai-agent-integration). Programmatic? Use [Python SDK](../documentation/python_sdk.md). Deep dive: [Commands Reference](../reference/commands.md).
+Provide environment variables to your application's tools.
+
+```bash
+toolfront ask http://127.0.0.1:8000 \
+  "Query the database" \
+  --env "DATABASE_URL=postgres://localhost/mydb" \
+  --env "API_KEY=secret-key"
+```
+
+!!! info "Defining environment variables"
+    See the [Tools documentation](../application/tools.md#environment-variables) for how to define environment variables in your tool configurations.
+
+## Verbose mode
+
+View the agent's reasoning and tool calls during execution.
+
+```bash
+toolfront ask http://127.0.0.1:8000 \
+  "Your question" \
+  --model openai:gpt-5 \
+  --verbose
+```
+
+## Command options
+
+Available options for the `ask` command:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--model` | `$TOOLFRONT_MODEL` | AI model using provider:model format |
+| `--param` / `-p` | None | Authentication parameters (can be repeated) |
+| `--env` | None | Environment variables for tools (can be repeated) |
+| `--output-type` | `str` | Output format: `str` or `json` |
+| `--verbose` | `false` | Show agent reasoning and tool calls |
+
+!!! info "Full CLI reference"
+    See the [CLI Commands documentation](../../reference/client_library/cli_commands.md) for complete command syntax and options.

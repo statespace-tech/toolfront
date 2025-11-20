@@ -1,5 +1,5 @@
 ---
-icon: simple/markdown
+icon: lucide/notebook-text
 ---
 
 
@@ -13,17 +13,15 @@ Markdown files define instructions and tools for AI agents.
 
 Declare agent instructions in the body of Markdown files.
 
-```markdown title="README.md" hl_lines="8-12"
+```yaml title="README.md" hl_lines="7-12"
 ---
 tools:
   - [ls]
   - [cat]
-
 ---
 
-You are a helpful assistant.
-
-## Guidelines
+# General Instructions
+- You are a helpful assitant
 - Explore files with `ls`, read them with `cat`.
 - Answer based on discovered tools only.
 ```
@@ -32,28 +30,26 @@ You are a helpful assistant.
 
 List tool commands in the YAML frontmatter of Markdown files.
 
-```markdown title="tools.md" hl_lines="1-7"
+```yaml title="tools.md" hl_lines="1-6"
 ---
 tools:
   - [grep]
   - [psql, -U, $USER, -d, $DB]
   - [python3, script.py]
-
 ---
 
 # Tool Instructions
 - Use `grep` for search, `psql` for queries, `python3` for analysis.
 ```
 
-!!! tip "No Tools?"
-    If your agent doesn't need tools, omit the frontmatter entirely and write only instructions.
+> If your Markdown page doesn't need tools, omit the frontmatter entirely.
 
 
-## Project Layout
+## Project layout
 
 ### README
 
-Every application starts with a `README.md` at its root:
+Every application starts with a `README.md`:
 
 ```bash
 project/
@@ -62,7 +58,7 @@ project/
 0 directories, 1 file
 ```
 
-### Progressive Disclosure
+### Progressive disclosure
 
 Agents can use tools to explore Markdown files and discover new instructions and tools.
 
@@ -71,7 +67,7 @@ Agents can use tools to explore Markdown files and discover new instructions and
 ```bash
 project/
 ├── README.md    # Has ls and cat tools
-└── tools.md     # Has psql tool
+└── tools.md     # Has grep tool
 
 0 directories, 2 files
 ```
@@ -82,8 +78,8 @@ project/
 2. Agent calls `ls` to discover files
 3. Agent finds `tools.md`
 4. Agent calls `cat tools.md` to read it
-5. Agent discovers `psql` tool
-6. Agent can now call `psql`
+5. Agent discovers `grep` tool
+6. Agent can now call `grep`
 
 ### Organization
 

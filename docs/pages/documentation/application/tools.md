@@ -21,54 +21,53 @@ tools:
 ---
 ```
 
-!!! info "Additional Arguments"
-    By default, agents can pass additional flags or arguments to tools (e.g.., `ls -la` or `cat --help`)
+<!-- !!! info "" -->
+> By default, agents can pass additional flags or arguments to tools (e.g., `ls -la` or `cat --help`)
 
-## Advanced Usage
+## Advanced usage
 
 Add placeholders, regex constraints, and options control for fine-grained validation.
 
 ### Placeholders
 
-Use `{{ }}` to denote where agents can pass arguments in commands.
+Use `{ }` to denote where agents can pass arguments in commands.
 
 ```yaml
 ---
 tools:
-  - [cat, {{ }}]
-  - [curl, {{ }}]
-  - [grep, -r, {{ }}, logs/]
+  - [cat, { }]
+  - [curl, { }]
+  - [grep, -r, { }, logs/]
 ---
 ```
 
-### Regex Constraints
+### Regex constraints
 
-Validate agent arguments with `{{ "regex" }}` patterns to restrict inputs.
+Restrict agent arguments with `{ regex: ... }` patterns.
 
 ```yaml
 ---
 tools:
-  - [cat, {{ ".*\.(txt|md|json)$" }}]           # Only specific file types
-  - [curl, {{ "^https://api\.com/.+" }}]        # Only specific domain
-  - [git, checkout, {{ "^[a-z0-9-]+$" }}]       # Only valid branch names
+  - [cat, { regex: ".*\.(txt|md|json)$" }]       # Only specific file types
+  - [curl, { regex: "^https://api\.com/.+" }]    # Only specific domain
+  - [git, checkout, { regex: "^[a-z0-9-]+$" }]   # Only valid branch names
 ---
 ```
 
-### Options Control
+### Options control
 
-Use `;` at the end of a tool to disallow additional flags and arguments.
+Add `;` at the end of a tool command to disallow additional flags and arguments.
 
 ```yaml
 ---
 tools:
-  - [cat, {{ }}, ;]
-  - [curl, {{ "^https://api\.example\.com/.+" }}, ;]
-  - [rm, {{ ".*\.tmp$" }}, ;]
+  - [cat, { }, ;]
+  - [curl, { regex: "^https://api\.example\.com/.+" }, ;]
+  - [rm, { regex: ".*\.tmp$" }, ;]
 ---
 ```
 
-
-### Environment Variables
+### Environment variables
 
 Use environment `$VARIABLES` to hide secrets from agents, and inject them at runtime.
 
@@ -76,15 +75,15 @@ Use environment `$VARIABLES` to hide secrets from agents, and inject them at run
 ---
 tools:
   - command: [curl, -H, "Authorization: Bearer $API_KEY"]
-  - command: [psql, -U, $USER, -d, $DATABASE, -c {{ }}]
+  - command: [psql, -U, $USER, -d, $DATABASE, -c, { }]
 ---
 ```
 
-!!! info "Passing Environment Variables"
+!!! question "Learn more"
+    Learn how to pass environment variables through the [Python SDK](../integration/python_sdk/#environment-variables), [MCP server](../integration/mcp_server/#environment-variables), [command line](../integration/command_line/#environment-variables) or [REST API](../integration/rest_api/#environment-variables).
 
-    Learn how to pass environment variables in the [agent documentation](integration/python_sdk/)
 
-## Custom Tools
+### Custom tools
 
 Use custom scripts and compiled binaries as tools.
 
@@ -110,13 +109,15 @@ project/
 tools:  
   - [python3, scripts/analyze.py]
   - [./bin/custom_tool, ;]
-  - [bash, scripts/process.sh, {{ }}, {{ }}]
-  - [node, index.js, --port, {{ }}]
+  - [bash, scripts/process.sh, { }, { }]
+  - [node, index.js, --port, { }]
 ---
 ```
 
-!!! info "Custom Tool Support"
-    Custom tools are not supported yet by Statespace Cloud. Coming soon!
+### Hooks
+
+!!! failure "Work in progress"
+    Hooks will allow you to run setup scripts and transformations automatically when deploying applications. Join our [Discord](https://discord.gg/toolfront) to stay updated and share feedback.
 
 ## Examples
 
@@ -141,11 +142,11 @@ Query a PostgreSQL database with read-only SELECT statements.
 ```yaml
 ---
 tools:
-  - [psql, -U, $USER, -d, $DB, -c, {{ "^SELECT\b.*" }}, ;]
+  - [psql, -U, $USER, -d, $DB, -c, { regex: "^SELECT\b.*" }, ;]
 ---
 ```
 
-### API with Auth
+### API with auth
 
 Call external APIs with authentication headers.
 
@@ -156,7 +157,7 @@ tools:
 ---
 ```
 
-### Data Processing
+### Data processing
 
 Process and analyze data with custom Python scripts.
 
