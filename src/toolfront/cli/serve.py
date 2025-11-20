@@ -14,6 +14,7 @@ from pydantic import BaseModel
 OPTIONS_DISABLED = ";"  # Marker to disable additional flags/arguments
 TIMEOUT = 30
 
+
 class ActionRequest(BaseModel):
     """Request model for executing commands via POST endpoint.
 
@@ -163,8 +164,12 @@ def serve(directory: str, host: str, port: int) -> None:
             raise HTTPException(status_code=403, detail=f"Command not allowed: {action.command}")
 
         try:
-            result = subprocess.run(action.command, cwd=path.parent, env=action.env, capture_output=True, text=True, timeout=TIMEOUT)
-            return JSONResponse(content={"stdout": result.stdout or "", "stderr": result.stderr or "", "returncode": result.returncode})
+            result = subprocess.run(
+                action.command, cwd=path.parent, env=action.env, capture_output=True, text=True, timeout=TIMEOUT
+            )
+            return JSONResponse(
+                content={"stdout": result.stdout or "", "stderr": result.stderr or "", "returncode": result.returncode}
+            )
         except subprocess.TimeoutExpired:
             raise HTTPException(status_code=408, detail="Command execution timeout")
         except Exception as e:

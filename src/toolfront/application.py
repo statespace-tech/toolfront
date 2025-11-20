@@ -102,7 +102,7 @@ class Application(BaseModel):
         4. Tools ending with ; (semicolon) allow no additional flags beyond what is specified (e.g., [rm, { }, ;] cannot accept -f flag after the placeholder)
         5. Tools without ; allow unlimited additional flags and arguments (e.g., [ls] can be called as ['ls', '-la'] or ['ls', '--help'])
         6. Environment variables like $USER or $DB are injected at runtime: pass them exactly as written, do not substitute values yourself
-        7. When unsure about a command and ; is not present, try running it with --help flag first (e.g., ['command', '--help']) 
+        7. When unsure about a command and ; is not present, try running it with --help flag first (e.g., ['command', '--help'])
 
         Parameters
         ----------
