@@ -1,0 +1,116 @@
+[project]
+site_name = "ToolFront"
+site_description = "Build AI applications in Markdown"
+site_url = "https://docs.toolfront.ai"
+repo_url = "https://github.com/statespace-tech/toolfront"
+repo_name = "statespace-tech/toolfront"
+extra_css = [
+  "assets/css/custom.css"
+]
+extra_javascript = [
+  "assets/js/gtag-init.js",
+  "assets/js/analytics.js",
+  "assets/js/api-tester.js"
+]
+nav = [
+  {"Home" = [
+    {"Home" = "index.md"}
+  ]},
+  {"Get Started" = [
+    {"Quickstart" = [
+      {"Install ToolFront" = "pages/get_started/quickstart/install.md"},
+      {"Build your first app" = "pages/get_started/quickstart/build.md"},
+      {"Deploy your app" = "pages/get_started/quickstart/deploy.md"},
+      {"Connect AI agents" = "pages/get_started/quickstart/connect.md"},
+    ]},
+    {"Community" = [
+      {"FAQ" = "pages/get_started/community/faq.md"},
+      {"Contributing" = "pages/get_started/community/contributing.md"},
+      {"Roadmap" = "pages/get_started/community/roadmap.md"},
+      {"License" = "pages/get_started/community/license.md"}
+    ]},
+
+  ]},
+  {"Documentation" = [
+    {"Building apps" = [
+      {"Markdown" = "pages/documentation/application/markdown.md"},
+      {"Tools" = "pages/documentation/application/tools.md"},
+      {"Architecture" = "pages/documentation/application/architecture.md"}
+    ]},
+    {"Deploying apps" = [
+      {"Cloud deployment" = "pages/documentation/deployment/cloud_deploy.md"},
+      {"Self-hosting" = "pages/documentation/deployment/self_host.md"},
+    ]},
+    {"Integrating agents" = [
+      {"Python SDK" = "pages/documentation/integration/python_sdk.md"},
+      {"MCP server" = "pages/documentation/integration/mcp_server.md"},
+      {"Command line" = "pages/documentation/integration/command_line.md"},
+      {"REST API" = "pages/documentation/integration/rest_api.md"}
+    ]}
+  ]},
+  {"Reference" = [
+    {"Client library" = [
+      {"Python" = "pages/reference/client_library/python.md"},
+      {"CLI commands" = "pages/reference/client_library/cli_commands.md"},
+      {"Environment variables" = "pages/reference/client_library/environment_variables.md"}
+    ]},
+    {"Applications" = [
+      {"Server API" = "pages/reference/application/server_api.md"},
+      {"Management API" = "pages/reference/application/management_api.md"}
+    ]}
+  ]}
+]
+copyright = "Copyright &copy; 2025 Statespace Technologies, Inc."
+
+[project.theme]
+icon = { repo = "fontawesome/brands/git-alt" }
+logo = "assets/images/favicon.svg"
+favicon = "assets/images/favicon.svg"
+palette = [
+  { scheme = "default", primary = "custom", accent = "green", toggle = { icon = "material/lightbulb", name = "Switch to dark mode" } },
+  { scheme = "slate", primary = "custom", accent = "green", toggle = { icon = "material/lightbulb", name = "Switch to light mode" } }
+]
+features = [
+  "navigation.tabs",
+  "navigation.footer",
+  "navigation.sections",
+  "navigation.expand",
+  "navigation.top",
+  "search.highlight",
+  "search.share",
+  "content.code.copy",
+  "content.code.annotate",
+  "navigation.indexes",
+  "search.suggest",
+  "announce.dismiss",
+  "navigation.tracking",
+  "navigation.prune"
+]
+
+[project.extra]
+generator = false
+
+[[project.extra.social]]
+  icon = "fontawesome/brands/github"
+  link = "https://github.com/statespace-tech/toolfront/"
+  name = "Star us on GitHub"
+
+[[project.extra.social]]
+  icon = "fontawesome/brands/python"
+  link = "https://pypi.org/project/toolfront/"
+  name = "Install from PyPI"
+
+[[project.extra.social]]
+  icon = "fontawesome/brands/discord"
+  link = "https://discord.gg/rRyM7zkZTf"
+  name = "Join our Discord community"
+
+[[project.extra.social]]
+  icon = "fontawesome/brands/linkedin"
+  link = "https://www.linkedin.com/company/statespace-tech/"
+  name = "Follow us on LinkedIn"
+
+[[project.extra.social]]
+  icon = "fontawesome/brands/x-twitter"
+  link = "https://x.com/statespace_tech"
+  name = "Follow us on X (Twitter)"

@@ -1,5 +1,6 @@
 import click
 
+from .cli.ask import ask
 from .cli.delete import delete
 from .cli.deploy import deploy
 from .cli.list import list_deployments
@@ -14,6 +15,7 @@ def main():
     pass
 
 
+main.add_command(ask)
 main.add_command(serve)
 main.add_command(mcp)
 main.add_command(deploy)

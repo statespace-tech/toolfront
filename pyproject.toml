@@ -57,6 +57,7 @@ dev = [
     "ruff>=0.1.0",
     "mkdocs-material[imaging]>=9.6.16",
     "mkdocstrings[python]>=0.30.0",
+    "zensical>=0.0.7",
 ]
 
 [build-system]

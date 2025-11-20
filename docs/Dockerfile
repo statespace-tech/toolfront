@@ -1,7 +1,5 @@
-# Use Python 3.11 slim image as base
 FROM python:3.11-slim
 
-# Install system dependencies for Cairo and other image processing
 RUN apt-get update && apt-get install -y \
     libcairo2 \
     libcairo2-dev \
@@ -14,35 +12,22 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv
 RUN pip install uv
 
-# Set working directory
 WORKDIR /app
 
-# Copy project files (should be in build context)
 COPY pyproject.toml uv.lock* ./
-
-# Copy source code (needed for mkdocstrings)
 COPY src ./src
 
-# Install toolfront package and mkdocs dependencies
-RUN uv pip install --system -e . mkdocs-material[imaging] mkdocstrings[python]
+RUN uv pip install --system -e . zensical mkdocstrings[python]
 
-# Copy mkdocs configuration
 COPY mkdocs.yml ./
 
-# Copy docs content
 COPY pages ./docs/pages
 COPY assets ./docs/assets
 COPY overrides ./docs/overrides
 COPY index.md ./docs/
 
-# Expose port 8080
 EXPOSE 8080
 
-# Build the site
-RUN mkdocs build
-
-# Serve static files
-CMD ["python", "-m", "http.server", "8080", "--directory", "site"]
+CMD ["zensical", "serve", "--dev-addr", "0.0.0.0:8080"]

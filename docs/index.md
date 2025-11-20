@@ -1,8 +1,6 @@
 ---
-icon: material/lightning-bolt
+icon: lucide/home
 ---
-
-
 
 <p align="center">
   <a href="https://github.com/statespace-tech/toolfront">
@@ -16,22 +14,24 @@ icon: material/lightning-bolt
     <em>
       Build and deploy AI apps in minutes. All in pure Markdown. Zero boilerplate.
     </em>
-</em>
 </p>
 
 <p align="center">
-<a href="https://github.com/statespace-tech/toolfront/actions/workflows/test.yml" target="_blank">
+  <a href="https://github.com/statespace-tech/toolfront/actions/workflows/test.yml" target="_blank" style="text-decoration: none;">
     <img src="https://github.com/statespace-tech/toolfront/actions/workflows/test.yml/badge.svg" alt="Test Suite">
-</a>
-<a href="https://pypi.org/project/toolfront/" target="_blank">
-    <img src="https://img.shields.io/pypi/v/toolfront?color=%2334D058&label=pypi%20package" alt="PyPI package">
-</a>
-<a href="https://discord.gg/rRyM7zkZTf" target="_blank">
-    <img src="https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&style=flat-square" alt="Discord">
-</a>
-<a href="https://x.com/statespace_tech" target="_blank">
+  </a>
+  <a href="https://pypi.org/project/toolfront/" target="_blank" style="text-decoration: none;">
+    <img src="https://img.shields.io/pypi/v/toolfront?color=3775A9&label=pypi%20package&style=flat-square" alt="PyPI package">
+  </a>
+  <a href="https://github.com/statespace-tech/toolfront/blob/main/LICENSE" target="_blank" style="text-decoration: none;">
+    <img src="https://img.shields.io/badge/license-MIT-007ec6?style=flat-square" alt="License">
+  </a>
+  <a href="https://discord.gg/rRyM7zkZTf" target="_blank" style="text-decoration: none;">
+    <img src="https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&color=5865F2&style=flat-square" alt="Discord">
+  </a>
+  <a href="https://x.com/statespace_tech" target="_blank" style="text-decoration: none;">
     <img src="https://img.shields.io/badge/Statespace-black?style=flat-square&logo=x&logoColor=white" alt="X">
-</a>
+  </a>
 </p>
 
 ---
@@ -40,7 +40,7 @@ icon: material/lightning-bolt
 
 ---
 
-ToolFront is a declarative framework for building modular AI applications in Markdown. Write tools and instructions in `.md` files, run the project, and get a live AI application.
+ToolFront is a declarative framework for building modular AI applications in Markdown. Write tools and instructions in `.md` files and get a live AI application.
 
 ## Simple Example
 
@@ -49,27 +49,29 @@ ToolFront is a declarative framework for building modular AI applications in Mar
   Start with one file: `README.md`
 
 
-  ```markdown title="README.md"
+  ```yaml title="README.md"
   ---
   tools:
     - [curl, -X, GET, "https://httpbin.org/status/200"]
   ---
 
-  # Status Checker
+  # Instructions
   - Use `curl` to check if the service is up
   ```
 
-### Run it
+### Serve it
 
-Run the application with:
+Run your app on your machine:
 
 ```bash
-toolfront run .
+toolfront serve .
 ```
+> Runs at `http://127.0.0.1:8000`
+
 
 ### Ask it
 
-Ask your AI application.
+Export your `OPENAI_API_KEY` and query your app:
 
 === ":simple-python: &nbsp; Python SDK"
 
@@ -79,9 +81,6 @@ Ask your AI application.
     app = Application(url="http://127.0.0.1:8000")
 
     result = app.ask("Is the service up?", model="openai:gpt-5")
-    
-    print(result)
-    # Answer: yes
     ```
 
 === ":simple-modelcontextprotocol: &nbsp; MCP Server"
@@ -91,98 +90,105 @@ Ask your AI application.
       "mcpServers": {
         "toolfront": {
           "command": "uvx",
-          "args": ["toolfront", "mcp", "http://127.0.0.1:8000"],
+          "args": ["toolfront", "mcp", "http://127.0.0.1:8000"]
         }
       }
     }
     ```
+  
+=== ":lucide-terminal: &nbsp; Command Line"
 
----
+    ```bash
+    toolfront ask http://127.0.0.1:8000 "Is the service up?"
+    ```
 
 ## Upgraded Example
 
-Your full project can grow like this: 
+Your app can grow into a full project:
 
 ```bash
 project/
-├── README.md #(1)!
+├── README.md          # Main instructions & navigation tools
 ├── src/
-│   ├── api.md
-│   ├── rag.md
-│   ├── text2sql.md
-│   └── toolkit.md
+│   ├── rag.md         # Document search
+│   ├── text2sql.md    # Database query
+│   └── toolkit.md     # Custom workflow
 ├── data/
 └── tools/
+
+4 directories, 10 files
 ```
 
-1. All applications must have a `README.md`
-
-### Add Navigation
+### Add Navigation Tools
 
   Update `README.md` with tools to explore the project.
 
-  ```markdown title="README.md" hl_lines="4-5 11"
+  ```yaml title="README.md" hl_lines="4-5 10"
   ---
   tools:
     - [curl, -X, GET, "https://httpbin.org/status/200"]
     - [ls]
     - [cat]
-
   ---
 
-  # Status Checker
+  # Instructions
   - Use `curl` to check if the service is up
   - Use `ls` and `cat` to browse other files
   ```
 
-### Add Document RAG
+### Add Specialized Tools
 
-  Give your agent tools to search documents.
+Expand your app with specialized workflows.
 
-  ```markdown title="src/rag.md"
-  ---
-  tools:
-    - [grep]
-  ---
+=== ":lucide-folder-search: &nbsp; Document Search"
 
-  # Search Docs
-  - Use `grep` to search files in `/data/`
-  ```
+      ```yaml title="src/rag.md"
+      ---
+      tools:
+        - [grep]
+      ---
 
-### Add Text-to-SQL
+      # Document Search
+      - Use `grep` for keyword searches in `data/`.
+      ```
 
-  Connect your databases for SQL workflows.
+=== ":lucide-database: &nbsp; Text-to-SQL"
 
+    ```yaml title="src/text2sql.md"
+    ---
+    tools:
+      - [psql, -U, $USER, -d, $DB, -c, { regex: "^SELECT\b.*" }]
+    ---
 
-  ```markdown title="src/text2sql.md"
-  ---
-  tools:
-    - [psql, -U, $USER, -d, $DATABASE, -c, {query}]
-  ---
+    # Database Access
+    - Call `psql` to query the database with read-only SELECT statements
+    ```
 
-  # Database Access
-  - Call the `psql` tool to query the PostgreSQL database
-  ```
+=== ":lucide-file-code: &nbsp; Custom Scripts"
 
-### Add Custom Tools
+    ```yaml title="src/toolkit.md"
+    ---
+    tools:
+      - [python3, tools/analyze.py"]
+    ---
+    
+    # Custom Tools
+    - Run `analyze.py` to process data, passing `--input` as needed
+    ```
 
-  Build custom tools in any programming language.
+### Deploy It
 
-  ```markdown title="src/toolkit.md"
-  ---
-  tools:
-    - [python, tools/status.py, --delayed]
-  ---
-  
-  # Custom Tools
-  - Run `status.py` to check delayed orders
-  ```
+Create a free [Statespace account](https://statespace.com) and deploy your app in one command.
 
----
+```bash
+toolfront deploy .
+```
+> Deploys to `https://your-app.toolfront.app`. Share it with the community or your team!
+
 
 ## Installation
 
-Install `toolfront` with your favorite PyPI package manager.
+Install `toolfront` with your favorite PyPI package manager[^1].
 
 === ":fontawesome-brands-python: &nbsp; pip"
 
@@ -202,37 +208,5 @@ Install `toolfront` with your favorite PyPI package manager.
     poetry add toolfront
     ```
 
-!!! toolfront "Deploy your Apps 🔥"
+[^1]: Requires Python 3.10+
 
-    Instantly deploy your AI applications:
-
-    ```bash
-    toolfront deploy ./path/to/project
-    ```
-
-    Gives you a shareable application URL:
-
-    === ":material-web: Community Cloud (Free)"
-
-        ```python
-        # Up to 5 public apps, totally free
-        app = Application("https://cloud.statespace.com/you/status-checker")
-        ```
-
-    === ":material-account-group: Statespace Cloud (Pro)"
-
-        ```python
-        # Up to 20 public or private apps with authentication
-        app = Application("https://cloud.statespace.com/team/project", params={"API_KEY": "..."})
-        ```
-
-    === ":material-lock: Self-Hosted (Enterprise)"
-
-        ```python
-        # Unlimited on-prem apps with Docker or K8s  
-        app = Application("https://custom.com/agent")
-        ```
-    
-    [Get started for free](#){ .md-button .md-button--primary }
-        
-<p align="right"><strong>Made with ❤️ by <a href="https://statespace.com" target="_blank">Statespace</a></strong>.</p>
