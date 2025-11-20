@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 import yaml
-from httpx import HTTPTransport
+from httpx import HTTPStatusError, HTTPTransport
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 from pydantic_ai import Agent, UnexpectedModelBehavior, models
 from pydantic_ai.mcp import MCPServerStdio
@@ -30,6 +30,16 @@ DEFAULT_MAX_RETRIES = 3
 
 class Application(BaseModel):
     """Application for interacting with HTTP-served documentation and tools.
+
+    ```mermaid
+    graph LR
+        Agent["Agent"] ===>|"ask()"| App["Application"]
+        App ===>|"GET /{path}"| Server["HTTP Server"]
+        App ===>|"POST /{path}"| Server
+        Server ===>|instructions| App
+        Server ===>|tool result| App
+        App ===>|response| Agent
+    ```
 
     Attributes
     ----------
@@ -68,51 +78,56 @@ class Application(BaseModel):
             return dict(env_var.split("=", 1) for env_var in env)
         return env
 
-    async def action(self, url: str, command: list[str], args: dict[str, str] | None = None) -> str:
+    @field_validator("url", mode="before")
+    @classmethod
+    def validate_url(cls, url: str) -> str:
+        """Convert url to HttpUrl."""
+        if not url.endswith(".md"):
+            url = f"{url.rstrip('/')}/README.md"
+        return HttpUrl(url)
+
+    async def action(self, url: str, command: list[str]) -> str:
         """Execute a command from a Markdown page's frontmatter.
 
-        This tool executes commands that must be listed in the page's frontmatter.
-        Commands can parse directories, query databases, call APIs, etc.
+        This tool executes command tools defined in the Markdown file's frontmatter.
 
         Instructions:
-        1. url MUST ALWAYS be a complete HTTP/HTTPS URL to a file (e.g., 'https://example.com/docs/index.md')
-        2. The URL must point to the specific .md file where the command is defined in the frontmatter
-        3. To discover available commands and their URLs, use previously discovered/read tools and documentation
-        4. IMPORTANT: You can ONLY execute commands explicitly listed in the page's frontmatter. Never call a command you haven't found in the .md file
-        5. Commands must exactly match those in the frontmatter (they may include placeholders like '{endpoint}' or '{id}')
-        6. If you don't know what a command does, run it with --help first (e.g., ['command', '--help'])
-        7. Replace command placeholders with actual values from the args dict when executing
+        1. The URL parameter MUST ALWAYS be a complete HTTP/HTTPS URL to a Markdown file (e.g., 'https://example.com/docs/index.md')
+        2. You can only execute commands that are explicitly listed in the frontmatter of the Markdown file at that URL
+        3. Argument placeholders:
+            - ALWAYS pass arguments to placeholders denoted by { } or { regex: ... }
+            - { } requires exactly ONE argument (e.g., [ls, { }] accepts ['ls', 'directory'] but rejects ['ls'] or ['ls', 'directory', 'another_argument'])
+            - { regex: ... } validates against a pattern (e.g., [cat, { regex: ".*\\.txt$" }] accepts ['cat', 'doc.txt'] but rejects ['cat', 'doc.py'])
+            - Failure to pass the correct arguments to placeholders will result in an error
+        4. Tools ending with ; (semicolon) allow no additional flags beyond what is specified (e.g., [rm, { }, ;] cannot accept -f flag after the placeholder)
+        5. Tools without ; allow unlimited additional flags and arguments (e.g., [ls] can be called as ['ls', '-la'] or ['ls', '--help'])
+        6. Environment variables like $USER or $DB are injected at runtime: pass them exactly as written, do not substitute values yourself
+        7. When unsure about a command and ; is not present, try running it with --help flag first (e.g., ['command', '--help']) 
 
         Parameters
         ----------
         url : str
-            Complete HTTP/HTTPS URL to the .md file where the command is defined (e.g., 'https://example.com/docs/index.md')
-            MUST always be a full URL, never a file:// path
+            Complete HTTP/HTTPS URL to the .md file where the command is defined (e.g., 'https://example.com/README.md')
         command : list[str]
-            Command and its arguments (e.g., ['curl', '-X', 'GET', 'https://api.com/{endpoint}']). REQUIRED.
-        args : dict[str, str] | None
-            Parameters to substitute into command placeholders (e.g., {'endpoint': 'orders', 'id': '123'})
+            Command as a list of strings (e.g., ['cat', 'file.txt', '-n'])
 
         Returns
         -------
         str
-            stdout and stderr from executing the command
+            stdout, stderr, and returncode from executing the command
 
         Raises
         ------
         ValueError
-            If command is not provided or url is invalid
+            If command is not provided or URL is invalid
         RuntimeError
             If command is not listed in the page's frontmatter or execution fails
         """
-        if not command:
-            raise ValueError("command is required")
 
         try:
             async with httpx.AsyncClient() as client:
                 payload = {"command": command}
-                if args is not None:
-                    payload["args"] = args
+
                 if self.env is not None:
                     payload["env"] = self.env
 
@@ -125,8 +140,10 @@ class Application(BaseModel):
                 response.raise_for_status()
                 output = json.loads(response.text)
                 return f"# stdout:\n\n{output.get('stdout', 'N/A')}\n\n# stderr:\n\n{output.get('stderr', 'N/A')}"
+        except HTTPStatusError as e:
+            raise RuntimeError(f"HTTP {e.response.status_code}: {e.response.text}") from e
         except Exception as e:
-            raise RuntimeError(f"Error executing command: {e}") from e
+            raise RuntimeError(str(e)) from e
 
     def ask(
         self,
@@ -157,6 +174,7 @@ class Application(BaseModel):
         """
 
         mcp_args = ["run", "toolfront", "mcp", str(self.url), "--transport", "stdio"]
+
         if self.param:
             for key, value in self.param.items():
                 mcp_args.extend(["--param", f"{key}={value}"])
@@ -170,9 +188,9 @@ class Application(BaseModel):
         )
 
         try:
-            transport = HTTPTransport(retries=2)
+            transport = HTTPTransport(retries=DEFAULT_MAX_RETRIES)
             with httpx.Client(transport=transport) as client:
-                response = client.get(str(self.url), headers=self.param or {}, timeout=10.0)
+                response = client.get(str(self.url), headers=self.param or {}, timeout=DEFAULT_TIMEOUT_SECONDS)
                 response.raise_for_status()
                 instructions = response.text + f"\n\n Your current URL is: {self.url}"
         except Exception as e:
