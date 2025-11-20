@@ -27,33 +27,35 @@
 
 ## Quickstart
 
-ToolFront is a declarative framework for building modular AI applications in Markdown. Write tools and instructions in `.md` files, run the project, and get a live AI application.
+ToolFront is a declarative framework for building modular AI applications in Markdown. Write tools and instructions in `.md` files and get a live AI application.
 
 ### Create it
 
-Start with **one file**: `README.md`
+Start with one file: `README.md`
 
-```markdown
+```yaml
 ---
 tools:
   - [curl, -X, GET, "https://httpbin.org/status/200"]
 ---
 
-# Status Checker
+# Instructions
 - Use `curl` to check if the service is up
 ```
 
-### Run it
+### Serve it
 
-Run the application with:
+Run your app on your machine:
 
 ```bash
-toolfront run .
+toolfront serve .
 ```
+
+> Runs at `http://127.0.0.1:8000`
 
 ### Ask it
 
-Ask your AI application.
+Export your `OPENAI_API_KEY` and query your app:
 
 <details open>
 <summary><b>Python SDK</b></summary>
@@ -64,9 +66,6 @@ from toolfront import Application
 app = Application(url="http://127.0.0.1:8000")
 
 result = app.ask("Is the service up?", model="openai:gpt-5")
-
-print(result)
-# Answer: yes
 ```
 
 </details>
@@ -87,29 +86,37 @@ print(result)
 
 </details>
 
----
+<details>
+<summary><b>Command Line</b></summary>
+
+```bash
+toolfront ask http://127.0.0.1:8000 "Is the service up?"
+```
+
+</details>
 
 ## Upgraded Example
 
-Your full project can grow like this:
+Your app can grow into a full project:
 
 ```bash
 project/
-├── README.md
+├── README.md          # Main instructions & navigation tools
 ├── src/
-│   ├── api.md
-│   ├── rag.md
-│   ├── text2sql.md
-│   └── toolkit.md
+│   ├── rag.md         # Document search
+│   ├── text2sql.md    # Database query
+│   └── toolkit.md     # Custom workflow
 ├── data/
 └── tools/
+
+4 directories, 10 files
 ```
 
-### Add Navigation
+### Add Navigation Tools
 
-Update `README.md` with tools to explore the project
+Update `README.md` with tools to explore the project.
 
-```markdown
+```yaml
 ---
 tools:
   - [curl, -X, GET, "https://httpbin.org/status/200"]
@@ -117,58 +124,73 @@ tools:
   - [cat]
 ---
 
-# Status Checker
+# Instructions
 - Use `curl` to check if the service is up
 - Use `ls` and `cat` to browse other files
 ```
 
-### Add Document RAG
+### Add Specialized Tools
 
-Give your agent tools to search documents
+Expand your app with specialized workflows.
 
-```markdown
+<details open>
+<summary><b>Document Search</b></summary>
+
+```yaml
 ---
 tools:
   - [grep]
 ---
 
-# Search Docs
-- Use `grep` to search files in `/data/`
+# Document Search
+- Use `grep` for keyword searches in `data/`.
 ```
 
-### Add Text-to-SQL
+</details>
 
-Connect your databases for SQL workflows
+<details>
+<summary><b>Text-to-SQL</b></summary>
 
-```markdown
+```yaml
 ---
 tools:
-  - [psql, -U, $USER, -d, $DATABASE, -c, {query}]
+  - [psql, -U, $USER, -d, $DB, -c, { regex: "^SELECT\b.*" }]
 ---
 
 # Database Access
-- Call the `psql` tool to query the PostgreSQL database
+- Call `psql` to query the database with read-only SELECT statements
 ```
 
-### Add Custom Tools
+</details>
 
-Build custom tools in any programming language
+<details>
+<summary><b>Custom Scripts</b></summary>
 
-```markdown
+```yaml
 ---
 tools:
-  - [python, tools/status.py, --delayed]
+  - [python3, tools/analyze.py]
 ---
 
 # Custom Tools
-- Run `status.py` to check delayed orders
+- Run `analyze.py` to process data, passing `--input` as needed
 ```
 
----
+</details>
+
+### Deploy It
+
+Create a free [Statespace account](https://statespace.com) and deploy your app in one command.
+
+```bash
+toolfront deploy .
+```
+
+> Deploys to `https://your-app.toolfront.app`. Share it with the community or your team!
 
 ## Installation
 
-Install `toolfront` with your favorite PyPI package manager.
+Install `toolfront` with your favorite PyPI package manager*[^1]*.
 
 <details open>
 <summary><b>pip</b></summary>
@@ -197,49 +219,7 @@ poetry add toolfront
 
 </details>
 
----
-
-## Deploy your Apps
-
-Instantly deploy your AI applications:
-
-```bash
-toolfront deploy ./path/to/project
-```
-
-Gives you a shareable application URL:
-
-<details open>
-<summary><b>Community Cloud (Free)</b></summary>
-
-```python
-# Up to 5 public apps, totally free
-app = Application("https://cloud.statespace.com/you/status-checker")
-```
-
-</details>
-
-<details>
-<summary><b>Statespace Cloud (Pro)</b></summary>
-
-```python
-# Up to 20 public or private apps with authentication
-app = Application("https://cloud.statespace.com/team/project", params={"API_KEY": "..."})
-```
-
-</details>
-
-<details>
-<summary><b>Self-Hosted (Enterprise)</b></summary>
-
-```python
-# Unlimited on-prem apps with Docker or K8s
-app = Application("https://custom.com/agent")
-```
-
-</details>
-
-[Get started for free](https://cloud.statespace.com/signup)
+*Requires Python 3.10+
 
 
 ## Community & Contributing
