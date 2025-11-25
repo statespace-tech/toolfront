@@ -1,5 +1,5 @@
 ---
-icon: material/account-group
+icon: lucide/users
 ---
 
 # Contributing

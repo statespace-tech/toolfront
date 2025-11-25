@@ -1,5 +1,5 @@
 ---
-icon: material/chat-question
+icon: lucide/message-circle-question-mark
 ---
 # FAQ
 
