@@ -1,6 +1,6 @@
 """Unit tests for get_frontmatter function."""
 
-from toolfront.cli.serve import get_frontmatter
+from toolfront.cli.serve import _parse_frontmatter
 
 
 def test_parse_markdown_with_tools():
@@ -14,7 +14,7 @@ tools:
 
 Some content"""
 
-    frontmatter = get_frontmatter(markdown)
+    frontmatter = _parse_frontmatter(markdown)
     assert "tools" in frontmatter
     assert frontmatter["tools"] == ["python3 script.py", "bash ls -la"]
 
@@ -22,7 +22,7 @@ Some content"""
 def test_parse_markdown_without_frontmatter():
     """Test parsing markdown without frontmatter."""
     markdown = "# Title\n\nSome content"
-    frontmatter = get_frontmatter(markdown)
+    frontmatter = _parse_frontmatter(markdown)
     assert frontmatter == {}
 
 
@@ -33,6 +33,6 @@ def test_parse_markdown_with_invalid_yaml():
 ---
 # Title"""
 
-    frontmatter = get_frontmatter(markdown)
+    frontmatter = _parse_frontmatter(markdown)
     # When YAML parsing fails, it returns empty dict
     assert frontmatter == {}

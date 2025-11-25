@@ -7,7 +7,7 @@ on:
       - main
     paths:
       - 'docs/**'
-      - 'mkdocs.yml'
+      - 'zensical.toml'
       - 'pyproject.toml'
       - 'src/**'
 
