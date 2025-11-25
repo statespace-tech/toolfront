@@ -1,8 +1,52 @@
+from datetime import UTC, datetime
+from typing import Any
+
 import click
-from datetime import datetime
 
 from toolfront.lib.config import get_api_credentials
 from toolfront.lib.gateway import GatewayClient
+
+
+def get_client(api_key: str | None, gateway_url: str | None, org_id: str | None = None) -> GatewayClient:
+    """Helper to initialize GatewayClient with error handling."""
+    try:
+        url, key, org = get_api_credentials(api_key, gateway_url, org_id)
+        return GatewayClient(url, key, org)
+    except ValueError as e:
+        raise click.ClickException(str(e)) from e
+
+
+def format_relative_time(iso_timestamp: str | None) -> str:
+    """Format ISO timestamp to relative time string."""
+    if not iso_timestamp:
+        return "never"
+
+    try:
+        dt = datetime.fromisoformat(iso_timestamp.replace("Z", "+00:00"))
+        now = datetime.now(UTC)
+        delta = now - dt
+
+        if delta.days > 0:
+            return f"{delta.days}d ago"
+        if delta.seconds >= 3600:
+            return f"{delta.seconds // 3600}h ago"
+        if delta.seconds >= 60:
+            return f"{delta.seconds // 60}m ago"
+        return "just now"
+    except ValueError:
+        return iso_timestamp
+
+
+def print_kv(key: str, value: Any, color: str | None = None) -> None:
+    """Print Key-Value pair if value is present."""
+    if value is None or value == "":
+        return
+
+    val_str = str(value)
+    if color:
+        val_str = click.style(val_str, fg=color)
+
+    click.echo(f"  {key:<16} {val_str}")
 
 
 @click.group()
@@ -17,16 +61,19 @@ def tokens():
 @click.option("--gateway-url", help="Gateway base URL (overrides config)")
 @click.option("--org-id", help="Organization ID (overrides config)")
 @click.option("--scope", type=click.Choice(["read", "execute", "admin"]), default="execute", help="Token scope")
-@click.option("--env", "environment_ids", multiple=True, help="Restrict to specific environment IDs (can be used multiple times)")
-@click.option("--expires", help="Expiration date (ISO 8601 format, e.g., 2025-12-31T23:59:59Z)")
-def create(name: str, api_key: str | None, gateway_url: str | None, org_id: str | None, scope: str, environment_ids: tuple[str, ...], expires: str | None):
+@click.option("--env", "environment_ids", multiple=True, help="Restrict to specific environment IDs")
+@click.option("--expires", help="Expiration date (ISO 8601 format)")
+def create(
+    name: str,
+    api_key: str | None,
+    gateway_url: str | None,
+    org_id: str | None,
+    scope: str,
+    environment_ids: tuple[str, ...],
+    expires: str | None,
+):
     """Create a new Personal Access Token"""
-    try:
-        gateway_url, api_key, org_id = get_api_credentials(api_key, gateway_url, org_id)
-    except ValueError as e:
-        raise click.ClickException(str(e)) from e
-
-    client = GatewayClient(gateway_url, api_key, org_id)
+    client = get_client(api_key, gateway_url, org_id)
 
     click.echo(f"Creating token '{click.style(name, bold=True)}'...")
 
@@ -39,12 +86,12 @@ def create(name: str, api_key: str | None, gateway_url: str | None, org_id: str 
         )
 
         click.echo("\n" + "=" * 80)
-        click.echo(f"  Token ID:    {click.style(result['id'], fg='green')}")
-        click.echo(f"  Name:        {result['name']}")
-        click.echo(f"  Scope:       {result['scope']}")
-        click.echo(f"  Created:     {result['created_at']}")
-        if result.get('expires_at'):
-            click.echo(f"  Expires:     {result['expires_at']}")
+        print_kv("Token ID:", result["id"], color="green")
+        print_kv("Name:", result["name"])
+        print_kv("Scope:", result["scope"])
+        print_kv("Created:", result["created_at"])
+        print_kv("Expires:", result.get("expires_at"))
+
         click.echo("\n" + "─" * 80)
         click.echo(f"  {click.style('Token (save this - shown only once):', fg='yellow', bold=True)}")
         click.echo(f"  {click.style(result['token'], fg='cyan', bold=True)}")
@@ -61,14 +108,15 @@ def create(name: str, api_key: str | None, gateway_url: str | None, org_id: str 
 @click.option("--org-id", help="Organization ID (overrides config)")
 @click.option("--all", "show_all", is_flag=True, help="Show inactive tokens too")
 @click.option("--limit", default=100, help="Maximum number of tokens to return")
-def list_tokens(api_key: str | None, gateway_url: str | None, org_id: str | None, show_all: bool, limit: int):
+def list_tokens(
+    api_key: str | None,
+    gateway_url: str | None,
+    org_id: str | None,
+    show_all: bool,
+    limit: int,
+):
     """List all Personal Access Tokens"""
-    try:
-        gateway_url, api_key, org_id = get_api_credentials(api_key, gateway_url, org_id)
-    except ValueError as e:
-        raise click.ClickException(str(e)) from e
-
-    client = GatewayClient(gateway_url, api_key, org_id)
+    client = get_client(api_key, gateway_url, org_id)
 
     try:
         tokens_list = client.list_tokens(only_active=not show_all, limit=limit)
@@ -80,39 +128,24 @@ def list_tokens(api_key: str | None, gateway_url: str | None, org_id: str | None
         click.echo(f"\n{len(tokens_list)} token(s):\n")
 
         for token in tokens_list:
-            status = "active" if token.get('is_active', True) else "revoked"
-            status_icon = click.style("✓", fg='green') if status == "active" else click.style("✗", fg='red')
-            
-            # Extract scope type (read/execute/admin)
-            scope = token['scope'].replace('environments:', '')
-            scope_color = 'yellow' if scope == 'admin' else 'cyan' if scope == 'execute' else 'white'
-            
-            # Shorten ID to last 8 chars
-            short_id = token['id'][-12:]
-            
-            # Calculate relative time
-            from datetime import datetime, timezone
-            created_dt = datetime.fromisoformat(token['created_at'].replace('Z', '+00:00'))
-            now = datetime.now(timezone.utc)
-            delta = now - created_dt
-            
-            if delta.days > 0:
-                time_ago = f"{delta.days}d ago"
-            elif delta.seconds >= 3600:
-                time_ago = f"{delta.seconds // 3600}h ago"
-            elif delta.seconds >= 60:
-                time_ago = f"{delta.seconds // 60}m ago"
-            else:
-                time_ago = "just now"
-            
-            # Print compact card-style
+            is_active = token.get("is_active", True)
+            status_icon = click.style("✓", fg="green") if is_active else click.style("✗", fg="red")
+
+            scope = token.get("scope", "").replace("environments:", "")
+            scope_color = {"admin": "yellow", "execute": "cyan"}.get(scope, "white")
+
+            short_id = token["id"][-12:]
+            time_ago = format_relative_time(token["created_at"])
+
             click.echo(f"{status_icon} {click.style(token['name'], bold=True)}")
             click.echo(f"  {click.style(scope, fg=scope_color)} • {time_ago} • {click.style(short_id, dim=True)}")
-            
-            if token.get('usage_count', 0) > 0:
-                click.echo(f"  Used {token['usage_count']} time(s), last: {token.get('last_used_at', 'never')}")
-            
-            click.echo()  # Blank line between tokens
+
+            usage = token.get("usage_count", 0)
+            if usage > 0:
+                last_used = format_relative_time(token.get("last_used_at"))
+                click.echo(f"  Used {usage} time(s), last: {last_used}")
+
+            click.echo()
 
     except Exception as e:
         raise click.ClickException(f"Failed to list tokens: {e}") from e
@@ -124,44 +157,35 @@ def list_tokens(api_key: str | None, gateway_url: str | None, org_id: str | None
 @click.option("--gateway-url", help="Gateway base URL (overrides config)")
 def get(token_id: str, api_key: str | None, gateway_url: str | None):
     """Get details for a specific token"""
-    try:
-        gateway_url, api_key, _ = get_api_credentials(api_key, gateway_url)
-    except ValueError as e:
-        raise click.ClickException(str(e)) from e
-
-    client = GatewayClient(gateway_url, api_key)
+    client = get_client(api_key, gateway_url)
 
     try:
         result = client.get_token(token_id)
-        token = result.get('token', result)
+        token = result.get("token", result)
+
+        is_active = token.get("is_active")
+        status_color = "green" if is_active else "red"
+        status_text = "active" if is_active else "revoked"
 
         click.echo("\n" + "=" * 80)
-        click.echo(f"  ID:              {token['id']}")
-        click.echo(f"  Name:            {token['name']}")
-        click.echo(f"  Scope:           {token['scope']}")
-        click.echo(f"  Status:          {click.style('active' if token.get('is_active') else 'revoked', fg='green' if token.get('is_active') else 'red')}")
-        click.echo(f"  Created:         {token['created_at']}")
-        click.echo(f"  Created by:      {token.get('created_by', 'N/A')}")
+        print_kv("ID:", token["id"])
+        print_kv("Name:", token["name"])
+        print_kv("Scope:", token["scope"])
+        print_kv("Status:", status_text, color=status_color)
+        print_kv("Created:", token["created_at"])
+        print_kv("Created by:", token.get("created_by", "N/A"))
+        print_kv("Expires:", token.get("expires_at"))
+        print_kv("Last used:", token.get("last_used_at"))
+        print_kv("Usage count:", token.get("usage_count", 0))
 
-        if token.get('expires_at'):
-            click.echo(f"  Expires:         {token['expires_at']}")
+        envs = token.get("allowed_environments")
+        env_str = ", ".join(envs) if envs else "All"
+        print_kv("Allowed envs:", env_str)
 
-        if token.get('last_used_at'):
-            click.echo(f"  Last used:       {token['last_used_at']}")
-
-        click.echo(f"  Usage count:     {token.get('usage_count', 0)}")
-
-        if token.get('allowed_environments'):
-            click.echo(f"  Allowed envs:    {', '.join(token['allowed_environments'])}")
-        else:
-            click.echo(f"  Allowed envs:    All")
-
-        if token.get('revoked_at'):
-            click.echo(f"  Revoked:         {token['revoked_at']}")
-            if token.get('revoked_by'):
-                click.echo(f"  Revoked by:      {token['revoked_by']}")
-            if token.get('revocation_reason'):
-                click.echo(f"  Reason:          {token['revocation_reason']}")
+        if token.get("revoked_at"):
+            print_kv("Revoked:", token["revoked_at"])
+            print_kv("Revoked by:", token.get("revoked_by"))
+            print_kv("Reason:", token.get("revocation_reason"))
 
         click.echo("=" * 80 + "\n")
 
@@ -177,14 +201,17 @@ def get(token_id: str, api_key: str | None, gateway_url: str | None):
 @click.option("--scope", type=click.Choice(["read", "execute", "admin"]), help="New scope")
 @click.option("--env", "environment_ids", multiple=True, help="New environment restrictions")
 @click.option("--expires", help="New expiration date (ISO 8601 format)")
-def rotate(token_id: str, api_key: str | None, gateway_url: str | None, name: str | None, scope: str | None, environment_ids: tuple[str, ...], expires: str | None):
+def rotate(
+    token_id: str,
+    api_key: str | None,
+    gateway_url: str | None,
+    name: str | None,
+    scope: str | None,
+    environment_ids: tuple[str, ...],
+    expires: str | None,
+):
     """Rotate a token (generates new token value, revokes old one)"""
-    try:
-        gateway_url, api_key, _ = get_api_credentials(api_key, gateway_url)
-    except ValueError as e:
-        raise click.ClickException(str(e)) from e
-
-    client = GatewayClient(gateway_url, api_key)
+    client = get_client(api_key, gateway_url)
 
     click.echo(f"Rotating token {click.style(token_id, bold=True)}...")
 
@@ -198,9 +225,10 @@ def rotate(token_id: str, api_key: str | None, gateway_url: str | None, name: st
         )
 
         click.echo("\n" + "=" * 80)
-        click.echo(f"  Token ID:    {click.style(result['id'], fg='green')}")
-        click.echo(f"  Name:        {result['name']}")
-        click.echo(f"  Scope:       {result['scope']}")
+        print_kv("Token ID:", result["id"], color="green")
+        print_kv("Name:", result["name"])
+        print_kv("Scope:", result["scope"])
+
         click.echo("\n" + "─" * 80)
         click.echo(f"  {click.style('New Token (save this - shown only once):', fg='yellow', bold=True)}")
         click.echo(f"  {click.style(result['token'], fg='cyan', bold=True)}")
@@ -219,18 +247,13 @@ def rotate(token_id: str, api_key: str | None, gateway_url: str | None, name: st
 @click.confirmation_option(prompt="Are you sure you want to revoke this token?")
 def revoke(token_id: str, api_key: str | None, gateway_url: str | None, reason: str | None):
     """Revoke a token (cannot be undone)"""
-    try:
-        gateway_url, api_key, _ = get_api_credentials(api_key, gateway_url)
-    except ValueError as e:
-        raise click.ClickException(str(e)) from e
-
-    client = GatewayClient(gateway_url, api_key)
+    client = get_client(api_key, gateway_url)
 
     click.echo(f"Revoking token {click.style(token_id, bold=True)}...")
 
     try:
         client.revoke_token(token_id=token_id, reason=reason)
-        click.echo(f"\n✓ Token revoked successfully")
+        click.echo("\n✓ Token revoked successfully")
 
     except Exception as e:
         raise click.ClickException(f"Failed to revoke token: {e}") from e
