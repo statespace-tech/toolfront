@@ -1,5 +1,6 @@
+import asyncio
+import contextlib
 import re
-import subprocess
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -164,14 +165,30 @@ def serve(directory: str, host: str, port: int) -> None:
             raise HTTPException(status_code=403, detail=f"Command not allowed: {action.command}")
 
         try:
-            result = subprocess.run(
-                action.command, cwd=path.parent, env=action.env, capture_output=True, text=True, timeout=TIMEOUT
+            process = await asyncio.create_subprocess_exec(
+                *action.command,
+                cwd=path.parent,
+                env=action.env,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
+
+            try:
+                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=TIMEOUT)
+            except TimeoutError:
+                with contextlib.suppress(ProcessLookupError):
+                    process.kill()
+                raise HTTPException(status_code=408, detail="Command execution timeout")
+
             return JSONResponse(
-                content={"stdout": result.stdout or "", "stderr": result.stderr or "", "returncode": result.returncode}
+                content={
+                    "stdout": stdout.decode() if stdout else "",
+                    "stderr": stderr.decode() if stderr else "",
+                    "returncode": process.returncode,
+                }
             )
-        except subprocess.TimeoutExpired:
-            raise HTTPException(status_code=408, detail="Command execution timeout")
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Command execution failed: {str(e)}") from e
 

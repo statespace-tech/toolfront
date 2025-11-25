@@ -55,30 +55,31 @@ def get_current_context() -> dict:
     return context
 
 
-def get_api_credentials(api_key: str | None = None, gateway_url: str | None = None) -> tuple[str, str]:
+def get_api_credentials(
+    api_key: str | None = None, gateway_url: str | None = None, org_id: str | None = None
+) -> tuple[str, str, str | None]:
     """
     Get API credentials, preferring explicit args, then config file, then env vars.
 
-    Returns: (gateway_url, api_key)
+    Returns: (gateway_url, api_key, org_id)
     """
     import os
 
-    # If both are provided explicitly, use them
-    if api_key and gateway_url:
-        return gateway_url, api_key
-
     # Try to load from config file
+    config_org_id = None
     try:
         context = get_current_context()
         config_gateway_url = context.get("api_url")
         config_api_key = context.get("api_key")
+        config_org_id = context.get("org_id")
 
         # Use config values, but allow CLI args to override
         final_gateway_url = gateway_url or config_gateway_url
         final_api_key = api_key or config_api_key
+        final_org_id = org_id or config_org_id
 
         if final_gateway_url and final_api_key:
-            return final_gateway_url, final_api_key
+            return final_gateway_url, final_api_key, final_org_id
 
     except (FileNotFoundError, ValueError):
         # Config file doesn't exist or is invalid, fall back to env vars
@@ -87,6 +88,7 @@ def get_api_credentials(api_key: str | None = None, gateway_url: str | None = No
     # Fall back to environment variables
     final_gateway_url = gateway_url or os.getenv("TOOLFRONT_GATEWAY_URL", "https://api.toolfront.ai")
     final_api_key = api_key or os.getenv("TOOLFRONT_API_KEY")
+    final_org_id = org_id or os.getenv("TOOLFRONT_ORG_ID") or config_org_id
 
     if not final_api_key:
         raise ValueError(
@@ -96,4 +98,4 @@ def get_api_credentials(api_key: str | None = None, gateway_url: str | None = No
             "3. Set TOOLFRONT_API_KEY environment variable"
         )
 
-    return final_gateway_url, final_api_key
+    return final_gateway_url, final_api_key, final_org_id

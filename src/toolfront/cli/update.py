@@ -14,7 +14,7 @@ from toolfront.lib.gateway import GatewayClient
 def update(deployment_id: str, path: Path, api_key: str | None, gateway_url: str | None):
     """Update deployment with new markdown files"""
     try:
-        gateway_url, api_key = get_api_credentials(api_key, gateway_url)
+        gateway_url, api_key, _ = get_api_credentials(api_key, gateway_url)
     except ValueError as e:
         raise click.ClickException(str(e)) from e
 

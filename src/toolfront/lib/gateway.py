@@ -32,9 +32,10 @@ class Environment:
 
 
 class GatewayClient:
-    def __init__(self, base_url: str, api_key: str):
+    def __init__(self, base_url: str, api_key: str, org_id: str | None = None):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
+        self.org_id = org_id
 
     def scan_markdown_files(self, dir_path: Path) -> list[EnvironmentFile]:
         files = []
@@ -154,3 +155,122 @@ class GatewayClient:
 
         if not response.is_success:
             raise RuntimeError(f"Failed to update environment: {response.status_code}\n{response.text}")
+
+    def create_token(
+        self,
+        name: str,
+        scope: str,
+        environment_ids: list[str] | None = None,
+        expires_at: str | None = None,
+    ) -> dict:
+        if not self.org_id:
+            raise RuntimeError(
+                "Organization ID required for token creation. Set org_id in config or use --org-id flag."
+            )
+
+        payload = {
+            "organization_id": self.org_id,
+            "name": name,
+            "scope": f"environments:{scope}",
+        }
+
+        if environment_ids:
+            payload["allowed_environment_ids"] = environment_ids
+
+        if expires_at:
+            payload["expires_at"] = expires_at
+
+        response = httpx.post(
+            f"{self.base_url}/api/v1/tokens",
+            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+            json=payload,
+            timeout=30.0,
+        )
+
+        if not response.is_success:
+            raise RuntimeError(f"Failed to create token: {response.status_code}\n{response.text}")
+
+        return response.json().get("data", response.json())
+
+    def list_tokens(self, only_active: bool = True, limit: int = 100, offset: int = 0) -> dict:
+        if not self.org_id:
+            raise RuntimeError(
+                "Organization ID required for listing tokens. Set org_id in config or use --org-id flag."
+            )
+
+        response = httpx.get(
+            f"{self.base_url}/api/v1/tokens",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            params={
+                "organization_id": self.org_id,
+                "only_active": str(only_active).lower(),
+                "limit": limit,
+                "offset": offset,
+            },
+            timeout=30.0,
+        )
+
+        if not response.is_success:
+            raise RuntimeError(f"Failed to list tokens: {response.status_code}\n{response.text}")
+
+        data = response.json()
+        return data.get("data", data) if isinstance(data, dict) else data
+
+    def get_token(self, token_id: str) -> dict:
+        response = httpx.get(
+            f"{self.base_url}/api/v1/tokens/{token_id}",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            timeout=30.0,
+        )
+
+        if not response.is_success:
+            raise RuntimeError(f"Failed to get token: {response.status_code}\n{response.text}")
+
+        return response.json().get("data", response.json())
+
+    def rotate_token(
+        self,
+        token_id: str,
+        name: str | None = None,
+        scope: str | None = None,
+        environment_ids: list[str] | None = None,
+        expires_at: str | None = None,
+    ) -> dict:
+        payload = {}
+
+        if name is not None:
+            payload["name"] = name
+        if scope is not None:
+            payload["scope"] = f"environments:{scope}"
+        if environment_ids is not None:
+            payload["environment_scope"] = {"type": "restricted", "environment_ids": environment_ids}
+        if expires_at is not None:
+            payload["expires_at"] = expires_at
+
+        response = httpx.post(
+            f"{self.base_url}/api/v1/tokens/{token_id}/rotate",
+            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+            json=payload,
+            timeout=30.0,
+        )
+
+        if not response.is_success:
+            raise RuntimeError(f"Failed to rotate token: {response.status_code}\n{response.text}")
+
+        return response.json().get("data", response.json())
+
+    def revoke_token(self, token_id: str, reason: str | None = None) -> None:
+        payload = {}
+        if reason:
+            payload["reason"] = reason
+
+        response = httpx.request(
+            "DELETE",
+            f"{self.base_url}/api/v1/tokens/{token_id}",
+            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+            json=payload,
+            timeout=30.0,
+        )
+
+        if not response.is_success:
+            raise RuntimeError(f"Failed to revoke token: {response.status_code}\n{response.text}")
