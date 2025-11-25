@@ -55,7 +55,9 @@ def get_current_context() -> dict:
     return context
 
 
-def get_api_credentials(api_key: str | None = None, gateway_url: str | None = None, org_id: str | None = None) -> tuple[str, str, str | None]:
+def get_api_credentials(
+    api_key: str | None = None, gateway_url: str | None = None, org_id: str | None = None
+) -> tuple[str, str, str | None]:
     """
     Get API credentials, preferring explicit args, then config file, then env vars.
 

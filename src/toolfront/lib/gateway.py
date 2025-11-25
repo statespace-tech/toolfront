@@ -164,7 +164,9 @@ class GatewayClient:
         expires_at: str | None = None,
     ) -> dict:
         if not self.org_id:
-            raise RuntimeError("Organization ID required for token creation. Set org_id in config or use --org-id flag.")
+            raise RuntimeError(
+                "Organization ID required for token creation. Set org_id in config or use --org-id flag."
+            )
 
         payload = {
             "organization_id": self.org_id,
@@ -192,12 +194,19 @@ class GatewayClient:
 
     def list_tokens(self, only_active: bool = True, limit: int = 100, offset: int = 0) -> dict:
         if not self.org_id:
-            raise RuntimeError("Organization ID required for listing tokens. Set org_id in config or use --org-id flag.")
+            raise RuntimeError(
+                "Organization ID required for listing tokens. Set org_id in config or use --org-id flag."
+            )
 
         response = httpx.get(
             f"{self.base_url}/api/v1/tokens",
             headers={"Authorization": f"Bearer {self.api_key}"},
-            params={"organization_id": self.org_id, "only_active": str(only_active).lower(), "limit": limit, "offset": offset},
+            params={
+                "organization_id": self.org_id,
+                "only_active": str(only_active).lower(),
+                "limit": limit,
+                "offset": offset,
+            },
             timeout=30.0,
         )
 
