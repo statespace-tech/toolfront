@@ -4,7 +4,7 @@ icon: lucide/cloud-upload
 
 # Cloud deployment
 
-Deploy and manage your ToolFront applications with simple commands.
+Deploy and manage your RAG applications with simple commands.
 
 
 !!! info "First time?"
@@ -13,30 +13,24 @@ Deploy and manage your ToolFront applications with simple commands.
 
 ## Quick deploy
 
-### Public apps
+Deploy your application as public (community access) or private (authenticated access).
 
-Share your apps with the community.
-
+**Public deployment:**
 ```bash
-toolfront deploy . --public
+toolfront deploy ./project --public
 ```
+> Accessible at `https://<app-id>.toolfront.app` (anyone can use)
 
-> Deploys to `https://<app-id>.toolfront.app`
-
-
-### Private apps
-
-Deploy private apps with authentication.
-
+**Private deployment:**
 ```bash
-toolfront deploy . --private
+toolfront deploy ./project --private
 ```
-> Deploys to `https://<app-id>.toolfront.app` with authentication token
+> Accessible at `https://<app-id>.toolfront.app` (requires authentication)
 
 
 ## Usage
 
-Once deployed, connect to your app from anywhere.
+Once deployed, connect AI agents to your app.
 
 === ":simple-python: &nbsp; Python SDK"
 
@@ -44,13 +38,13 @@ Once deployed, connect to your app from anywhere.
     from toolfront import Application
 
     app = Application(
-        "https://<app-id>.toolfront.app",
-        param={"Authorization": "Bearer YOUR_TOKEN"} # (1)!
+            url="https://<app-id>.toolfront.app",
+            headers={"Authorization": "Bearer YOUR_TOKEN"}
     )
-    result = app.ask("Your question", model="openai:gpt-5")
+
+    result = app.ask("Who are our top-3 customers?", model="openai:gpt-5")
     ```
 
-    1. Authorization is only required for private apps
 
 === ":simple-modelcontextprotocol: &nbsp; MCP Server"
 
@@ -61,71 +55,51 @@ Once deployed, connect to your app from anywhere.
           "command": "uvx",
           "args": [
             "toolfront", "mcp", "https://<app-id>.toolfront.app",
-            "--param", "Authorization=Bearer YOUR_TOKEN" // (1)!
+            "--param", "Authorization=Bearer YOUR_TOKEN"
           ]
         }
       }
     }
     ```
 
-    1. Authorization is only required for private apps
-
 === ":lucide-terminal: &nbsp; Command Line"
 
-    ```bash
-    toolfront ask https://<app-id>.toolfront.app "Your question" \
-      --param "Authorization=Bearer YOUR_TOKEN"  # (1)!
+    ```console
+    $ toolfront ask https://<app-id>.toolfront.app \
+        "Who are our top-3 customers?" \
+        --param "Authorization=Bearer YOUR_TOKEN" \
+        --model "openai:gpt-5"
     ```
-
-    1. Authorization is only required for private apps
+> Only private apps require authentication via `Authorization` header
 
 !!! question "Learn more"
-    Check out the [Python SDK](../integration/python_sdk.md), [MCP Server](../integration/mcp_server.md), [Command Line](../integration/command_line.md), and [REST API](../integration/rest_api.md) documentation for more details.
-
-
-## Deployment options
-
-| Feature | Community Cloud | Statespace Cloud | Enterprise |
-|---------|----------------|------------------|------------|
-| **Pricing** | Free | $39/month | Custom |
-| **Public Apps** | 5 | 20 | Unlimited |
-| **Private Apps** | :x: | 20 | Unlimited |
-| **Team Collaboration** | :x: | :white_check_mark: | :white_check_mark: |
-| **Support** | Community | Priority | Dedicated |
-
-**Community Cloud** - Perfect for getting started with public apps. Free forever.
-
-**Statespace Cloud** - For teams and private apps with authentication. [Learn more](https://statespace.com/)
-
-**Enterprise** - Custom deployment with unlimited apps and dedicated support. [Contact us](https://statespace.com)
-
+    Check out the [Python SDK](../integration/python_sdk.md), [MCP server](../integration/mcp_server.md), and [command Line](../integration/command_line.md) documentation for more details.
 
 ## Management
 
 ### List apps
 
-View all your deployed applications.
+View all deployed applications:
 
 ```bash
-toolfront list [OPTIONS]
+toolfront list
 ```
 
 ### Update an app
 
-Update an existing deployment with new files.
+Push changes to an existing deployment:
 
 ```bash
-toolfront update [OPTIONS] DEPLOYMENT_ID PATH
+toolfront update <app-id> ./project
 ```
-
 
 ### Delete an app
 
-Remove a deployment from the cloud.
+Permanently remove a deployment:
 
 ```bash
-toolfront delete [OPTIONS] DEPLOYMENT_ID
+toolfront delete <app-id>
 ```
 
 !!! question "Learn more"
-    See the [CLI Commands documentation](../../reference/client_library/cli_commands.md) for complete command syntax and options.
+    See the [CLI reference](../../reference/client_library/cli_commands.md#toolfront-tokens) for more details on app deployment commands.

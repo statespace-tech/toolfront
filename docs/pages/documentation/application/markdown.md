@@ -23,7 +23,7 @@ tools:
 # General Instructions
 - You are a helpful assitant
 - Explore files with `ls`, read them with `cat`.
-- Answer based on discovered tools only.
+- Provide answer based on discovered tools.
 ```
 
 ### Tools
@@ -66,8 +66,8 @@ Agents can use tools to explore Markdown files and discover new instructions and
 
 ```bash
 project/
-├── README.md    # Has ls and cat tools
-└── tools.md     # Has grep tool
+├── README.md    # has `ls` and `cat` tools
+└── tools.md     # has `grep` tool
 
 0 directories, 2 files
 ```

@@ -3,50 +3,41 @@ icon: lucide/bot
 ---
 
 
-# Connect AI Agents
+# Connect AI agents
 
-Your status checker app is deployed. Now, let's connect OpenAI's GPT-5 to interact with with it.
+Let's connect AI agents to query your app.
 
-## Set Up API Key
+## Set up API key
 
-Export your OpenAI API key:
+Export your LLM API key:
 
-```bash
-export OPENAI_API_KEY="sk-..."
+```console
+$ export OPENAI_API_KEY="sk-..."
 ```
 
 ## Command Line
 
 Query your app from the terminal:
 
-```bash
-toolfront ask http://127.0.0.1:8000 "What's the current service status?" \ 
-  --model "openai:gpt-5"
-
-toolfront ask http://127.0.0.1:8000 "Search logs for errors on Feb 3" \
-  --model "openai:gpt-5"
+```console
+$ toolfront ask http://127.0.0.1:8000 "Analyze logs on Feb 3" --model "openai:gpt-5"
 ```
-
 
 ## Python SDK
 
-Use the Python SDK to integrate apps with your code.
+Use the Python SDK to query apps from code:
 
 ```python
 from toolfront import Application
 
 app = Application(url="http://127.0.0.1:8000")
 
-# Check current status
-result = app.ask("What's the current service status?", model="openai:gpt-5")
-
-# Search historical logs
-result = app.ask("Find errors in the logs", model="openai:gpt-5")
+result = app.ask("Analyze logs on Feb 3", model="openai:gpt-5")
 ```
 
-## MCP Server
+## MCP server
 
-Connect Claude Desktop or other MCP clients.
+Connect apps to MCP clients like Claude Code or Cursor:
 
 ```json title="claude_desktop_config.json"
 {
@@ -58,10 +49,11 @@ Connect Claude Desktop or other MCP clients.
   }
 }
 ```
+> Aask questions directly through your MCP client
 
 ---
 
 !!! success
     You've connected AI agents to your running app.
 
-    **Next:** Explore the [documentation](../../documentation/application/markdown.md) to build more complex apps
+    **Next:** Explore the [documentation](../../documentation/application/markdown.md) to build more complex RAG apps

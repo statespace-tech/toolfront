@@ -2,28 +2,32 @@
 icon: lucide/package-open
 ---
 
-# Build Your First App
+# Build your first app
 
-Let's build a status checker that lets AI agents health check an API and search log files.
+Build your first RAG application with vector search, text-to-SQL, and agentic RAG.
 
-## Create Project Layout
+## Define project layout
 
-Start with this folder structure:
+Start with this directory structure:
 
 ```bash
-app/
-├── README.md       # Navigation
+project/
+├── README.md
 ├── src/
-│   ├── health.md   # API status
-│   └── search.md   # Document RAG
-└── data/           # Log files
+│   ├── agentic_rag.md
+│   ├── text2sql.md
+│   └── vector_search.md
+└── data/
+    ├── log1.txt
+    ├── log2.txt
+    └── log3.txt
 
-2 directories, 3 files
+2 directories, 7 files
 ```
 
-## Set Up README
+## Set up README
 
-Add general instructions and tools.
+Create the `README.md` with tools to navigate other files:
 
 ```yaml title="README.md"
 ---
@@ -32,45 +36,45 @@ tools:
   - [cat]
 ---
 
-# My First Application
-
-You're a helpful assistant that monitors service health.
-
-## Guidelines
-- Use `ls` to list files
-- Use `cat` to read files and discover tools
+# My first application
+- Use `ls` and `cat` to navigate other files
 ```
 
+## Add vector search
 
-## Add Specialized Pages
+Create a page for querying vector embeddings:
 
-Create pages with specific tools. Start with `health.md` for service checks.
-
-```yaml title="src/health.md"
+```yaml title="src/vector_search.md"
 ---
 tools:
-  - [curl, -X, GET, "https://httpbin.org/status/200"]
+  - [curl, -X, POST, https://host.pinecone.io/records/namespaces/user/search]
 ---
 
-# API Health Check
-Use `curl` to check service health (returns 200 OK if healthy).
+# Vector search instructions:
+- Query documents with your vector database API
 ```
 
-Then, create `search.md` for log search with `{ }` as a placeholder for arguments.
+> Replace the URL with your vector database API endpoint (Pinecone, Weaviate, Qdrant, etc.).
 
-```yaml title="src/search.md"
+## Add text-to-SQL
+
+Create a page for read-only database queries:
+
+```yaml title="src/text2sql.md"
 ---
 tools:
-  - [grep, -r, { }, data/]
+  - [psql, -U, $USER, -d, $DB, -c, { regex: "^SELECT\b.*" }]
 ---
 
-# Log Search
-Use `grep` to search logs in `data/` (e.g., grep -r "error" data/).
+# Text-to-SQL Instructions:
+- Use `psql` for read-only PostgreSQL queries
 ```
 
-## Add Sample Logs
+> Alternatively, use your own database CLI (mysql, sqlite3, mongosh, etc.).
 
-Create sample log files in `/data`.
+## Add agentic RAG
+
+Add sample log files to `data/`:
 
 ```text title="data/doc1.txt"
 2025-01-15 14:23:01 INFO [api.health] GET /status/200 - 200 OK (12ms)
@@ -90,9 +94,24 @@ Create sample log files in `/data`.
 2025-02-15 16:42:33 INFO [worker] Job 'daily-backup' completed (status: success)
 ```
 
+Then, create a page for searching through the logs with `grep`:
+
+```yaml title="src/agentic_rag.md"
+---
+tools:
+  - [grep, -r, -i, { }, ../data/]
+---
+
+# Document search instructions:
+- Use `grep` to search documents in `../data/`.
+```
+
+> The `{ }` placeholder requires agents to pass exactly one argument.
+
+
 ---
 
 !!! success
-    You've built your first app app with navigation, api calls, and file search. 
-    
-    **Next**: [Deploy your app](deploy.md)
+    You've built your first RAG application.
+
+    **Next**: [deploy your app](deploy.md)

@@ -2,32 +2,31 @@
 icon: lucide/monitor-up
 ---
 
-# Deploy Your App
+# Deploy your app
 
-Now that you've built your status checker, let's deploy it.
+Now that you've built your first RAG application, let's deploy it.
 
-## Local Deployment
+## Local deployment
 
 Run your app locally:
 
-```bash
-toolfront serve my-app --port 8000
+```console
+$ toolfront serve my-app --port 8000
 ```
-> Your app will be running on `http://127.0.0.1:8000`
+> Runs on `http://127.0.0.1:8000`
 
-## Cloud Deployment
+## Cloud deployment
 
-Create a free [Statespace account](#cloud-deployment)[^1] and get an API key. Then, deploy to ToolFront Cloud:
+Create a free [Statespace account](#cloud-deployment)[^1] and deploy your app to the cloud:
 
-```bash
-toolfront deploy my-app  --api-key <your-statespace-key>
+```console
+$ toolfront deploy my-app --api-key <your-statespace-key>
 ```
-> Your app will be deployed to `https://<app_id>.toolfront.app`
+> Deploys to `https://your-app.toolfront.app`
 
+## Test your deployment
 
-## Test Your Deployment
-
-Open the application URL in your browser. You should see the `README.md` content.
+Open the application URL in your browser. You should see your `README.md`.
 
 ---
 

@@ -5,22 +5,32 @@ icon: lucide/message-circle-question-mark
 
 ## Why Markdown?
 
-Markdown is simple, readable, and works with version control. You can define both instructions and tools in one place without learning new syntax. Just add more .md files to extend your app.
+Markdown is simple, readable, and works with version control. You can define both instructions and tools in one place without learning new syntax. Just add more `.md` files to extend your app.
 
-## How is ToolFront different from MCPs or Claude Skills?
+## How is ToolFront different from MCPs?
 
-MCPs are great for tools but lack progressive disclosure and require a handshake to connect. Claude Skills offer progressive disclosure for context but can't define or constrain tools. ToolFront combines both with no handshake required, so agents can progressively discover tools, instructions, and new apps.
+  | | MCPs | ToolFront |
+  |---|------|-----------|
+  | **Implementation** | Code | Markdown |
+  | **Tool discovery** | Upfront[^1] | Progressive |
+  | **Connection** | Stateful stdio/SSE | Stateless HTTP |
 
-## When should I use the CLI, Python SDK, or MCP Server?
+## How is ToolFront different from other RAG frameworks?
 
-Use the [CLI](../../guides/cli.md) for quick testing and development. Use the [Python SDK](../../guides/python_sdk.md) to run applications directly with built-in agents in your code. Use the [MCP Server](../../guides/mcp_server.md) to connect external agents (like Claude Desktop or Cline) to applications.
+Other frameworks provide RAG components like embedders, chunkers, retrievers, and APIs. ToolFront helps you composes them into apps.
+
+## When should I use the CLI, SDK, or MCP?
+
+Use the [command line](../../documentation/integration/command_line.md) for rapid testing and development, the [Python SDK](../../documentation/integration/python_sdk.md) to query apps in Python, and the [MCP Server](../../documentation/integration/mcp_server.md) to connect them to MCP clients like Cursor and Claude Code.
 
 ## Can I use ToolFront with any AI model?
 
-Yes! The Python SDK works with any model through [Pydantic AI](https://ai.pydantic.dev/models/overview/). This includes cloud providers (OpenAI, Anthropic, Google, Mistral) and local models (Ollama, LM Studio).
+Yes! The Python SDK works with any model through [Pydantic AI](https://ai.pydantic.dev/models/overview/). This includes cloud providers (OpenAI, Anthropic, Google, Mistral) as well as local models (Ollama, LM Studio).
 
 ## How do I deploy applications?
 
-You can self-host applications or deploy to ToolFront Cloud. Community cloud apps are public, while private cloud apps require authentication. Get started by creating a free [Statespace account](https://statespace.com).
+You can self-host applications or use Statespace to deploy public or private apps to the cloud. Start by creating a free [Statespace account](#)[^2].
 
 
+[^1]: Loading all tool definitions upfront slows down agents and increases costs. See [Anthropic's blog post](https://www.anthropic.com/engineering/code-execution-with-mcp).
+[^2]: Statespace is currently in beta. Email `esteban[at]statespace[dot]com` or join our [Discord](https://discord.gg/rRyM7zkZTf) to get an API key.

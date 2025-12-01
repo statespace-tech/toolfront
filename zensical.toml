@@ -40,12 +40,12 @@ nav = [
     {"Deploying apps" = [
       {"Cloud deployment" = "pages/documentation/deployment/cloud_deploy.md"},
       {"Self-hosting" = "pages/documentation/deployment/self_host.md"},
+      {"Access Tokens" = "pages/documentation/deployment/tokens.md"}
     ]},
     {"Integrating agents" = [
       {"Python SDK" = "pages/documentation/integration/python_sdk.md"},
       {"MCP server" = "pages/documentation/integration/mcp_server.md"},
       {"Command line" = "pages/documentation/integration/command_line.md"},
-      {"REST API" = "pages/documentation/integration/rest_api.md"}
     ]}
   ]},
   {"Reference" = [

@@ -4,7 +4,7 @@ icon: lucide/hammer
 
 # Tools
 
-Tools give AI agents the ability to take actions by calling commands.
+Tools give AI agents the ability to take actions by running commands.
 
 ## Syntax
 
@@ -26,11 +26,9 @@ tools:
 
 ## Advanced usage
 
-Add placeholders, regex constraints, and options control for fine-grained validation.
-
 ### Placeholders
 
-Use `{ }` to denote where agents can pass arguments in commands.
+Use `{ }` to denote where agents can pass arguments to commands.
 
 ```yaml
 ---
@@ -87,9 +85,9 @@ tools:
 
 Use custom scripts and compiled binaries as tools.
 
-**1. Add your scripts and binaries to the project repository:**
+**1. Add executable files to your project's repository:**
 
-```bash
+```bash hl_lines="4-5 7-8"
 project/
 ├── README.md
 ├── scripts/
@@ -131,7 +129,7 @@ tools:
   - [ls]
   - [cat]
   - [tree]
-  - [grep]
+  - [grep, -r, { }, { }]
 ---
 ```
 

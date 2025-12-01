@@ -4,7 +4,7 @@ icon: simple/python
 
 # Python SDK
 
-ToolFront's SDK provides a simple interface for interacting with AI applications in Python.
+ToolFront's SDK provides a simple interface for interacting with RAG applications in Python.
 
 ## Basic usage
 

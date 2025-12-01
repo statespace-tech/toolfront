@@ -4,10 +4,10 @@ icon: lucide/box
 
 # Server API
 
-Full list of REST endpoints to interact with running applications.
+REST API endpoints for interacting with running RAG applications.
 
-!!! warning "Advanced Usage"
-    This API is for advanced use cases. Most users should interact with running applications through the [Python SDK](../../documentation/integration/python_sdk.md), [MCP Server](../../documentation/integration/mcp_server.md), or [Command Line](../../documentation/integration/command_line.md) instead.
+!!! warning "Advanced usage"
+    This API is for advanced use cases. Most users should instead interact with applications through the [Python SDK](../../documentation/integration/python_sdk.md), [MCP server](../../documentation/integration/mcp_server.md), or [Command line](../../documentation/integration/command_line.md).
 
 <div class="grid" markdown>
 
@@ -15,23 +15,23 @@ Full list of REST endpoints to interact with running applications.
 
 <span class="param-tag http-get">GET</span> **`/{path}`**
 
-Fetch Markdown/resources from the app.
+Read a file from the application directory.
 
-**Path Parameters**
+**Path parameters**
 
 `path` <span class="param-tag param-type">string</span> <span class="param-tag param-required">required</span>
 
-: File path (e.g., README.md)
+: Path to markdown file (e.g., `README.md` or `src/file.txt`)
 
 **Headers**
 
-Pass via `param` (e.g., Authorization: Bearer token)
+`authorization`  <span class="param-tag param-type">string</span>
 
-**Response Attributes**
+  : Bearer token for authentication
 
-`content` <span class="param-tag param-type">string</span>
+**Response**
 
-: Raw Markdown/text
+: Raw file content
 
 </div>
 
@@ -68,43 +68,43 @@ You are an AI agent.
 
 <span class="param-tag http-post">POST</span> **`/{path}`**
 
-Execute tool from frontmatter.
+Execute a tool defined in a Markdown's frontmatter.
 
-**Path Parameters**
+**Path parameters**
 
 `path` <span class="param-tag param-type">string</span> <span class="param-tag param-required">required</span>
 
-: `.md` file with tool definition
+: Path to markdown file containing the tool definition
 
-**Body (JSON)**
+**Request body (JSON)**
 
 `command` <span class="param-tag param-type">array</span> <span class="param-tag param-required">required</span>
 
-: Command array (e.g., ["echo", "hello"])
+: Command to execute as an array of strings (e.g., `["echo", "hello"]`)
 
 `env` <span class="param-tag param-type">object</span> <span class="param-tag param-optional">optional</span>
 
-: Dict overrides $VAR
+: Environment variables to pass to the command (e.g., `{"USER": "john"}`)
 
 **Headers**
 
 `authorization`  <span class="param-tag param-type">string</span>
 
-  : Bearer token
+  : Bearer token for authentication
 
-**Response Attributes**
+**Response (JSON)**
 
 `stdout` <span class="param-tag param-type">string</span>
 
-: Tool standard output
+: Standard output from the command
 
 `stderr` <span class="param-tag param-type">string</span>
 
-: Tool standard error
+: Standard error from the command
 
 `returncode` <span class="param-tag param-type">integer</span>
 
-: Command exit code
+: Exit code (0 for success, non-zero for errors)
 
 </div>
 

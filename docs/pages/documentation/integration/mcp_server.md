@@ -66,7 +66,7 @@ You can also configure environment variables in your client configuration:
 }
 ```
 
-!!! info "Learn more"
+!!! question "Learn more"
     See the [Tools documentation](../application/tools.md#environment-variables) for how to define environment variables in your tool configurations.
 
 ## Command options
@@ -82,6 +82,6 @@ Available options for the `mcp` command:
 | `--env` | None | Environment variables for tools (can be repeated) |
 | `--log-level` | `WARNING` | Log level: `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL` |
 
-!!! info "Learn more"
+!!! question "Learn more"
     See the [CLI commands documentation](../../reference/client_library/cli_commands.md) for complete command syntax and options.
 
