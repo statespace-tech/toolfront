@@ -1,7 +1,7 @@
 [project]
 name = "toolfront"
 version = "0.4.1"
-description = "Build AI applications in Markdown."
+description = "A declarative framework for building composable RAG applications in Markdown."
 readme = "README.md"
 authors = [
     { name = "Esteban Safranchik", email = "esteban@statespace.com" },
@@ -55,8 +55,6 @@ test = [
 dev = [
     "pre-commit>=3.0.0",
     "ruff>=0.1.0",
-    "mkdocs-material[imaging]>=9.6.16",
-    "mkdocstrings[python]>=0.30.0",
     "zensical>=0.0.7",
 ]
 
