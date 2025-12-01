@@ -8,11 +8,13 @@
 
 # ToolFront
 
-**Build and deploy AI apps in minutes. All in pure Markdown. Zero boilerplate.**
+**Turn your data into shareable RAG apps in minutes. All in pure Markdown. Zero boilerplate.**
 
 [![Test Suite](https://github.com/statespace-tech/toolfront/actions/workflows/test.yml/badge.svg)](https://github.com/statespace-tech/toolfront/actions/workflows/test.yml)
-[![PyPI package](https://img.shields.io/pypi/v/toolfront?color=%2334D058&label=pypi%20package)](https://pypi.org/project/toolfront/)
-[![Discord](https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/rRyM7zkZTf)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-3775A9?style=flat-square)](https://www.python.org/downloads/)
+[![PyPI package](https://img.shields.io/pypi/v/toolfront?color=3775A9&label=pypi%20package&style=flat-square)](https://pypi.org/project/toolfront/)
+[![License](https://img.shields.io/badge/license-MIT-007ec6?style=flat-square)](https://github.com/statespace-tech/toolfront/blob/main/LICENSE)
+[![Discord](https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&color=5865F2&style=flat-square)](https://discord.gg/rRyM7zkZTf)
 [![X](https://img.shields.io/badge/Statespace-black?style=flat-square&logo=x&logoColor=white)](https://x.com/statespace_tech)
 
 </div>
@@ -25,9 +27,9 @@
 
 ---
 
-## Quickstart
+## Simple example
 
-ToolFront is a declarative framework for building modular AI applications in Markdown. Write tools and instructions in `.md` files and get a live AI application.
+ToolFront is a declarative framework for building composable RAG applications in Markdown.
 
 ### Create it
 
@@ -53,9 +55,9 @@ toolfront serve .
 
 > Runs at `http://127.0.0.1:8000`
 
-### Ask it
+### Connect it
 
-Export your `OPENAI_API_KEY` and query your app:
+Connect your app to AI agents:
 
 <details open>
 <summary><b>Python SDK</b></summary>
@@ -71,7 +73,16 @@ result = app.ask("Is the service up?", model="openai:gpt-5")
 </details>
 
 <details>
-<summary><b>MCP Server</b></summary>
+<summary><b>Command line</b></summary>
+
+```bash
+toolfront ask http://127.0.0.1:8000 "Is the service up?" --model "openai:gpt-5"
+```
+
+</details>
+
+<details>
+<summary><b>MCP server</b></summary>
 
 ```json
 {
@@ -86,35 +97,28 @@ result = app.ask("Is the service up?", model="openai:gpt-5")
 
 </details>
 
-<details>
-<summary><b>Command Line</b></summary>
+## Complex example
 
-```bash
-toolfront ask http://127.0.0.1:8000 "Is the service up?"
-```
-
-</details>
-
-## Upgraded Example
+### Upgrade it
 
 Your app can grow into a full project:
 
 ```bash
 project/
-├── README.md          # Main instructions & navigation tools
-├── src/
-│   ├── rag.md         # Document search
-│   ├── text2sql.md    # Database query
-│   └── toolkit.md     # Custom workflow
+├── README.md
 ├── data/
-└── tools/
+│   ├── log1.txt
+│   ├── log2.txt
+│   └── log3.txt
+└── src/
+    ├── agentic_rag.md
+    ├── text2sql.md
+    └── vector_search.md
 
-4 directories, 10 files
+3 directories, 9 files
 ```
 
-### Add Navigation Tools
-
-Update `README.md` with tools to explore the project.
+Update `README.md` with tools to navigate other files:
 
 ```yaml
 ---
@@ -126,24 +130,24 @@ tools:
 
 # Instructions
 - Use `curl` to check if the service is up
-- Use `ls` and `cat` to browse other files
+- Use `ls` and `cat` to navigate other files
 ```
 
-### Add Specialized Tools
+### Compose it
 
-Expand your app with specialized workflows.
+Add pages for different RAG workflows:
 
 <details open>
-<summary><b>Document Search</b></summary>
+<summary><b>Vector Search</b></summary>
 
 ```yaml
 ---
 tools:
-  - [grep]
+  - [curl, -X, POST, https://host.pinecone.io/records/namespaces/user/search]
 ---
 
-# Document Search
-- Use `grep` for keyword searches in `data/`.
+# Vector search instructions:
+- Query documents with your vector database API
 ```
 
 </details>
@@ -157,36 +161,36 @@ tools:
   - [psql, -U, $USER, -d, $DB, -c, { regex: "^SELECT\b.*" }]
 ---
 
-# Database Access
-- Call `psql` to query the database with read-only SELECT statements
+# Text-to-SQL instructions:
+- Use `psql` for read-only PostgreSQL queries
 ```
 
 </details>
 
 <details>
-<summary><b>Custom Scripts</b></summary>
+<summary><b>Agentic RAG</b></summary>
 
 ```yaml
 ---
 tools:
-  - [python3, tools/analyze.py]
+  - [grep, -r, -i, { }, ../data/]
 ---
 
-# Custom Tools
-- Run `analyze.py` to process data, passing `--input` as needed
+# Document search instructions:
+- Use `grep` to search documents in `../data/`
 ```
 
 </details>
 
-### Deploy It
+### Deploy it
 
-Create a free [Statespace account](#deploy-it)[^1] and deploy your app in one command.
+Create a free [Statespace account](#deploy-it)[^1] and deploy your app to the cloud:
 
 ```bash
 toolfront deploy .
 ```
 
-> Deploys to `https://your-app.toolfront.app`. Share it with the community or your team!
+> Accessible at `https://<app-id>.toolfront.app`. Share it with the community or your team!
 
 ## Installation
 
