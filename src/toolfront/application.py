@@ -29,17 +29,7 @@ DEFAULT_MAX_RETRIES = 3
 
 
 class Application(BaseModel):
-    """Application for interacting with HTTP-served documentation and tools.
-
-    ```mermaid
-    graph LR
-        Agent["Agent"] ===>|"ask()"| App["Application"]
-        App ===>|"GET /{path}"| Server["HTTP Server"]
-        App ===>|"POST /{path}"| Server
-        Server ===>|instructions| App
-        Server ===>|tool result| App
-        App ===>|response| Agent
-    ```
+    """Application for interacting with HTTP-served tool sites.
 
     Attributes
     ----------
@@ -87,41 +77,36 @@ class Application(BaseModel):
         return HttpUrl(url)
 
     async def action(self, url: str, command: list[str]) -> str:
-        """Execute a command from a Markdown page's frontmatter.
-
-        This tool executes command tools defined in the Markdown file's frontmatter.
+        """Execute a command tool defined in a Markdown file's frontmatter.
 
         Instructions:
-        1. The URL parameter MUST ALWAYS be a complete HTTP/HTTPS URL to a Markdown file (e.g., 'https://example.com/docs/index.md')
-        2. You can only execute commands that are explicitly listed in the frontmatter of the Markdown file at that URL
-        3. Argument placeholders:
-            - ALWAYS pass arguments to placeholders denoted by { } or { regex: ... }
-            - { } requires exactly ONE argument (e.g., [ls, { }] accepts ['ls', 'directory'] but rejects ['ls'] or ['ls', 'directory', 'another_argument'])
-            - { regex: ... } validates against a pattern (e.g., [cat, { regex: ".*\\.txt$" }] accepts ['cat', 'doc.txt'] but rejects ['cat', 'doc.py'])
-            - Failure to pass the correct arguments to placeholders will result in an error
-        4. Tools ending with ; (semicolon) allow no additional flags beyond what is specified (e.g., [rm, { }, ;] cannot accept -f flag after the placeholder)
-        5. Tools without ; allow unlimited additional flags and arguments (e.g., [ls] can be called as ['ls', '-la'] or ['ls', '--help'])
-        6. Environment variables like $USER or $DB are injected at runtime: pass them exactly as written, do not substitute values yourself
-        7. When unsure about a command and ; is not present, try running it with --help flag first (e.g., ['command', '--help'])
+        1. URL must be a complete HTTP/HTTPS URL to a Markdown file (e.g., 'https://example.com/docs/index.md').
+        2. Only commands explicitly listed in that file's frontmatter can be executed. Unlisted commands will error.
+        3. Commands execute relative to the Markdown file's directory.
+        4. Placeholder { } requires exactly ONE argument: [ls, { }] accepts ['ls', 'dir'] but rejects ['ls'] or ['ls', 'dir1', 'dir2'].
+        5. Placeholder { regex: ... } validates against a pattern: [cat, { regex: ".*\\.txt$" }] accepts ['cat', 'file.txt'] but rejects ['cat', 'file.py'].
+        6. Commands ending with ; (semicolon) accept NO additional flags: [rm, { }, ;] cannot accept ['rm', 'file', '-f'].
+        7. Commands without ; accept unlimited flags: [ls] can be ['ls', '-la', '--color', '--help'].
+        8. When unsure about a command without ;, try ['command', '--help'] first.
+        9. Pass environment variables like $USER or $DB exactly as written. Do not substitute values yourself.
+        10. Missing or invalid placeholder arguments will cause an error.
 
         Parameters
         ----------
         url : str
-            Complete HTTP/HTTPS URL to the .md file where the command is defined (e.g., 'https://example.com/README.md')
+            Complete HTTP/HTTPS URL to the .md file (e.g., 'https://example.com/README.md')
         command : list[str]
             Command as a list of strings (e.g., ['cat', 'file.txt', '-n'])
 
         Returns
         -------
         str
-            stdout, stderr, and returncode from executing the command
+            stdout, stderr, and returncode from command execution
 
         Raises
         ------
-        ValueError
-            If command is not provided or URL is invalid
         RuntimeError
-            If command is not listed in the page's frontmatter or execution fails
+            If command is not in frontmatter or execution fails
         """
 
         try:
