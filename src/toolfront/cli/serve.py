@@ -165,9 +165,8 @@ def serve(directory: str, host: str, port: int) -> None:
         # Replace placeholders
         current_url = f"http://{host}:{port}"
         robots_txt_content = (directory_path / "robots.txt").read_text()
-        index_html_content = (
-            index_html_content.replace("{current_url}", current_url)
-            .replace("{robots_txt_content}", robots_txt_content)
+        index_html_content = index_html_content.replace("{current_url}", current_url).replace(
+            "{robots_txt_content}", robots_txt_content
         )
         (directory_path / "index.html").write_text(index_html_content)
 
