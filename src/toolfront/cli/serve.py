@@ -152,9 +152,9 @@ def serve(directory: str, host: str, port: int) -> None:
     # Copy template files if they don't exist
     templates = files("toolfront") / "templates"
 
-    if not (directory_path / "robots.txt").exists():
-        robots_txt_content = (templates / "robots.txt").read_text()
-        (directory_path / "robots.txt").write_text(robots_txt_content)
+    if not (directory_path / "agents.md").exists():
+        agents_md_content = (templates / "agents.md").read_text()
+        (directory_path / "agents.md").write_text(agents_md_content)
 
     if not (directory_path / "favicon.svg").exists():
         favicon_content = (templates / "favicon.svg").read_text()
@@ -164,9 +164,9 @@ def serve(directory: str, host: str, port: int) -> None:
         index_html_content = (templates / "index.html").read_text()
         # Replace placeholders
         current_url = f"http://{host}:{port}"
-        robots_txt_content = (directory_path / "robots.txt").read_text()
+        agents_md_content = (directory_path / "agents.md").read_text()
         index_html_content = index_html_content.replace("{current_url}", current_url).replace(
-            "{robots_txt_content}", robots_txt_content
+            "{agents_md_content}", agents_md_content
         )
         (directory_path / "index.html").write_text(index_html_content)
 

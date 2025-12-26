@@ -172,20 +172,20 @@ class Application(BaseModel):
             timeout=DEFAULT_TIMEOUT_SECONDS,
         )
 
-        try:
-            transport = HTTPTransport(retries=DEFAULT_MAX_RETRIES)
-            with httpx.Client(transport=transport) as client:
-                response = client.get(str(self.url), headers=self.param or {}, timeout=DEFAULT_TIMEOUT_SECONDS)
-                response.raise_for_status()
-                instructions = response.text + f"\n\n Your current URL is: {self.url}"
-        except Exception as e:
-            raise RuntimeError(f"Failed to read instructions from {self.url}: {e}") from e
+        # try:
+        #     transport = HTTPTransport(retries=DEFAULT_MAX_RETRIES)
+        #     with httpx.Client(transport=transport) as client:
+        #         response = client.get(str(self.url), headers=self.param or {}, timeout=DEFAULT_TIMEOUT_SECONDS)
+        #         response.raise_for_status()
+        #         instructions = response.text + f"\n\n Your current URL is: {self.url}"
+        # except Exception as e:
+        #     raise RuntimeError(f"Failed to read instructions from {self.url}: {e}") from e
 
         history_processor_ = history_processor(context_window=context_window)
 
         agent = Agent(
             model=model or get_model_from_env(),
-            system_prompt=instructions,
+            # system_prompt=instructions,
             toolsets=[server],
             output_retries=DEFAULT_MAX_RETRIES,
             output_type=output_type,
