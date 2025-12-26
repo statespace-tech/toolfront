@@ -8,59 +8,32 @@ extra_css = [
   "assets/css/custom.css"
 ]
 extra_javascript = [
-  "assets/js/gtag-init.js",
   "assets/js/analytics.js",
-  "assets/js/api-tester.js"
 ]
 nav = [
-  {"Home" = [
-    {"Home" = "index.md"}
+  {"Get started" = "index.md"},
+  {"Develop" = [
+    {"Instructions" = "pages/develop/instructions.md"},
+    {"CLI tools" = "pages/develop/tools.md"},
+    {"Apps" = "pages/develop/apps.md"},
   ]},
-  {"Get Started" = [
-    {"Quickstart" = [
-      {"Install ToolFront" = "pages/get_started/quickstart/install.md"},
-      {"Build your first app" = "pages/get_started/quickstart/build.md"},
-      {"Deploy your app" = "pages/get_started/quickstart/deploy.md"},
-      {"Connect AI agents" = "pages/get_started/quickstart/connect.md"},
-    ]},
-    {"Community" = [
-      {"FAQ" = "pages/get_started/community/faq.md"},
-      {"Contributing" = "pages/get_started/community/contributing.md"},
-      {"Roadmap" = "pages/get_started/community/roadmap.md"},
-      {"License" = "pages/get_started/community/license.md"}
-    ]},
-
+  {"Deploy" = [
+    {"Cloud deployment" = "pages/deploy/cloud.md"},
+    {"Self-hosting" = "pages/deploy/self_hosting.md"},
+    {"Access tokens" = "pages/deploy/tokens.md"},
+  ]},  
+  {"Connect" = [
+    {"Coding agents" = "pages/connect/coding_agents.md"},
+    {"Custom agents" = "pages/connect/custom_agents.md"},
+    {"HTTP API" = "pages/connect/api.md"},
   ]},
-  {"Documentation" = [
-    {"Building apps" = [
-      {"Markdown" = "pages/documentation/application/markdown.md"},
-      {"Tools" = "pages/documentation/application/tools.md"},
-      {"Architecture" = "pages/documentation/application/architecture.md"}
-    ]},
-    {"Deploying apps" = [
-      {"Cloud deployment" = "pages/documentation/deployment/cloud_deploy.md"},
-      {"Self-hosting" = "pages/documentation/deployment/self_host.md"},
-      {"Access Tokens" = "pages/documentation/deployment/tokens.md"}
-    ]},
-    {"Integrating agents" = [
-      {"Python SDK" = "pages/documentation/integration/python_sdk.md"},
-      {"MCP server" = "pages/documentation/integration/mcp_server.md"},
-      {"Command line" = "pages/documentation/integration/command_line.md"},
-    ]}
-  ]},
-  {"Reference" = [
-    {"Client library" = [
-      {"Python" = "pages/reference/client_library/python.md"},
-      {"CLI commands" = "pages/reference/client_library/cli_commands.md"},
-      {"Environment variables" = "pages/reference/client_library/environment_variables.md"}
-    ]},
-    {"Applications" = [
-      {"Server API" = "pages/reference/application/server_api.md"},
-      {"Management API" = "pages/reference/application/management_api.md"}
-    ]}
+  {"Community" = [
+    {"FAQ" = "pages/community/faq.md"},
+    {"Contributing" = "pages/community/contributing.md"},
+    {"License" = "pages/community/license.md"},
   ]}
 ]
-copyright = "Copyright &copy; 2025 Statespace Technologies, Inc."
+copyright = "Copyright &copy; 2026 Statespace Technologies, Inc."
 
 [project.theme]
 icon = { repo = "fontawesome/brands/git-alt" }
@@ -71,7 +44,6 @@ palette = [
   { scheme = "slate", primary = "custom", accent = "green", toggle = { icon = "material/lightbulb", name = "Switch to light mode" } }
 ]
 features = [
-  "navigation.tabs",
   "navigation.footer",
   "navigation.sections",
   "navigation.expand",
