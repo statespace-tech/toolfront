@@ -4,7 +4,7 @@ icon: lucide/users
 
 # Contributing
 
-Thank you for your interest in contributing to ToolFront! We :heart: contributions.
+Thank you for your interest in contributing to ToolFront!
 
 ## Getting Started
 
@@ -77,4 +77,4 @@ If you have questions about contributing, feel free to:
 - Open a [GitHub Discussion](https://github.com/statespace-tech/toolfront/discussions)
 - Email `esteban[at]statespace[dot]com`
 
-We appreciate your contributions! 🎉
+Statespace :heart: open-source.
