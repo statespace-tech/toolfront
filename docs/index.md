@@ -12,7 +12,7 @@ icon: lucide/home
 </div>
 <p align="center">
     <em>
-      Turn your data into shareable RAG apps in minutes. All in pure Markdown. Zero boilerplate.
+      Turn your data into shareable LLM apps in minutes. All in pure Markdown. Zero boilerplate.
     </em>
 </p>
 
@@ -43,23 +43,23 @@ icon: lucide/home
 
 ---
 
-_ToolFront is a declarative framework for building composable RAG applications in Markdown._
+_ToolFront is a declarative framework for building modular LLM applications in Markdown._
 
-## Simple example
+## Example
 
 ### Create it
 
-Start with one file:`README.md`
+Start with one file: `README.md`
 
 
 ```yaml title="README.md"
 ---
 tools:
-  - [curl, -X, GET, "https://httpbin.org/status/200"]
+  - [date]
 ---
 
 # Instructions
-- Use `curl` to check if the service is up
+- Run `date` to check today's date
 ```
 
 ### Serve it
@@ -69,38 +69,77 @@ Run your app locally:
 ```console
 $ toolfront serve .
 ```
-> Runs on `http://127.0.0.1:8000`
+> **Note**: Runs on `http://127.0.0.1:8000`
 
-### Connect it
+### Ask it
 
-Connect your app to AI agents:
+Include the app URL in your prompts:
 
-=== ":simple-python: &nbsp; Python SDK"
-
-    ```python
-    from toolfront import Application
-
-    app = Application(url="http://127.0.0.1:8000")
-
-    result = app.ask("Is the service up?", model="openai:gpt-5")
-    ```
-
-=== ":lucide-terminal: &nbsp; Command line"
+=== ":simple-claude: &nbsp; Claude Code"
 
     ```console
-    $ toolfront ask http://127.0.0.1:8000 "Is the service up?" --model "openai:gpt-5"
+    $ claude "Get today's date from http://127.0.0.1:8000"
     ```
 
-=== ":simple-modelcontextprotocol: &nbsp; MCP server"
+=== ":simple-githubcopilot: &nbsp; GitHub Copilot"
 
-    ```json
-    {
-      "mcpServers": {
-        "toolfront": {
-          "command": "uvx",
-          "args": ["toolfront", "mcp", "http://127.0.0.1:8000"]
-        }
-      }
+    ```console
+    $ copilot "Get today's date from http://127.0.0.1:8000"
+    ```
+
+=== ":simple-openai: &nbsp; Codex"
+
+    ```console
+    $ codex "Get today's date from http://127.0.0.1:8000"
+    ```
+
+For custom agents, add an HTTP request tool:
+
+=== ":simple-python: &nbsp; Python"
+
+    ```python
+    import subprocess
+
+    @tool
+    def curl_tool(url: str, args: list[str]) -> str:
+        """Execute curl commands to interact with Statespace apps."""
+        result = subprocess.run(
+            ['curl', *args, url],
+            capture_output=True,
+            text=True
+        )
+        return result.stdout
+    ```
+
+=== ":simple-typescript: &nbsp; TypeScript"
+
+    ```typescript
+    import { execFileSync } from 'child_process';
+
+    /**
+     * Execute curl commands to interact with Statespace apps.
+     */
+    function curlTool(url: string, args: string[]): string {
+        const result = execFileSync('curl', [...args, url], {
+            encoding: 'utf-8'
+        });
+        return result.toString();
+    }
+    ```
+
+=== ":simple-rust: &nbsp; Rust"
+
+    ```rust
+    use std::process::Command;
+
+    /// Execute curl commands to interact with HTTP endpoints.
+    fn curl_tool(url: &str, args: Vec<&str>) -> String {
+        let output = Command::new("curl")
+            .args(&args)
+            .arg(url)
+            .output()
+            .unwrap();
+        String::from_utf8_lossy(&output.stdout).to_string()
     }
     ```
 
@@ -125,24 +164,24 @@ project/
 3 directories, 9 files
 ```
 
-Update `README.md` with tools to navigate other files:
+Update `README.md` with CLI tools to progressively discover and read other files:
 
 ```yaml title="README.md" hl_lines="4-5 10"
 ---
 tools:
-  - [curl, -X, GET, "https://httpbin.org/status/200"]
+  - [date]
   - [ls]
   - [cat]
 ---
 
 # Instructions
-- Use `curl` to check if the service is up
-- Use `ls` and `cat` to navigate other files
+- Run `date` to check today's date
+- Use `ls` and `cat` to discover and read other files
 ```
 
 ### Compose it
 
-Add pages for different RAG workflows:
+Add pages and CLI tools for different workflows:
 
 === ":lucide-list-indent-increase: &nbsp; Vector Search"
 
@@ -156,6 +195,8 @@ Add pages for different RAG workflows:
     - Query documents with your vector database API
     ```
 
+    > **Note**: replace the API with your own (e.g., Pinecone, Weaviate, Qdrant)
+
 === ":lucide-database: &nbsp; Text-to-SQL"
 
     ```yaml title="src/text2sql.md"
@@ -168,9 +209,11 @@ Add pages for different RAG workflows:
     - Use `psql` for read-only PostgreSQL queries
     ```
 
+    > **Note**: use your own database CLI (e.g., `mysql`, `sqlite3`, `mongosh`).
+
 === ":lucide-bot: &nbsp; Agentic RAG"
 
-    ```yaml title="src/agentic_rag.md"
+    ```yaml title="src/agentic_LLM.md"
     ---
     tools:
       - [grep, -r, -i, { }, ../data/]
@@ -180,15 +223,22 @@ Add pages for different RAG workflows:
     - Use `grep` to search documents in `../data/`
     ```
 
+    > **Note**: apps can include any file type (e.g. `.csv`, `.sqlite`, `.json`)
+
 ### Deploy it
 
-Create a free [Statespace account](#deploy-it)[^1] and deploy your app to the cloud:
+Create a free [Statespace account](https://statespace.com/) to deploy authenticated private apps:
 
 ```console
-$ toolfront deploy .
+$ toolfront deploy . --private
 ```
-> Accesible at `https://<app-id>.toolfront.app`. Share it with the community or your team!
 
+Alternatively, share public apps with the community:
+
+```console
+$ toolfront deploy . --public
+```
+> **Note** Statespace gives you app URLs you can paste in prompts and instructions.
 
 ## Installation
 
@@ -211,5 +261,3 @@ Install `toolfront` with your favorite PyPI package manager:
     ```console
     $ poetry add toolfront
     ```
-
-[^1]: Statespace is currently in beta. Email `esteban[at]statespace[dot]com` or join our [Discord](https://discord.gg/rRyM7zkZTf) to get an API key.

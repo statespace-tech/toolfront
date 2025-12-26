@@ -1,13 +1,12 @@
 ---
-icon: lucide/box
+icon: lucide/globe
 ---
 
-# Server API
+# HTTP API
 
-REST API endpoints for interacting with running RAG applications.
+REST API endpoints for interacting with running applications
 
-!!! warning "Advanced usage"
-    This API is for advanced use cases. Most users should instead interact with applications through the [Python SDK](../../documentation/integration/python_sdk.md), [MCP server](../../documentation/integration/mcp_server.md), or [Command line](../../documentation/integration/command_line.md).
+## GET /{path}
 
 <div class="grid" markdown>
 
@@ -21,7 +20,7 @@ Read a file from the application directory.
 
 `path` <span class="param-tag param-type">string</span> <span class="param-tag param-required">required</span>
 
-: Path to markdown file (e.g., `README.md` or `src/file.txt`)
+: Path to file (e.g., `README.md` or `src/tools.md`)
 
 **Headers**
 
@@ -62,19 +61,21 @@ You are an AI agent.
 
 </div>
 
+## POST /{path}
+
 <div class="grid" markdown>
 
 <div markdown>
 
 <span class="param-tag http-post">POST</span> **`/{path}`**
 
-Execute a tool defined in a Markdown's frontmatter.
+Execute a tool defined in a Markdown file's frontmatter.
 
 **Path parameters**
 
 `path` <span class="param-tag param-type">string</span> <span class="param-tag param-required">required</span>
 
-: Path to markdown file containing the tool definition
+: Path to Markdown file containing the tool definition
 
 **Request body (JSON)**
 
@@ -126,7 +127,7 @@ curl -X POST \
 
 ```json
 {
-  "stdout": "hello",
+  "stdout": "hello\n",
   "stderr": "",
   "returncode": 0
 }
@@ -135,3 +136,33 @@ curl -X POST \
 </div>
 
 </div>
+
+## Path resolution
+
+The server resolves paths using three strategies for both GET and POST requests.
+
+**Strict lookup**
+
+Exact path to a file with extension:
+
+```bash
+curl https://your-app.toolfront.ai/file.md
+```
+
+**Implicit extension**
+
+Path without `.md` automatically appends it:
+
+```bash
+curl https://your-app.toolfront.ai/path/file
+```
+> Maps to `path/file.md`
+
+**Directory default**
+
+Directory path defaults to `index.md` (for human-readable navigation):
+
+```bash
+curl https://your-app.toolfront.ai/path/
+```
+> Maps to `path/index.md`

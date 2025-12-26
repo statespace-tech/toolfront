@@ -118,24 +118,24 @@ project/
 3 directories, 9 files
 ```
 
-Update `README.md` with tools to navigate other files:
+Update `README.md` with CLI tools to progressively discover and read other files:
 
 ```yaml
 ---
 tools:
-  - [curl, -X, GET, "https://httpbin.org/status/200"]
+  - [date]
   - [ls]
   - [cat]
 ---
 
 # Instructions
-- Use `curl` to check if the service is up
-- Use `ls` and `cat` to navigate other files
+- Run `date` to check today's date
+- Use `ls` and `cat` to discover and read other files
 ```
 
 ### Compose it
 
-Add pages for different RAG workflows:
+Add pages and CLI tools for different workflows:
 
 <details open>
 <summary><b>Vector Search</b></summary>
@@ -149,6 +149,8 @@ tools:
 # Vector search instructions:
 - Query documents with your vector database API
 ```
+
+> **Note**: replace the API with your own (e.g., Pinecone, Weaviate, Qdrant)
 
 </details>
 
@@ -165,6 +167,8 @@ tools:
 - Use `psql` for read-only PostgreSQL queries
 ```
 
+> **Note**: use your own database CLI (e.g., `mysql`, `sqlite3`, `mongosh`).
+
 </details>
 
 <details>
@@ -180,21 +184,29 @@ tools:
 - Use `grep` to search documents in `../data/`
 ```
 
+> **Note**: apps can include any file type (e.g. `.csv`, `.sqlite`, `.json`)
+
 </details>
 
 ### Deploy it
 
-Create a free [Statespace account](#deploy-it)[^1] and deploy your app to the cloud:
+Create a free [Statespace account](https://statespace.com/) to deploy authenticated private apps:
 
 ```bash
-toolfront deploy .
+toolfront deploy . --private
 ```
 
-> Accessible at `https://<app-id>.toolfront.app`. Share it with the community or your team!
+Alternatively, share public apps with the community:
+
+```bash
+toolfront deploy . --public
+```
+
+> **Note** Statespace gives you app URLs you can paste in prompts and instructions.
 
 ## Installation
 
-Install `toolfront` with your favorite PyPI package manager (Requires Python 3.10+).
+Install `toolfront` with your favorite PyPI package manager:
 
 <details open>
 <summary><b>pip</b></summary>
@@ -232,5 +244,3 @@ poetry add toolfront
 ## License
 
 This project is licensed under the terms of the MIT license.
-
-[^1]: Statespace is currently in beta. Email `esteban[at]statespace[dot]com` or join our [Discord](https://discord.gg/rRyM7zkZTf) to get an API key

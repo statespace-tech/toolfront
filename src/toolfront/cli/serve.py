@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import re
 import tomllib
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
@@ -26,7 +27,6 @@ class ActionRequest(BaseModel):
 
     command: list[str]
     env: dict[str, str] | None = None
-    path: str | None = None
 
 
 def _parse_frontmatter(markdown: str) -> dict[str, Any]:
@@ -86,28 +86,44 @@ def _is_valid_tool_call(tool_command: list[str], tools: list) -> bool:
     return False
 
 
-def _resolve_file_path(directory: Path, file_path: str) -> str:
-    """Resolve and validate file path (security checks + .md/.README.md resolution)."""
+def _resolve_file_path(directory: Path, file_path: str) -> Path:
+    """Resolve and validate file path (security checks + .md/.README.md resolution).
+
+    Resolution order:
+    1. If path exists as-is and is a file, serve it
+    2. If path is a directory, serve directory/README.md
+    3. If path doesn't exist, try adding .md extension
+    4. Otherwise, 404
+    """
+    # Normalize: strip leading/trailing slashes, handle empty path
+    file_path = file_path.strip("/") or "."
+
+    # Resolve to absolute path
     full_path = (directory / file_path).resolve()
 
     # Security: prevent directory traversal
     if not full_path.is_relative_to(directory):
         raise HTTPException(status_code=403, detail="Access denied: path outside served directory")
 
-    # Direct .md file
-    if file_path.endswith(".md"):
-        if not full_path.exists():
-            raise HTTPException(status_code=404, detail="File not found")
-        if not full_path.is_file():
-            raise HTTPException(status_code=400, detail="Path is not a file")
-        return str(full_path)
+    # Case 1: Path exists as-is and is a file
+    if full_path.is_file():
+        return full_path
 
-    # Try README.md in directory
-    readme_path = full_path / "README.md"
-    if readme_path.exists() and readme_path.is_file():
-        return str(readme_path)
+    # Case 2: Path is a directory, serve README.md
+    if full_path.is_dir():
+        readme_path = full_path / "README.md"
+        if readme_path.is_file():
+            return readme_path
+        raise HTTPException(status_code=404, detail=f"Directory found but no README.md: {file_path}")
 
-    raise HTTPException(status_code=404, detail="File not found (tried README.md)")
+    # Case 3: Path doesn't exist, try adding .md extension
+    if not str(full_path).endswith(".md"):
+        md_path = Path(str(full_path) + ".md")
+        if md_path.is_file():
+            return md_path
+
+    # Case 4: Not found
+    raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
 
 
 @click.command()
@@ -133,13 +149,49 @@ def serve(directory: str, host: str, port: int) -> None:
         click.echo("Error: README.md not found in directory", err=True)
         raise click.Abort()
 
+    # Copy template files if they don't exist
+    templates = files("toolfront") / "templates"
+
+    if not (directory_path / "agents.md").exists():
+        agents_md_content = (templates / "agents.md").read_text()
+        (directory_path / "agents.md").write_text(agents_md_content)
+
+    if not (directory_path / "favicon.svg").exists():
+        favicon_content = (templates / "favicon.svg").read_text()
+        (directory_path / "favicon.svg").write_text(favicon_content)
+
+    if not (directory_path / "index.html").exists():
+        index_html_content = (templates / "index.html").read_text()
+        # Replace placeholders
+        current_url = f"http://{host}:{port}"
+        agents_md_content = (directory_path / "agents.md").read_text()
+        index_html_content = index_html_content.replace("{current_url}", current_url).replace(
+            "{agents_md_content}", agents_md_content
+        )
+        (directory_path / "index.html").write_text(index_html_content)
+
     app = FastAPI(title="ToolFront Application")
 
+    @app.get("/favicon.svg")
+    async def get_favicon():
+        """Serve the favicon from the directory."""
+        favicon_path = directory_path / "favicon.svg"
+        if favicon_path.exists():
+            return FileResponse(favicon_path, media_type="image/svg+xml")
+        raise HTTPException(status_code=404, detail="Favicon not found")
+
     @app.get("/{file_path:path}")
-    async def read_file(file_path: str) -> FileResponse:
+    async def read_file(file_path: str):
         """Read a markdown file from the served directory."""
-        full_path = _resolve_file_path(directory_path, file_path)
-        return FileResponse(full_path)
+        # Serve index.html for root path
+        if not file_path.strip("/"):
+            index_path = directory_path / "index.html"
+            if index_path.exists():
+                return FileResponse(index_path, media_type="text/html")
+
+        # Default behavior for all other paths
+        resolved_path = _resolve_file_path(directory_path, file_path)
+        return FileResponse(resolved_path)
 
     @app.post("/{file_path:path}")
     async def execute_action(file_path: str, action: ActionRequest = Body(...)) -> JSONResponse:
@@ -150,16 +202,15 @@ def serve(directory: str, host: str, port: int) -> None:
             raise HTTPException(status_code=400, detail="Empty command")
 
         # Resolve and parse file
-        full_path = _resolve_file_path(directory_path, file_path)
-        path = Path(full_path)
-        frontmatter = _parse_frontmatter(path.read_text())
+        resolved_path = _resolve_file_path(directory_path, file_path)
+        frontmatter = _parse_frontmatter(resolved_path.read_text())
 
         if not frontmatter:
-            raise HTTPException(status_code=400, detail=f"No frontmatter found in: {path.name}")
+            raise HTTPException(status_code=400, detail=f"No frontmatter found in: {resolved_path.name}")
 
         tools = frontmatter.get("tools", [])
         if not tools:
-            raise HTTPException(status_code=400, detail=f"No tools defined in frontmatter of: {path.name}")
+            raise HTTPException(status_code=400, detail=f"No tools defined in frontmatter of: {resolved_path.name}")
 
         if not _is_valid_tool_call(action.command, tools):
             raise HTTPException(status_code=403, detail=f"Command not allowed: {action.command}")
@@ -167,7 +218,7 @@ def serve(directory: str, host: str, port: int) -> None:
         try:
             process = await asyncio.create_subprocess_exec(
                 *action.command,
-                cwd=path.parent,
+                cwd=resolved_path.parent,
                 env=action.env,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
