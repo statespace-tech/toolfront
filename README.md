@@ -8,7 +8,7 @@
 
 # ToolFront
 
-**Turn your data into shareable RAG apps in minutes. All in pure Markdown. Zero boilerplate.**
+**Turn your data into shareable LLM apps in minutes. All in pure Markdown. Zero boilerplate.**
 
 [![Test Suite](https://github.com/statespace-tech/toolfront/actions/workflows/test.yml/badge.svg)](https://github.com/statespace-tech/toolfront/actions/workflows/test.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3775A9?style=flat-square)](https://www.python.org/downloads/)
@@ -27,9 +27,9 @@
 
 ---
 
-## Simple example
+_ToolFront is a declarative framework for building modular LLM applications in Markdown._
 
-ToolFront is a declarative framework for building composable RAG applications in Markdown.
+## Example
 
 ### Create it
 
@@ -38,60 +38,107 @@ Start with one file: `README.md`
 ```yaml
 ---
 tools:
-  - [curl, -X, GET, "https://httpbin.org/status/200"]
+  - [date]
 ---
 
 # Instructions
-- Use `curl` to check if the service is up
+- Run `date` to check today's date
 ```
 
 ### Serve it
 
-Run your app on your machine:
+Run your app locally:
 
 ```bash
 toolfront serve .
 ```
+> **Note**: Runs on `http://127.0.0.1:8000`
 
-> Runs at `http://127.0.0.1:8000`
+### Ask it
 
-### Connect it
-
-Connect your app to AI agents:
+Include the app URL in your prompts:
 
 <details open>
-<summary><b>Python SDK</b></summary>
-
-```python
-from toolfront import Application
-
-app = Application(url="http://127.0.0.1:8000")
-
-result = app.ask("Is the service up?", model="openai:gpt-5")
-```
-
-</details>
-
-<details>
-<summary><b>Command line</b></summary>
+<summary><b>Claude Code</b></summary>
 
 ```bash
-toolfront ask http://127.0.0.1:8000 "Is the service up?" --model "openai:gpt-5"
+claude "Get today's date from http://127.0.0.1:8000"
 ```
 
 </details>
 
 <details>
-<summary><b>MCP server</b></summary>
+<summary><b>GitHub Copilot</b></summary>
 
-```json
-{
-  "mcpServers": {
-    "toolfront": {
-      "command": "uvx",
-      "args": ["toolfront", "mcp", "http://127.0.0.1:8000"]
-    }
-  }
+```bash
+copilot "Get today's date from http://127.0.0.1:8000"
+```
+
+</details>
+
+<details>
+<summary><b>Codex</b></summary>
+
+```bash
+codex "Get today's date from http://127.0.0.1:8000"
+```
+
+</details>
+
+For custom agents, add an HTTP request tool:
+
+<details>
+<summary><b>Python</b></summary>
+
+```python
+import subprocess
+
+@tool
+def curl_tool(url: str, args: list[str]) -> str:
+    """Execute curl commands to interact with Statespace apps."""
+    result = subprocess.run(
+        ['curl', *args, url],
+        capture_output=True,
+        text=True
+    )
+    return result.stdout
+```
+
+</details>
+
+<details>
+<summary><b>TypeScript</b></summary>
+
+```typescript
+import { execFileSync } from 'child_process';
+
+/**
+ * Execute curl commands to interact with Statespace apps.
+ */
+function curlTool(url: string, args: string[]): string {
+    const result = execFileSync('curl', [...args, url], {
+        encoding: 'utf-8'
+    });
+    return result.toString();
+}
+```
+
+</details>
+
+<details>
+<summary><b>Rust</b></summary>
+
+```rust
+use std::process::Command;
+
+/// Execute curl commands to interact with HTTP endpoints.
+fn curl_tool(url: &str, args: Vec<&str>) -> String {
+    let output = Command::new("curl")
+        .args(&args)
+        .arg(url)
+        .output()
+        .unwrap();
+    String::from_utf8_lossy(&output.stdout).to_string()
 }
 ```
 
