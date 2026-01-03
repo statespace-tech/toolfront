@@ -1,0 +1,313 @@
+//! Frontmatter parsing (YAML and TOML)
+//!
+//! Pure functions for extracting and parsing frontmatter from markdown files.
+//!
+//! # Supported Formats
+//!
+//! ```yaml
+//! ---
+//! tools:
+//!   - [ls]
+//!   - [cat, { }]
+//!   - [cat, { regex: ".*\\.md$" }]
+//! ---
+//! ```
+//!
+//! ```toml
+//! +++
+//! tools = [
+//!   ["ls"],
+//!   ["cat", {}],
+//! ]
+//! +++
+//! ```
+
+use crate::error::Error;
+use crate::spec::ToolSpec;
+use serde::Deserialize;
+
+/// Raw frontmatter for initial deserialization.
+#[derive(Debug, Clone, Deserialize)]
+struct RawFrontmatter {
+    #[serde(default)]
+    tools: Vec<Vec<serde_json::Value>>,
+}
+
+/// Frontmatter structure extracted from markdown files.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Frontmatter {
+    /// Parsed tool specifications (supports regex, options control)
+    pub specs: Vec<ToolSpec>,
+
+    /// Legacy format for backwards compatibility
+    pub tools: Vec<Vec<String>>,
+}
+
+impl Frontmatter {
+    /// Check if a command is declared in frontmatter tools (legacy validation)
+    #[must_use]
+    pub fn has_tool(&self, command: &[String]) -> bool {
+        if command.is_empty() {
+            return false;
+        }
+
+        self.tools.iter().any(|tool| {
+            if tool.is_empty() {
+                return false;
+            }
+
+            // Command must have exactly as many args as the tool spec
+            // (all parts including placeholders are required)
+            if command.len() != tool.len() {
+                return false;
+            }
+
+            if tool[0] != command[0] {
+                return false;
+            }
+
+            true
+        })
+    }
+
+    /// Get all unique tool names (first element of each tool)
+    #[must_use]
+    pub fn tool_names(&self) -> Vec<&str> {
+        self.tools
+            .iter()
+            .filter_map(|tool| tool.first().map(String::as_str))
+            .collect()
+    }
+}
+
+/// Parse frontmatter from markdown content
+///
+/// Supports both YAML (--- ... ---) and TOML (+++ ... +++) formats.
+pub fn parse_frontmatter(content: &str) -> Result<Frontmatter, Error> {
+    if let Some(yaml_content) = extract_yaml_frontmatter(content) {
+        return parse_yaml(&yaml_content);
+    }
+
+    if let Some(toml_content) = extract_toml_frontmatter(content) {
+        return parse_toml(&toml_content);
+    }
+
+    Err(Error::NoFrontmatter)
+}
+
+fn convert_raw(raw: RawFrontmatter) -> Result<Frontmatter, Error> {
+    let mut specs = Vec::new();
+    let mut tools = Vec::new();
+
+    for tool_parts in &raw.tools {
+        match ToolSpec::parse(tool_parts) {
+            Ok(spec) => specs.push(spec),
+            Err(e) => {
+                return Err(Error::FrontmatterParse(format!("Invalid tool spec: {e}")));
+            }
+        }
+
+        let legacy: Vec<String> = tool_parts
+            .iter()
+            .filter_map(|v| match v {
+                serde_json::Value::String(s) if s != ";" => Some(s.clone()),
+                _ => None,
+            })
+            .collect();
+        if !legacy.is_empty() {
+            tools.push(legacy);
+        }
+    }
+
+    Ok(Frontmatter { specs, tools })
+}
+
+fn extract_yaml_frontmatter(content: &str) -> Option<String> {
+    let trimmed = content.trim_start();
+
+    if !trimmed.starts_with("---") {
+        return None;
+    }
+
+    let after_open = &trimmed[3..];
+    let close_pos = after_open.find("\n---")?;
+
+    Some(after_open[..close_pos].trim().to_string())
+}
+
+fn extract_toml_frontmatter(content: &str) -> Option<String> {
+    let trimmed = content.trim_start();
+
+    if !trimmed.starts_with("+++") {
+        return None;
+    }
+
+    let after_open = &trimmed[3..];
+    let close_pos = after_open.find("\n+++")?;
+
+    Some(after_open[..close_pos].trim().to_string())
+}
+
+fn parse_yaml(content: &str) -> Result<Frontmatter, Error> {
+    let raw: RawFrontmatter = serde_yaml::from_str(content)
+        .map_err(|e| Error::FrontmatterParse(format!("YAML parse error: {e}")))?;
+    convert_raw(raw)
+}
+
+fn parse_toml(content: &str) -> Result<Frontmatter, Error> {
+    let raw: RawFrontmatter = toml::from_str(content)
+        .map_err(|e| Error::FrontmatterParse(format!("TOML parse error: {e}")))?;
+    convert_raw(raw)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::spec::is_valid_tool_call;
+
+    fn legacy_frontmatter(tools: Vec<Vec<String>>) -> Frontmatter {
+        Frontmatter {
+            specs: vec![],
+            tools,
+        }
+    }
+
+    #[test]
+    fn test_parse_yaml_frontmatter() {
+        let markdown = r#"---
+tools:
+  - ["ls", "{path}"]
+  - ["cat", "{path}"]
+---
+
+# Documentation
+"#;
+
+        let fm = parse_frontmatter(markdown).unwrap();
+        assert_eq!(fm.tools.len(), 2);
+        assert_eq!(fm.tools[0], vec!["ls", "{path}"]);
+        assert_eq!(fm.tools[1], vec!["cat", "{path}"]);
+        assert_eq!(fm.specs.len(), 2);
+    }
+
+    #[test]
+    fn test_parse_toml_frontmatter() {
+        let markdown = r#"+++
+tools = [
+  ["ls", "{path}"],
+  ["cat", "{path}"],
+]
++++
+
+# Documentation
+"#;
+
+        let fm = parse_frontmatter(markdown).unwrap();
+        assert_eq!(fm.tools.len(), 2);
+        assert_eq!(fm.tools[0], vec!["ls", "{path}"]);
+    }
+
+    #[test]
+    fn test_no_frontmatter() {
+        let markdown = "# Just a regular markdown file";
+        let result = parse_frontmatter(markdown);
+        assert!(matches!(result, Err(Error::NoFrontmatter)));
+    }
+
+    #[test]
+    fn test_has_tool() {
+        let fm = legacy_frontmatter(vec![
+            vec!["ls".to_string(), "{path}".to_string()],
+            vec!["cat".to_string(), "{path}".to_string()],
+            vec!["search".to_string()],
+        ]);
+
+        assert!(fm.has_tool(&["search".to_string()]));
+        assert!(fm.has_tool(&["ls".to_string(), "docs/".to_string()]));
+        assert!(fm.has_tool(&["cat".to_string(), "index.md".to_string()]));
+        assert!(!fm.has_tool(&["grep".to_string(), "pattern".to_string()]));
+        assert!(!fm.has_tool(&[]));
+    }
+
+    #[test]
+    fn test_tool_names() {
+        let fm = legacy_frontmatter(vec![
+            vec!["ls".to_string()],
+            vec!["cat".to_string()],
+            vec!["search".to_string()],
+        ]);
+
+        let names = fm.tool_names();
+        assert_eq!(names, vec!["ls", "cat", "search"]);
+    }
+
+    #[test]
+    fn test_e2e_regex_constraint() {
+        let markdown = r#"---
+tools:
+  - [psql, -c, { regex: "^SELECT" }, ";"]
+---
+"#;
+
+        let fm = parse_frontmatter(markdown).unwrap();
+
+        assert!(is_valid_tool_call(
+            &[
+                "psql".to_string(),
+                "-c".to_string(),
+                "SELECT * FROM users".to_string()
+            ],
+            &fm.specs
+        ));
+
+        assert!(!is_valid_tool_call(
+            &[
+                "psql".to_string(),
+                "-c".to_string(),
+                "INSERT INTO users VALUES (1)".to_string()
+            ],
+            &fm.specs
+        ));
+
+        assert!(!is_valid_tool_call(
+            &[
+                "psql".to_string(),
+                "-c".to_string(),
+                "SELECT 1".to_string(),
+                "--extra".to_string()
+            ],
+            &fm.specs
+        ));
+    }
+
+    #[test]
+    fn test_e2e_options_control() {
+        let markdown = r#"---
+tools:
+  - [ls]
+  - [cat, { }, ";"]
+---
+"#;
+
+        let fm = parse_frontmatter(markdown).unwrap();
+
+        assert!(is_valid_tool_call(&["ls".to_string()], &fm.specs));
+        assert!(is_valid_tool_call(
+            &["ls".to_string(), "-la".to_string()],
+            &fm.specs
+        ));
+        assert!(is_valid_tool_call(
+            &["ls".to_string(), "-la".to_string(), "docs/".to_string()],
+            &fm.specs
+        ));
+
+        assert!(is_valid_tool_call(
+            &["cat".to_string(), "file.txt".to_string()],
+            &fm.specs
+        ));
+        assert!(!is_valid_tool_call(
+            &["cat".to_string(), "file.txt".to_string(), "-n".to_string()],
+            &fm.specs
+        ));
+    }
+}

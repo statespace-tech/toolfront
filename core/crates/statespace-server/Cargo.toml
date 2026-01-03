@@ -1,0 +1,50 @@
+[package]
+name = "statespace-server"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Open-source AI tool execution runtime"
+readme = "README.md"
+keywords = ["ai", "tools", "mcp", "agents"]
+categories = ["web-programming::http-server"]
+
+[lib]
+name = "statespace_server"
+path = "src/lib.rs"
+
+[[bin]]
+name = "statespace"
+path = "src/main.rs"
+
+[dependencies]
+axum.workspace = true
+tokio.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+toml.workspace = true
+
+clap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+thiserror.workspace = true
+anyhow.workspace = true
+
+reqwest.workspace = true
+glob.workspace = true
+regex.workspace = true
+chrono.workspace = true
+
+async-trait.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
+
+[features]
+default = []
+curl = []  # Enable HTTP client tool with SSRF protections

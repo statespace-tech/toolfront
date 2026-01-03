@@ -1,0 +1,165 @@
+//! Command validation and placeholder expansion
+//!
+//! Pure functions for validating commands against frontmatter and expanding placeholders.
+
+use crate::error::Error;
+use crate::frontmatter::Frontmatter;
+use crate::spec::{is_valid_tool_call, ToolSpec};
+use std::collections::HashMap;
+
+/// Validate that command is declared in frontmatter (legacy).
+pub fn validate_command(frontmatter: &Frontmatter, command: &[String]) -> Result<(), Error> {
+    if command.is_empty() {
+        return Err(Error::InvalidCommand(
+            "command cannot be empty".to_string(),
+        ));
+    }
+
+    if !frontmatter.has_tool(command) {
+        return Err(Error::CommandNotFound {
+            command: command.join(" "),
+        });
+    }
+
+    Ok(())
+}
+
+/// Validate command against tool specifications.
+///
+/// This is the new validation that supports:
+/// - Regex constraints: `{ regex: "^SELECT" }`
+/// - Options control: trailing `;` to disallow extra args
+/// - Placeholders: `{ }` for any value
+pub fn validate_command_with_specs(specs: &[ToolSpec], command: &[String]) -> Result<(), Error> {
+    if command.is_empty() {
+        return Err(Error::InvalidCommand(
+            "command cannot be empty".to_string(),
+        ));
+    }
+
+    if !is_valid_tool_call(command, specs) {
+        return Err(Error::CommandNotFound {
+            command: command.join(" "),
+        });
+    }
+
+    Ok(())
+}
+
+/// Expand placeholders in command with provided arguments
+///
+/// Replaces {placeholder} with values from args map.
+#[must_use]
+pub fn expand_placeholders(command: &[String], args: &HashMap<String, String>) -> Vec<String> {
+    command
+        .iter()
+        .map(|part| {
+            let mut result = part.clone();
+
+            for (key, value) in args {
+                let placeholder = format!("{{{key}}}");
+                result = result.replace(&placeholder, value);
+            }
+
+            result
+        })
+        .collect()
+}
+
+/// Expand environment variable references in command
+///
+/// Replaces $VAR with values from env map.
+#[must_use]
+pub fn expand_env_vars(command: &[String], env: &HashMap<String, String>) -> Vec<String> {
+    command
+        .iter()
+        .map(|part| {
+            let mut result = part.clone();
+
+            for (key, value) in env {
+                let var = format!("${key}");
+                result = result.replace(&var, value);
+            }
+
+            result
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn legacy_frontmatter(tools: Vec<Vec<String>>) -> Frontmatter {
+        Frontmatter {
+            specs: vec![],
+            tools,
+        }
+    }
+
+    #[test]
+    fn test_validate_command_empty() {
+        let fm = legacy_frontmatter(vec![]);
+        let result = validate_command(&fm, &[]);
+        assert!(matches!(result, Err(Error::InvalidCommand(_))));
+    }
+
+    #[test]
+    fn test_validate_command_not_found() {
+        let fm = legacy_frontmatter(vec![vec!["ls".to_string()]]);
+
+        let result = validate_command(&fm, &["cat".to_string(), "file.md".to_string()]);
+        assert!(matches!(result, Err(Error::CommandNotFound { .. })));
+    }
+
+    #[test]
+    fn test_validate_command_success() {
+        let fm = legacy_frontmatter(vec![
+            vec!["ls".to_string(), "{path}".to_string()],
+            vec!["cat".to_string(), "{path}".to_string()],
+        ]);
+
+        let result = validate_command(&fm, &["ls".to_string(), "docs/".to_string()]);
+        assert!(result.is_ok());
+
+        let result = validate_command(&fm, &["cat".to_string(), "index.md".to_string()]);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_expand_placeholders() {
+        let command = vec![
+            "curl".to_string(),
+            "-X".to_string(),
+            "GET".to_string(),
+            "https://api.com/{endpoint}".to_string(),
+        ];
+
+        let mut args = HashMap::new();
+        args.insert("endpoint".to_string(), "orders".to_string());
+
+        let expanded = expand_placeholders(&command, &args);
+        assert_eq!(
+            expanded,
+            vec!["curl", "-X", "GET", "https://api.com/orders"]
+        );
+    }
+
+    #[test]
+    fn test_expand_env_vars() {
+        let command = vec![
+            "curl".to_string(),
+            "-H".to_string(),
+            "Authorization: Bearer $API_KEY".to_string(),
+        ];
+
+        let mut env = HashMap::new();
+        env.insert("API_KEY".to_string(), "secret123".to_string());
+
+        let expanded = expand_env_vars(&command, &env);
+        assert_eq!(
+            expanded,
+            vec!["curl", "-H", "Authorization: Bearer secret123"]
+        );
+    }
+}
