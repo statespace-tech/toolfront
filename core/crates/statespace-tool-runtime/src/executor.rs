@@ -59,6 +59,7 @@ pub struct FileInfo {
 }
 
 /// Executes tools against a filesystem root
+#[derive(Debug)]
 pub struct ToolExecutor {
     root: PathBuf,
     limits: ExecutionLimits,
@@ -179,7 +180,9 @@ impl ToolExecutor {
 
     async fn execute_curl(&self, url: &str, method: HttpMethod) -> Result<ToolOutput, Error> {
         let parsed = validate_url_initial(url)?;
-        let host = parsed.host_str().unwrap();
+        let host = parsed
+            .host_str()
+            .ok_or_else(|| Error::InvalidCommand("URL has no host".to_string()))?;
         let port = parsed
             .port_or_known_default()
             .ok_or_else(|| Error::InvalidCommand("Could not determine port".to_string()))?;
@@ -207,8 +210,9 @@ impl ToolExecutor {
             .build()
             .map_err(|e| Error::Network(format!("Client error: {e}")))?;
 
+        // HttpMethod enum values are always valid HTTP methods
         let http_method = reqwest::Method::from_bytes(method.as_str().as_bytes())
-            .expect("HttpMethod enum values are always valid");
+            .map_err(|_e| Error::InvalidCommand(format!("Invalid HTTP method: {method}")))?;
 
         let response = client
             .request(http_method, parsed.as_str())

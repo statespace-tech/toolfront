@@ -88,6 +88,15 @@ pub struct ServerState {
     pub content_root: PathBuf,
 }
 
+impl std::fmt::Debug for ServerState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ServerState")
+            .field("limits", &self.limits)
+            .field("content_root", &self.content_root)
+            .finish_non_exhaustive()
+    }
+}
+
 impl ServerState {
     /// Create a new server state from config
     #[must_use]

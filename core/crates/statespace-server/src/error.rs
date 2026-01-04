@@ -43,6 +43,7 @@ impl ErrorExt for Error {
 }
 
 /// Wrapper for runtime error that implements IntoResponse
+#[derive(Debug)]
 pub struct ServerError(pub Error);
 
 impl From<Error> for ServerError {

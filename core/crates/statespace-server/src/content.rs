@@ -29,6 +29,7 @@ pub trait ContentResolver: Send + Sync {
 }
 
 /// Local filesystem content resolver.
+#[derive(Debug)]
 pub struct LocalContentResolver {
     root: PathBuf,
 }
