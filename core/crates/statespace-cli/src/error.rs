@@ -1,6 +1,4 @@
-//! CLI-specific error types for statespace
-//!
-//! Provides friendly error messages for CLI usage.
+//! CLI error types.
 
 use thiserror::Error;
 

@@ -1,13 +1,10 @@
-//! Command validation and placeholder expansion
-//!
-//! Pure functions for validating commands against frontmatter and expanding placeholders.
+//! Command validation and placeholder expansion.
 
 use crate::error::Error;
 use crate::frontmatter::Frontmatter;
 use crate::spec::{ToolSpec, is_valid_tool_call};
 use std::collections::HashMap;
 
-/// Validate that command is declared in frontmatter (legacy).
 pub fn validate_command(frontmatter: &Frontmatter, command: &[String]) -> Result<(), Error> {
     if command.is_empty() {
         return Err(Error::InvalidCommand("command cannot be empty".to_string()));
@@ -22,12 +19,6 @@ pub fn validate_command(frontmatter: &Frontmatter, command: &[String]) -> Result
     Ok(())
 }
 
-/// Validate command against tool specifications.
-///
-/// This is the new validation that supports:
-/// - Regex constraints: `{ regex: "^SELECT" }`
-/// - Options control: trailing `;` to disallow extra args
-/// - Placeholders: `{ }` for any value
 pub fn validate_command_with_specs(specs: &[ToolSpec], command: &[String]) -> Result<(), Error> {
     if command.is_empty() {
         return Err(Error::InvalidCommand("command cannot be empty".to_string()));
@@ -42,9 +33,6 @@ pub fn validate_command_with_specs(specs: &[ToolSpec], command: &[String]) -> Re
     Ok(())
 }
 
-/// Expand placeholders in command with provided arguments
-///
-/// Replaces {placeholder} with values from args map.
 #[must_use]
 pub fn expand_placeholders(command: &[String], args: &HashMap<String, String>) -> Vec<String> {
     command
@@ -62,9 +50,6 @@ pub fn expand_placeholders(command: &[String], args: &HashMap<String, String>) -
         .collect()
 }
 
-/// Expand environment variable references in command
-///
-/// Replaces $VAR with values from env map.
 #[must_use]
 pub fn expand_env_vars(command: &[String], env: &HashMap<String, String>) -> Vec<String> {
     command

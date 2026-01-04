@@ -1,4 +1,4 @@
-//! HTTP server - Axum router for the statespace server
+//! HTTP server and Axum router.
 
 use crate::content::{ContentResolver, LocalContentResolver};
 use crate::error::ErrorExt;
@@ -21,21 +21,15 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::{info, warn};
 
-/// Server configuration
 #[derive(Debug, Clone)]
 pub struct ServerConfig {
-    /// Root directory for content
     pub content_root: PathBuf,
-    /// Host to bind to
     pub host: String,
-    /// Port to bind to
     pub port: u16,
-    /// Execution limits
     pub limits: ExecutionLimits,
 }
 
 impl ServerConfig {
-    /// Create a new server config with defaults
     #[must_use]
     pub fn new(content_root: PathBuf) -> Self {
         Self {
@@ -46,41 +40,35 @@ impl ServerConfig {
         }
     }
 
-    /// Set the host
     #[must_use]
     pub fn with_host(mut self, host: impl Into<String>) -> Self {
         self.host = host.into();
         self
     }
 
-    /// Set the port
     #[must_use]
     pub const fn with_port(mut self, port: u16) -> Self {
         self.port = port;
         self
     }
 
-    /// Set execution limits
     #[must_use]
     pub fn with_limits(mut self, limits: ExecutionLimits) -> Self {
         self.limits = limits;
         self
     }
 
-    /// Get the socket address string
     #[must_use]
     pub fn socket_addr(&self) -> String {
         format!("{}:{}", self.host, self.port)
     }
 
-    /// Get the base URL for this server
     #[must_use]
     pub fn base_url(&self) -> String {
         format!("http://{}:{}", self.host, self.port)
     }
 }
 
-/// Shared server state
 #[derive(Clone)]
 pub struct ServerState {
     pub content_resolver: Arc<dyn ContentResolver>,
@@ -98,7 +86,6 @@ impl std::fmt::Debug for ServerState {
 }
 
 impl ServerState {
-    /// Create a new server state from config
     #[must_use]
     pub fn from_config(config: &ServerConfig) -> Self {
         Self {
@@ -109,7 +96,6 @@ impl ServerState {
     }
 }
 
-/// Build the Axum router
 pub fn build_router(config: ServerConfig) -> Router {
     let state = ServerState::from_config(&config);
 

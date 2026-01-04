@@ -1,4 +1,4 @@
-//! Tool execution - running commands in a sandboxed environment
+//! Tool execution with sandboxing and resource limits.
 
 use crate::error::Error;
 use crate::security::{is_private_or_restricted_ip, validate_url_initial};
@@ -9,7 +9,6 @@ use tokio::process::Command;
 use tokio::time::timeout;
 use tracing::{info, instrument, warn};
 
-/// Execution limits for tools
 #[derive(Debug, Clone)]
 pub struct ExecutionLimits {
     pub max_output_bytes: usize,
@@ -27,7 +26,6 @@ impl Default for ExecutionLimits {
     }
 }
 
-/// Output from tool execution
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub enum ToolOutput {
@@ -36,7 +34,6 @@ pub enum ToolOutput {
 }
 
 impl ToolOutput {
-    /// Convert output to text representation
     #[must_use]
     pub fn to_text(&self) -> String {
         match self {
@@ -50,7 +47,6 @@ impl ToolOutput {
     }
 }
 
-/// Information about a file from glob results
 #[derive(Debug, Clone)]
 pub struct FileInfo {
     pub key: String,
@@ -58,7 +54,6 @@ pub struct FileInfo {
     pub last_modified: chrono::DateTime<chrono::Utc>,
 }
 
-/// Executes tools against a filesystem root
 #[derive(Debug)]
 pub struct ToolExecutor {
     root: PathBuf,
@@ -210,7 +205,6 @@ impl ToolExecutor {
             .build()
             .map_err(|e| Error::Network(format!("Client error: {e}")))?;
 
-        // HttpMethod enum values are always valid HTTP methods
         let http_method = reqwest::Method::from_bytes(method.as_str().as_bytes())
             .map_err(|_e| Error::InvalidCommand(format!("Invalid HTTP method: {method}")))?;
 

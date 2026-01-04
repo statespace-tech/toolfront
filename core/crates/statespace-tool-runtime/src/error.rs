@@ -1,6 +1,4 @@
-//! Error types for statespace tool runtime
-//!
-//! Following thiserror pattern for clean error handling.
+//! Error types for the tool runtime.
 
 use thiserror::Error;
 
@@ -47,7 +45,6 @@ pub enum Error {
 }
 
 impl Error {
-    /// User-friendly error message
     #[must_use]
     pub fn user_message(&self) -> String {
         match self {

@@ -1,8 +1,4 @@
-//! Site initialization - writes template files on startup
-//!
-//! This module handles the effectful operation of ensuring template files
-//! exist in the content directory. Files are only written if they don't
-//! already exist (idempotent).
+//! Site initialization - writes template files if missing.
 
 use crate::templates::{AGENTS_MD, FAVICON_SVG, render_index_html};
 use std::io;
@@ -10,7 +6,6 @@ use std::path::Path;
 use tokio::fs;
 use tracing::info;
 
-/// Files that will be initialized if missing
 #[derive(Debug, Clone, Copy)]
 pub enum TemplateFile {
     AgentsMd,
@@ -28,22 +23,12 @@ impl TemplateFile {
     }
 }
 
-/// Result of initializing a single template file
 #[derive(Debug)]
 pub enum InitResult {
     Created,
     AlreadyExists,
 }
 
-/// Initialize all template files in the content directory.
-///
-/// This function is idempotent - files are only written if they don't exist.
-/// Returns the list of files that were created.
-///
-/// # Arguments
-///
-/// * `content_root` - The root directory of the tool site
-/// * `base_url` - The server's base URL (for index.html rendering)
 pub async fn initialize_templates(
     content_root: &Path,
     base_url: &str,

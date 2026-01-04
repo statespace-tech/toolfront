@@ -1,50 +1,22 @@
-//! Frontmatter parsing (YAML and TOML)
-//!
-//! Pure functions for extracting and parsing frontmatter from markdown files.
-//!
-//! # Supported Formats
-//!
-//! ```yaml
-//! ---
-//! tools:
-//!   - [ls]
-//!   - [cat, { }]
-//!   - [cat, { regex: ".*\\.md$" }]
-//! ---
-//! ```
-//!
-//! ```toml
-//! +++
-//! tools = [
-//!   ["ls"],
-//!   ["cat", {}],
-//! ]
-//! +++
-//! ```
+//! Frontmatter parsing for YAML (`---`) and TOML (`+++`) formats.
 
 use crate::error::Error;
 use crate::spec::ToolSpec;
 use serde::Deserialize;
 
-/// Raw frontmatter for initial deserialization.
 #[derive(Debug, Clone, Deserialize)]
 struct RawFrontmatter {
     #[serde(default)]
     tools: Vec<Vec<serde_json::Value>>,
 }
 
-/// Frontmatter structure extracted from markdown files.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Frontmatter {
-    /// Parsed tool specifications (supports regex, options control)
     pub specs: Vec<ToolSpec>,
-
-    /// Legacy format for backwards compatibility
     pub tools: Vec<Vec<String>>,
 }
 
 impl Frontmatter {
-    /// Check if a command is declared in frontmatter tools (legacy validation)
     #[must_use]
     pub fn has_tool(&self, command: &[String]) -> bool {
         if command.is_empty() {
@@ -68,7 +40,6 @@ impl Frontmatter {
         })
     }
 
-    /// Get all unique tool names (first element of each tool)
     #[must_use]
     pub fn tool_names(&self) -> Vec<&str> {
         self.tools
@@ -78,9 +49,6 @@ impl Frontmatter {
     }
 }
 
-/// Parse frontmatter from markdown content
-///
-/// Supports both YAML (--- ... ---) and TOML (+++ ... +++) formats.
 pub fn parse_frontmatter(content: &str) -> Result<Frontmatter, Error> {
     if let Some(yaml_content) = extract_yaml_frontmatter(content) {
         return parse_yaml(&yaml_content);

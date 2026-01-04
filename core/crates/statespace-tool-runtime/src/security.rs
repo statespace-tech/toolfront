@@ -1,23 +1,10 @@
-//! SSRF protection for curl tool
+//! SSRF protection for the curl tool.
 //!
-//! This module provides pure validation functions to prevent Server-Side Request Forgery (SSRF).
-//! All functions are **pure** (no I/O) for testability.
-//!
-//! # Protections
-//!
-//! - [`validate_url_initial`]: Checks scheme, hostname patterns, literal IPs
-//! - [`is_private_or_restricted_ip`]: Checks resolved IPs against blocklists
+//! Validates URLs and blocks requests to private/internal networks.
 
 use crate::error::Error;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
-/// Validate URL scheme and hostname (pure, no I/O)
-///
-/// Checks:
-/// - Scheme must be http or https
-/// - URL must have a valid host
-/// - Blocks localhost by name
-/// - Blocks cloud metadata services
 pub fn validate_url_initial(url: &str) -> Result<reqwest::Url, Error> {
     let parsed =
         reqwest::Url::parse(url).map_err(|e| Error::InvalidCommand(format!("Invalid URL: {e}")))?;
@@ -67,7 +54,6 @@ fn is_metadata_service(host: &str) -> bool {
     host == "169.254.169.254" || host == "metadata.google.internal"
 }
 
-/// Check if IP is private/restricted (pure)
 #[must_use]
 pub fn is_private_or_restricted_ip(ip: &IpAddr) -> bool {
     match ip {

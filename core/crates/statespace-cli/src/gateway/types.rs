@@ -1,8 +1,7 @@
-//! API types for the Statespace gateway
+//! Gateway API types.
 
 use serde::{Deserialize, Serialize};
 
-/// A file to be deployed as part of an environment
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct EnvironmentFile {
     pub path: String,
@@ -10,7 +9,6 @@ pub(crate) struct EnvironmentFile {
     pub checksum: String,
 }
 
-/// Result of deploying a new environment
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct DeployResult {
     pub id: String,
@@ -19,7 +17,6 @@ pub(crate) struct DeployResult {
     pub fly_url: Option<String>,
 }
 
-/// A deployed environment/app
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct Environment {
     pub id: String,
@@ -32,7 +29,6 @@ pub(crate) struct Environment {
     pub created_at: String,
 }
 
-/// A personal access token
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct Token {
     pub id: String,
@@ -51,7 +47,6 @@ pub(crate) struct Token {
     pub revocation_reason: Option<String>,
 }
 
-/// Result of creating or rotating a token
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct TokenCreateResult {
     pub id: String,

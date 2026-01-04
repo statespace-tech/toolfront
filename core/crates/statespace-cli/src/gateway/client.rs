@@ -1,4 +1,4 @@
-//! HTTP client for the Statespace Gateway API
+//! Gateway API client.
 
 use crate::config::Credentials;
 use crate::error::{GatewayError, Result};
@@ -13,12 +13,10 @@ use std::time::Duration;
 
 const USER_AGENT: &str = concat!("statespace-cli/", env!("CARGO_PKG_VERSION"));
 
-// Polling constants for verify_environment
 const VERIFY_MAX_ATTEMPTS: u32 = 20;
 const VERIFY_BASE_DELAY_SECS: u64 = 2;
 const VERIFY_MAX_DELAY_SECS: u64 = 10;
 
-/// Client for the Statespace Gateway API
 #[derive(Clone)]
 pub(crate) struct GatewayClient {
     base_url: String,
@@ -28,10 +26,6 @@ pub(crate) struct GatewayClient {
 }
 
 impl GatewayClient {
-    /// Create a new gateway client from credentials
-    ///
-    /// # Errors
-    /// Returns an error if the HTTP client cannot be built
     pub(crate) fn new(credentials: Credentials) -> Result<Self> {
         let http = Client::builder()
             .user_agent(USER_AGENT)
@@ -57,7 +51,6 @@ impl GatewayClient {
             .ok_or_else(|| GatewayError::MissingOrgId.into())
     }
 
-    /// Scan a directory for markdown files and prepare them for upload
     pub(crate) fn scan_markdown_files(&self, dir: &Path) -> Result<Vec<EnvironmentFile>> {
         let mut files = Vec::new();
 

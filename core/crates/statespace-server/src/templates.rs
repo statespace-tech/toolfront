@@ -1,15 +1,5 @@
-//! Embedded templates for the landing page and agent instructions
-//!
-//! These templates are bundled into the binary and written to the content
-//! directory on startup if they don't already exist.
-//!
-//! # Files
-//!
-//! - `AGENTS.md` - Instructions for AI agents on how to use the API
-//! - `favicon.svg` - Site icon
-//! - `index.html` - Landing page (template with placeholders)
+//! Embedded templates (AGENTS.md, favicon.svg, index.html).
 
-/// Agent instructions markdown - explains the API protocol to AI agents
 pub const AGENTS_MD: &str = r#"# Statespace Application Instructions
 
 1. **Discover available tools:** Make a GET request to `/README` or any markdown file to see tools in its frontmatter.
@@ -37,7 +27,6 @@ pub const AGENTS_MD: &str = r#"# Statespace Application Instructions
 12. **Pass environment variables exactly as written.** Do NOT substitute values. Write `$USER` or `$DB` literally in your commands. Missing or invalid placeholder arguments will cause an error.
 "#;
 
-/// SVG favicon - Statespace logo
 pub const FAVICON_SVG: &str = r##"<?xml version="1.0" encoding="UTF-8"?>
 <svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 157.32 157.32">
   <defs>
@@ -57,11 +46,6 @@ pub const FAVICON_SVG: &str = r##"<?xml version="1.0" encoding="UTF-8"?>
   </g>
 </svg>"##;
 
-/// HTML template for landing page
-///
-/// Contains two placeholders:
-/// - `{current_url}` - The server's base URL
-/// - `{agents_md_content}` - The agents.md content (for hidden SEO/agent discovery)
 const INDEX_HTML_TEMPLATE: &str = r##"<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,9 +114,6 @@ For complete instructions and available tools, check out /README
 </body>
 </html>"##;
 
-/// Render the index.html template with the given parameters.
-///
-/// This is a pure function - no I/O.
 #[must_use]
 pub fn render_index_html(base_url: &str, agents_md: &str) -> String {
     INDEX_HTML_TEMPLATE

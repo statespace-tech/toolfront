@@ -1,43 +1,21 @@
-//! Tool specification types and validation
-//!
-//! This module defines strongly-typed tool specifications parsed from frontmatter.
-//! All functions are **pure** (no I/O).
-//!
-//! # Tool Specification Format
-//!
-//! Tools are defined in YAML/TOML frontmatter as lists:
+//! Tool specification parsing and validation.
 //!
 //! ```yaml
 //! tools:
-//!   - [ls]                                    # Simple command
-//!   - [cat, { }]                              # Placeholder (any value)
-//!   - [cat, { regex: ".*\\.md$" }]            # Regex constraint
-//!   - [curl, { regex: "^https://" }, ;]      # Options disabled (no extra args)
-//!   - [psql, -c, { regex: "^SELECT" }, ;]    # Fixed args + constrained + strict
+//!   - [ls]                                 # Simple command, extra args allowed
+//!   - [cat, { }]                           # Placeholder accepts any value
+//!   - [cat, { regex: ".*\\.md$" }]         # Regex-constrained placeholder
+//!   - [psql, -c, { regex: "^SELECT" }, ;]  # Trailing ; disables extra args
 //! ```
-//!
-//! # Validation Rules
-//!
-//! 1. Command must match spec prefix (literals must match exactly)
-//! 2. Placeholders (`{ }`) match any value
-//! 3. Regex placeholders (`{ regex: "..." }`) must match the pattern
-//! 4. Extra arguments allowed unless spec ends with `;`
 
 use regex::Regex;
 
-/// A single part of a tool command specification.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToolPart {
-    /// Literal string that must match exactly (e.g., "ls", "-X", "GET")
     Literal(String),
-    /// Placeholder accepting any value, optionally constrained by regex
-    Placeholder {
-        /// If Some, the value must match this regex pattern
-        regex: Option<CompiledRegex>,
-    },
+    Placeholder { regex: Option<CompiledRegex> },
 }
 
-/// A compiled regex with its original pattern for debugging/display.
 #[derive(Debug, Clone)]
 pub struct CompiledRegex {
     pub pattern: String,
@@ -52,16 +30,12 @@ impl PartialEq for CompiledRegex {
 
 impl Eq for CompiledRegex {}
 
-/// A normalized tool specification.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ToolSpec {
-    /// The parts of the command to match
     pub parts: Vec<ToolPart>,
-    /// If true, no additional arguments beyond `parts` are allowed
     pub options_disabled: bool,
 }
 
-/// Error during spec parsing or validation.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 #[non_exhaustive]
 pub enum SpecError {
@@ -76,7 +50,6 @@ pub enum SpecError {
 pub type SpecResult<T> = Result<T, SpecError>;
 
 impl ToolSpec {
-    /// Parse a tool specification from a raw YAML/TOML value.
     pub fn parse(raw: &[serde_json::Value]) -> SpecResult<Self> {
         if raw.is_empty() {
             return Err(SpecError::EmptySpec);
@@ -135,9 +108,6 @@ impl ToolSpec {
     }
 }
 
-/// Check if a command matches any of the tool specifications.
-///
-/// This is a **pure function** - no I/O, fully testable.
 #[must_use]
 pub fn is_valid_tool_call(command: &[String], specs: &[ToolSpec]) -> bool {
     if command.is_empty() {

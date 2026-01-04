@@ -1,10 +1,6 @@
-//! Configuration and credential resolution for the CLI
+//! Configuration and credential resolution.
 //!
-//! Supports loading credentials from:
-//! 1. CLI flags (highest priority)
-//! 2. Config file
-//! 3. Environment variables
-//! 4. Default values (lowest priority)
+//! Precedence: CLI flags > config file > environment variables > defaults.
 
 use crate::error::{ConfigError, Result};
 use serde::Deserialize;
@@ -26,7 +22,6 @@ struct Context {
     org_id: Option<String>,
 }
 
-/// Resolved credentials for API access
 #[derive(Debug, Clone)]
 pub(crate) struct Credentials {
     pub api_url: String,
@@ -34,10 +29,6 @@ pub(crate) struct Credentials {
     pub org_id: Option<String>,
 }
 
-/// Get the platform-specific config file path
-///
-/// Respects XDG_CONFIG_HOME on all Unix platforms (including macOS).
-/// Falls back to platform defaults only when XDG_CONFIG_HOME is unset.
 pub(crate) fn config_path() -> PathBuf {
     if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
         return PathBuf::from(xdg).join("statespace").join("config.toml");
@@ -75,7 +66,6 @@ fn env_var(statespace_key: &str, toolfront_key: &str) -> Option<String> {
         .or_else(|| std::env::var(toolfront_key).ok())
 }
 
-/// Resolve credentials with precedence: CLI args > config file > env vars > defaults
 pub(crate) fn resolve_credentials(
     cli_api_url: Option<&str>,
     cli_api_key: Option<&str>,

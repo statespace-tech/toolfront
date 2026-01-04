@@ -1,46 +1,26 @@
-//! Content resolution - reading files from a content root
-//!
-//! This module provides the `ContentResolver` trait and a local filesystem implementation.
+//! Content resolution from a content root directory.
 
 use statespace_tool_runtime::Error;
 use async_trait::async_trait;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
-/// Trait for resolving content from a path.
-///
-/// This abstraction allows the server to work with different backends:
-/// - Local filesystem (OSS)
-/// - S3/B2 (proprietary environment-server)
 #[async_trait]
 pub trait ContentResolver: Send + Sync {
-    /// Read markdown content at the given path.
-    ///
-    /// # Resolution Order
-    ///
-    /// 1. If path exists as file → return contents
-    /// 2. If path is directory → return `{path}/README.md`
-    /// 3. If path doesn't exist → try `{path}.md`
-    /// 4. Otherwise → error
     async fn resolve(&self, path: &str) -> Result<String, Error>;
-
-    /// Resolve the actual file path (for POST to know working directory)
     async fn resolve_path(&self, path: &str) -> Result<PathBuf, Error>;
 }
 
-/// Local filesystem content resolver.
 #[derive(Debug)]
 pub struct LocalContentResolver {
     root: PathBuf,
 }
 
 impl LocalContentResolver {
-    /// Create a new resolver rooted at the given directory.
     pub fn new(root: PathBuf) -> Self {
         Self { root }
     }
 
-    /// Get the content root path
     #[must_use]
     pub fn root(&self) -> &Path {
         &self.root
@@ -75,8 +55,6 @@ impl LocalContentResolver {
             if readme.is_file() {
                 return Ok(readme);
             }
-            // Directory exists but no README.md - just 404
-            // Agent should use tools like `ls` to discover directory contents
             return Err(Error::NotFound(original.to_string()));
         }
 

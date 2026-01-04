@@ -1,35 +1,13 @@
-//! Statespace Tool Runtime - Core tool execution runtime
+//! Core tool execution runtime for Statespace.
 //!
-//! This library provides the foundational types and execution logic for AI tools.
-//! It is designed to be used by higher-level servers (like `statespace-server`)
-//! that provide HTTP interfaces and content resolution.
-//!
-//! # Features
-//!
-//! - **Tool parsing**: Parse commands into typed `BuiltinTool` variants
-//! - **Frontmatter**: Parse YAML/TOML frontmatter from markdown files
-//! - **Specification validation**: Validate commands against tool specifications
-//! - **Execution**: Execute tools in a sandboxed environment with limits
-//! - **Security**: SSRF protection, path traversal prevention
-//!
-//! # Architecture
-//!
-//! This crate follows FP-Rust patterns inspired by Oxide's Omicron:
-//!
-//! - **Pure modules** (no I/O): `frontmatter`, `spec`, `security`, `protocol`, `validation`, `tools`
-//! - **Effectful edge**: `executor` (filesystem, subprocess, HTTP)
-//!
-//! # Usage
+//! Provides tool parsing, frontmatter extraction, command validation,
+//! and sandboxed execution with security protections (SSRF, path traversal).
 //!
 //! ```rust,ignore
 //! use statespace_tool_runtime::{BuiltinTool, ToolExecutor, ExecutionLimits};
-//! use std::path::PathBuf;
 //!
-//! // Parse a command
 //! let tool = BuiltinTool::from_command(&["cat".to_string(), "file.md".to_string()])?;
-//!
-//! // Execute with limits
-//! let executor = ToolExecutor::new(PathBuf::from("./my-toolsite"), ExecutionLimits::default());
+//! let executor = ToolExecutor::new(PathBuf::from("./toolsite"), ExecutionLimits::default());
 //! let output = executor.execute(&tool).await?;
 //! ```
 

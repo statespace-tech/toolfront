@@ -1,14 +1,10 @@
 //! Tool domain models
-//!
-//! Uses sum types (enums) for all variants - no Option fields.
-//! This follows FP-Rust patterns: make invalid states unrepresentable.
 
 use crate::error::Error;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
-/// HTTP methods supported by the curl tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize)]
 #[serde(rename_all = "UPPERCASE")]
 #[non_exhaustive]
@@ -61,36 +57,16 @@ impl FromStr for HttpMethod {
     }
 }
 
-/// Built-in tools with validated, typed fields.
-///
-/// Prefer `BuiltinTool::from_command` over constructing variants directly.
-/// The server's safety model assumes tools are produced via `from_command`
-/// and frontmatter validation.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
 #[non_exhaustive]
 pub enum BuiltinTool {
-    Glob {
-        pattern: String,
-    },
-
-    /// HTTP request tool with SSRF protections.
-    ///
-    /// Only supports `curl URL` and `curl -X METHOD URL` syntax.
-    /// All other flags are rejected to keep behavior predictable and safe.
-    Curl {
-        url: String,
-        method: HttpMethod,
-    },
-
-    Exec {
-        command: String,
-        args: Vec<String>,
-    },
+    Glob { pattern: String },
+    Curl { url: String, method: HttpMethod },
+    Exec { command: String, args: Vec<String> },
 }
 
 impl BuiltinTool {
-    /// Parse a command into a BuiltinTool
     pub fn from_command(command: &[String]) -> Result<Self, Error> {
         if command.is_empty() {
             return Err(Error::InvalidCommand("Command cannot be empty".to_string()));
