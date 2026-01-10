@@ -17,6 +17,19 @@ pub(crate) struct DeployResult {
     pub fly_url: Option<String>,
 }
 
+/// Response from `PUT /api/v1/environments/by-name/{name}`.
+///
+/// Upsert semantics: creates if not exists, updates if exists.
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct UpsertResult {
+    /// Whether a new environment was created (false = updated existing)
+    pub created: bool,
+    pub id: String,
+    pub name: String,
+    pub url: Option<String>,
+    pub auth_token: Option<String>,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct Environment {
     pub id: String,

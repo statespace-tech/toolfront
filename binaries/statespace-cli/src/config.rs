@@ -36,13 +36,12 @@ pub(crate) fn config_path() -> PathBuf {
     }
 
     let base = if cfg!(target_os = "windows") {
-        dirs::home_dir()
-            .map(|h| h.join("AppData").join("Roaming"))
-            .unwrap_or_else(|| PathBuf::from("."))
+        dirs::home_dir().map_or_else(
+            || PathBuf::from("."),
+            |h| h.join("AppData").join("Roaming"),
+        )
     } else {
-        dirs::home_dir()
-            .map(|h| h.join(".config"))
-            .unwrap_or_else(|| PathBuf::from("."))
+        dirs::home_dir().map_or_else(|| PathBuf::from("."), |h| h.join(".config"))
     };
     base.join("statespace").join("config.toml")
 }
@@ -116,13 +115,12 @@ fn config_dir() -> PathBuf {
     }
 
     let base = if cfg!(target_os = "windows") {
-        dirs::home_dir()
-            .map(|h| h.join("AppData").join("Roaming"))
-            .unwrap_or_else(|| PathBuf::from("."))
+        dirs::home_dir().map_or_else(
+            || PathBuf::from("."),
+            |h| h.join("AppData").join("Roaming"),
+        )
     } else {
-        dirs::home_dir()
-            .map(|h| h.join(".config"))
-            .unwrap_or_else(|| PathBuf::from("."))
+        dirs::home_dir().map_or_else(|| PathBuf::from("."), |h| h.join(".config"))
     };
     base.join("statespace")
 }

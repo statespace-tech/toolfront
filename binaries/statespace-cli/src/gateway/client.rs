@@ -4,7 +4,7 @@ use crate::config::Credentials;
 use crate::error::{GatewayError, Result};
 use crate::gateway::types::{
     DeployResult, DeviceCodeResponse, DeviceTokenResponse, Environment, EnvironmentFile, Token,
-    TokenCreateResult,
+    TokenCreateResult, UpsertResult,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use reqwest::Client;
@@ -54,7 +54,7 @@ impl GatewayClient {
             .ok_or_else(|| GatewayError::MissingOrgId.into())
     }
 
-    pub(crate) fn scan_markdown_files(&self, dir: &Path) -> Result<Vec<EnvironmentFile>> {
+    pub(crate) fn scan_markdown_files(dir: &Path) -> Result<Vec<EnvironmentFile>> {
         let mut files = Vec::new();
 
         for path in walkdir(dir)? {
@@ -124,35 +124,35 @@ impl GatewayClient {
         parse_api_list_response(resp).await
     }
 
-    /// Find an environment by name. Returns None if not found.
-    pub(crate) async fn find_environment_by_name(&self, name: &str) -> Result<Option<Environment>> {
-        let environments = self.list_environments().await?;
-        Ok(environments.into_iter().find(|env| env.name == name))
-    }
-
-    pub(crate) async fn update_environment(
+    /// Upsert an environment by name: creates if not exists, updates if exists.
+    ///
+    /// This is the preferred method for `sync` operations as it handles the
+    /// create-or-update decision server-side, enabling consistent behavior
+    /// across CLI and UI.
+    pub(crate) async fn upsert_environment(
         &self,
-        environment_id: &str,
+        name: &str,
         files: Vec<EnvironmentFile>,
-    ) -> Result<()> {
+    ) -> Result<UpsertResult> {
         #[derive(Serialize)]
         struct Payload {
             files: Vec<EnvironmentFile>,
         }
 
         let url = format!(
-            "{}/api/v1/environments/{}/publish",
-            self.base_url, environment_id
+            "{}/api/v1/environments/by-name/{}",
+            self.base_url,
+            urlencoding::encode(name)
         );
         let resp = self
             .http
-            .post(&url)
+            .put(&url)
             .header("Authorization", self.auth_header())
             .json(&Payload { files })
             .send()
             .await?;
 
-        check_api_response(resp).await
+        parse_api_response(resp).await
     }
 
     pub(crate) async fn delete_environment(&self, environment_id: &str) -> Result<()> {

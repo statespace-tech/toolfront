@@ -7,6 +7,7 @@ use crate::state::{self, SyncState};
 use statespace_server::{build_router, initialize_templates, ExecutionLimits, ServerConfig};
 use std::io::{self, Write};
 use std::net::SocketAddr;
+use std::path::Path;
 use std::time::Duration;
 
 pub(crate) async fn run(cmd: AppCommands, gateway: GatewayClient) -> Result<()> {
@@ -77,8 +78,7 @@ async fn run_deploy(args: AppDeployArgs, gateway: GatewayClient) -> Result<()> {
     } else {
         args.path
             .parent()
-            .map(|p| p.to_path_buf())
-            .unwrap_or_else(|| args.path.clone())
+            .map_or_else(|| args.path.clone(), Path::to_path_buf)
     };
 
     let name = args.name.unwrap_or_else(|| {
@@ -90,7 +90,7 @@ async fn run_deploy(args: AppDeployArgs, gateway: GatewayClient) -> Result<()> {
     });
 
     println!("Scanning {}...", dir_path.display());
-    let files = gateway.scan_markdown_files(&dir_path)?;
+    let files = GatewayClient::scan_markdown_files(&dir_path)?;
 
     if files.is_empty() {
         return Err(Error::cli("No markdown files found"));
@@ -181,14 +181,10 @@ async fn run_delete(args: AppDeleteArgs, gateway: GatewayClient) -> Result<()> {
     Ok(())
 }
 
-/// Sync command: declarative create-or-update with local state caching.
+/// Sync command: declarative create-or-update using server-side upsert.
 ///
-/// Resolution order for deployment target:
-/// 1. If `--force` flag is set, always create new deployment
-/// 2. Load cached state from `.statespace/state.json`
-/// 3. If `--name` provided and differs from cached name, lookup by name
-/// 4. If no cached state, lookup by name (from --name or directory name)
-/// 5. If nothing found, create new deployment
+/// The gateway handles create-or-update logic, making behavior consistent
+/// between CLI and UI. Local state is cached for quick reference only.
 async fn run_sync(args: AppSyncArgs, gateway: GatewayClient) -> Result<()> {
     let dir_path = args
         .path
@@ -202,91 +198,47 @@ async fn run_sync(args: AppSyncArgs, gateway: GatewayClient) -> Result<()> {
         )));
     }
 
-    // Load cached state (unless --force)
-    let cached_state = if args.force {
-        None
-    } else {
-        state::load_state(&dir_path)?
-    };
-
-    // Determine the target name
+    let cached_state = state::load_state(&dir_path)?;
     let target_name = resolve_target_name(&args, &dir_path, cached_state.as_ref());
 
     println!("Scanning {}...", dir_path.display());
-    let files = gateway.scan_markdown_files(&dir_path)?;
+    let files = GatewayClient::scan_markdown_files(&dir_path)?;
 
     if files.is_empty() {
         return Err(Error::cli("No markdown files found"));
     }
 
     println!("Found {} file(s)", files.len());
+    println!("\nSyncing '{target_name}'...");
 
-    // Determine sync action: create new or update existing
-    let sync_result = determine_sync_action(
-        &gateway,
-        &target_name,
-        cached_state.as_ref(),
-        args.force,
+    let result = gateway.upsert_environment(&target_name, files.clone()).await?;
+
+    print_upsert_result(&result);
+
+    // Cache state locally for quick reference
+    let checksums: Vec<_> = files
+        .iter()
+        .map(|f| (f.path.clone(), f.checksum.clone()))
+        .collect();
+    let new_state = SyncState::new(
+        result.id.clone(),
+        result.name.clone(),
+        result.url.clone(),
+        result.auth_token.clone(),
     )
-    .await?;
+    .with_checksums(&checksums);
 
-    match sync_result {
-        SyncAction::Create => {
-            println!("\nCreating new deployment '{target_name}'...");
-            let result = gateway.deploy_environment(&target_name, files.clone()).await?;
+    state::save_state(&dir_path, &new_state)?;
 
-            print_deployment_result(&result);
-
-            // Save state for future syncs
-            let checksums: Vec<_> = files.iter().map(|f| (f.path.clone(), f.checksum.clone())).collect();
-            let new_state = SyncState::new(
-                result.id.clone(),
-                target_name,
-                result.url.clone(),
-                result.auth_token.clone(),
-            )
-            .with_checksums(&checksums);
-
-            state::save_state(&dir_path, &new_state)?;
-            println!("  State cached in .statespace/state.json");
-
-            if args.verify {
-                verify_deployment(&gateway, result.url.as_deref(), result.auth_token.as_deref()).await;
-            }
-        }
-        SyncAction::Update { deployment_id, name } => {
-            println!("\nUpdating deployment '{name}' ({deployment_id})...");
-            gateway.update_environment(&deployment_id, files.clone()).await?;
-
-            println!();
-            println!("{}", "─".repeat(80));
-            println!("  ✓ App synced successfully");
-            println!("  Files uploaded and search index updated");
-            println!("{}", "─".repeat(80));
-
-            // Update cached state
-            let checksums: Vec<_> = files.iter().map(|f| (f.path.clone(), f.checksum.clone())).collect();
-            let updated_state = if let Some(mut existing) = cached_state {
-                existing.checksums = checksums.into_iter().collect();
-                existing.last_synced = chrono::Utc::now();
-                existing
-            } else {
-                SyncState::new(deployment_id, name, None, None).with_checksums(&checksums)
-            };
-
-            state::save_state(&dir_path, &updated_state)?;
-        }
+    if args.verify {
+        verify_deployment(&gateway, result.url.as_deref(), result.auth_token.as_deref()).await;
     }
 
     Ok(())
 }
 
 /// Resolve the target deployment name from args, cache, or directory name.
-fn resolve_target_name(
-    args: &AppSyncArgs,
-    dir_path: &std::path::Path,
-    cached_state: Option<&SyncState>,
-) -> String {
+fn resolve_target_name(args: &AppSyncArgs, dir_path: &Path, cached_state: Option<&SyncState>) -> String {
     // Priority: --name flag > cached name > directory name
     args.name
         .clone()
@@ -300,64 +252,22 @@ fn resolve_target_name(
         })
 }
 
-/// What action to take during sync
-enum SyncAction {
-    /// Create a new deployment
-    Create,
-    /// Update an existing deployment
-    Update { deployment_id: String, name: String },
-}
-
-/// Determine whether to create or update based on state and remote lookup.
-async fn determine_sync_action(
-    gateway: &GatewayClient,
-    target_name: &str,
-    cached_state: Option<&SyncState>,
-    force_create: bool,
-) -> Result<SyncAction> {
-    // Force create: always make new deployment
-    if force_create {
-        return Ok(SyncAction::Create);
-    }
-
-    // Check cached state first
-    if let Some(state) = cached_state {
-        // If cached name matches target, use cached deployment ID
-        if state.name == target_name {
-            return Ok(SyncAction::Update {
-                deployment_id: state.deployment_id.clone(),
-                name: state.name.clone(),
-            });
-        }
-    }
-
-    // Look up by name on the server
-    if let Some(env) = gateway.find_environment_by_name(target_name).await? {
-        return Ok(SyncAction::Update {
-            deployment_id: env.id,
-            name: env.name,
-        });
-    }
-
-    // Nothing found, create new
-    Ok(SyncAction::Create)
-}
-
-fn print_deployment_result(result: &crate::gateway::DeployResult) {
+fn print_upsert_result(result: &crate::gateway::UpsertResult) {
     println!();
     println!("{}", "─".repeat(80));
     println!("  App ID:  {}", result.id);
     if let Some(url) = &result.url {
         println!("  URL:     {url}");
     }
-    if let Some(fly_url) = &result.fly_url {
-        println!("  Fly URL: {fly_url}");
-    }
     if let Some(token) = &result.auth_token {
         println!("  Token:   {token}");
     }
     println!("{}", "─".repeat(80));
-    println!("\n✓ Deployment created");
+    if result.created {
+        println!("\n✓ Deployment created");
+    } else {
+        println!("\n✓ Deployment updated");
+    }
 }
 
 async fn verify_deployment(

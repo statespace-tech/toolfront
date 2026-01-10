@@ -1,5 +1,7 @@
 //! Statespace CLI - AI tool execution runtime
 
+#![allow(clippy::items_after_statements)]
+
 mod args;
 mod commands;
 mod config;

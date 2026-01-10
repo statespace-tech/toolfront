@@ -71,15 +71,14 @@ async fn run_list(args: TokenListArgs, gateway: GatewayClient) -> Result<()> {
         };
 
         println!("{} {}", status, token.name);
-        println!("  {} • {} • {}", scope, time_ago, short_id);
+        println!("  {scope} • {time_ago} • {short_id}");
 
         if token.usage_count > 0 {
             let last_used = token
                 .last_used_at
                 .as_deref()
-                .map(format_relative_time)
-                .unwrap_or_else(|| "never".to_string());
-            println!("  Used {} time(s), last: {}", token.usage_count, last_used);
+                .map_or_else(|| "never".to_string(), format_relative_time);
+            println!("  Used {} time(s), last: {last_used}", token.usage_count);
         }
         println!();
     }
@@ -190,7 +189,7 @@ async fn run_revoke(args: TokenRevokeArgs, gateway: GatewayClient) -> Result<()>
 }
 
 fn print_kv(key: &str, value: &str) {
-    println!("  {:<16} {}", key, value);
+    println!("  {key:<16} {value}");
 }
 
 fn format_relative_time(iso: &str) -> String {
