@@ -47,7 +47,6 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
       - name: Build binary
-        working-directory: core
         run: |
           if [ "${{ matrix.cross }}" = "true" ]; then
             cross build --release --target ${{ matrix.target }} -p statespace-cli
@@ -62,7 +61,7 @@ jobs:
 
           ARCHIVE="${BINARY_NAME}-v${VERSION}-${{ matrix.target }}"
           mkdir -p "dist/${ARCHIVE}"
-          cp "core/target/${{ matrix.target }}/release/${BINARY_NAME}" "dist/${ARCHIVE}/"
+          cp "target/${{ matrix.target }}/release/${BINARY_NAME}" "dist/${ARCHIVE}/"
           cd dist
           tar -czvf "${ARCHIVE}.tar.gz" "${ARCHIVE}"
           if command -v sha256sum &>/dev/null; then

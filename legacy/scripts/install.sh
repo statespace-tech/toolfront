@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Statespace CLI Installer
-# https://github.com/statespace-ai/toolfront
+# https://github.com/statespace-tech/statespace
 #
 # Usage:
 #   curl -fsSL https://statespace.com/install.sh | bash
@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-readonly REPO="statespace-ai/toolfront"
+readonly REPO="statespace-tech/statespace"
 readonly BINARY_NAME="statespace"
 readonly INSTALL_DIR="${STATESPACE_INSTALL_DIR:-$HOME/.statespace}"
 readonly BIN_DIR="$INSTALL_DIR/bin"
