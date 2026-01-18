@@ -67,46 +67,17 @@ pub enum BuiltinTool {
 }
 
 impl BuiltinTool {
+    /// Parse a command into a BuiltinTool.
+    ///
+    /// Commands are validated against frontmatter specs before reaching this function,
+    /// so any command that passes validation is allowed to execute. Special handling
+    /// exists for glob and curl which have dedicated implementations.
     pub fn from_command(command: &[String]) -> Result<Self, Error> {
         if command.is_empty() {
             return Err(Error::InvalidCommand("Command cannot be empty".to_string()));
         }
 
-        const ALLOWED_COMMANDS: &[&str] = &[
-            "grep",
-            "head",
-            "tail",
-            "wc",
-            "sort",
-            "uniq",
-            "cut",
-            "sed",
-            "awk",
-            "find",
-            "tree",
-            "file",
-            "stat",
-            "md5sum",
-            "sha256sum",
-            "du",
-        ];
-
         match command[0].as_str() {
-            "ls" => Ok(Self::Exec {
-                command: "ls".to_string(),
-                args: command[1..].to_vec(),
-            }),
-            "cat" => {
-                if command.len() < 2 {
-                    return Err(Error::InvalidCommand(
-                        "cat requires a path argument".to_string(),
-                    ));
-                }
-                Ok(Self::Exec {
-                    command: "cat".to_string(),
-                    args: command[1..].to_vec(),
-                })
-            }
             "glob" => {
                 if command.len() < 2 {
                     return Err(Error::InvalidCommand(
@@ -118,14 +89,12 @@ impl BuiltinTool {
                 })
             }
             "curl" => Self::parse_curl(&command[1..]),
-            cmd if ALLOWED_COMMANDS.contains(&cmd) => Ok(Self::Exec {
+            // All other commands are executed directly.
+            // Frontmatter validation has already verified the command is allowed.
+            cmd => Ok(Self::Exec {
                 command: cmd.to_string(),
                 args: command[1..].to_vec(),
             }),
-            _ => Err(Error::InvalidCommand(format!(
-                "Unknown or disallowed tool: {}",
-                command[0]
-            ))),
         }
     }
 
@@ -222,8 +191,12 @@ mod tests {
             BuiltinTool::Exec { command, args } if command == "cat" && args == vec!["file.md"]
         ));
 
-        let result = BuiltinTool::from_command(&["cat".to_string()]);
-        assert!(matches!(result, Err(Error::InvalidCommand(_))));
+        // cat without args is now allowed (frontmatter validation handles this)
+        let tool = BuiltinTool::from_command(&["cat".to_string()]).unwrap();
+        assert!(matches!(
+            tool,
+            BuiltinTool::Exec { command, args } if command == "cat" && args.is_empty()
+        ));
     }
 
     #[test]
@@ -267,9 +240,19 @@ mod tests {
     }
 
     #[test]
-    fn test_from_command_unknown() {
-        let result = BuiltinTool::from_command(&["unknown".to_string()]);
-        assert!(matches!(result, Err(Error::InvalidCommand(_))));
+    fn test_from_command_custom() {
+        // Any command is now allowed - frontmatter validation handles restrictions
+        let tool = BuiltinTool::from_command(&["jq".to_string(), ".".to_string()]).unwrap();
+        assert!(matches!(
+            tool,
+            BuiltinTool::Exec { command, args } if command == "jq" && args == vec!["."]
+        ));
+
+        let tool = BuiltinTool::from_command(&["python".to_string(), "script.py".to_string()]).unwrap();
+        assert!(matches!(
+            tool,
+            BuiltinTool::Exec { command, args } if command == "python" && args == vec!["script.py"]
+        ));
     }
 
     #[test]
