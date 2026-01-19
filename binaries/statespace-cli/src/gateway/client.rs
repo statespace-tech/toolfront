@@ -330,7 +330,7 @@ impl GatewayClient {
     }
 
     pub(crate) async fn list_organizations(&self) -> Result<Vec<Organization>> {
-        let url = format!("{}/api/v1/dashboard/organizations", self.base_url);
+        let url = format!("{}/api/v1/user/organizations", self.base_url);
         let resp = self
             .http
             .get(&url)
