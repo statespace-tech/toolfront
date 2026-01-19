@@ -2,6 +2,7 @@
 
 mod app;
 mod auth;
+mod org;
 mod tokens;
 
 use crate::args::{AppCommands, Cli, Commands};
@@ -26,6 +27,10 @@ pub(crate) async fn run(cli: Cli) -> Result<()> {
         Commands::Auth { command } => {
             // Auth commands don't require existing credentials
             auth::run(command.clone(), cli.global.api_url.as_deref()).await
+        }
+        Commands::Org { command } => {
+            let gateway = create_gateway(&cli)?;
+            org::run(command.clone(), gateway).await
         }
     }
 }

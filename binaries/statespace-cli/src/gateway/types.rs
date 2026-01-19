@@ -118,3 +118,10 @@ pub(crate) struct ExchangeTokenResponse {
     pub expires_at: Option<String>,
     pub name: String,
 }
+
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct Organization {
+    pub id: String,
+    pub name: String,
+    pub tier: Option<String>,
+}
