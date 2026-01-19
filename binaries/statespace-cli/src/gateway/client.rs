@@ -484,4 +484,23 @@ impl AuthClient {
 
         parse_api_response(resp).await
     }
+
+    /// Exchange a JWT access token for a CLI API key.
+    ///
+    /// This is called after successful device authorization. The JWT is exchanged
+    /// for a scoped API key that can be used for subsequent CLI operations.
+    pub(crate) async fn exchange_token(
+        &self,
+        access_token: &str,
+    ) -> Result<crate::gateway::types::ExchangeTokenResponse> {
+        let url = format!("{}/api/v1/cli/tokens:exchange", self.base_url);
+        let resp = self
+            .http
+            .post(&url)
+            .header("Authorization", format!("Bearer {}", access_token))
+            .send()
+            .await?;
+
+        parse_api_response(resp).await
+    }
 }

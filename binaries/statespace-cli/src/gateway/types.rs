@@ -108,3 +108,13 @@ pub(crate) struct AuthorizedUser {
     pub user_id: String,
     pub expires_at: Option<String>,
 }
+
+/// Response from `POST /api/v1/cli/tokens:exchange`.
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct ExchangeTokenResponse {
+    pub api_key: String,
+    pub key_prefix: String,
+    pub organization_id: String,
+    pub expires_at: Option<String>,
+    pub name: String,
+}

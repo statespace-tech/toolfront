@@ -4,4 +4,4 @@ mod client;
 mod types;
 
 pub(crate) use client::{AuthClient, GatewayClient};
-pub(crate) use types::{AuthorizedUser, DeviceTokenResponse, UpsertResult};
+pub(crate) use types::{AuthorizedUser, DeviceTokenResponse, ExchangeTokenResponse, UpsertResult};

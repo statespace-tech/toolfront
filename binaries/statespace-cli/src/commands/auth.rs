@@ -81,7 +81,15 @@ async fn run_login(api_url: Option<&str>) -> Result<()> {
                 println!();
                 println!();
 
-                let creds = StoredCredentials::from_auth(user, api_url.to_string());
+                // Exchange JWT for CLI API key
+                println!("Exchanging token for API key...");
+                let exchange_result = client.exchange_token(&user.access_token).await?;
+
+                let creds = StoredCredentials::from_exchange(
+                    user,
+                    exchange_result,
+                    api_url.to_string(),
+                );
                 save_stored_credentials(&creds)?;
 
                 println!("✓ Logged in as {}", creds.email);
@@ -142,11 +150,12 @@ fn run_token(format: TokenOutputFormat) -> Result<()> {
 
     match format {
         TokenOutputFormat::Plain => {
-            println!("{}", creds.access_token);
+            println!("{}", creds.api_key);
         }
         TokenOutputFormat::Json => {
             let output = serde_json::json!({
-                "access_token": creds.access_token,
+                "api_key": creds.api_key,
+                "org_id": creds.org_id,
                 "email": creds.email,
                 "user_id": creds.user_id,
                 "expires_at": creds.expires_at,
