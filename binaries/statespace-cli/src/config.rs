@@ -153,6 +153,9 @@ pub(crate) struct StoredCredentials {
     pub api_key: String,
     /// Organization ID for CLI operations
     pub org_id: String,
+    /// Organization name for display purposes
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub org_name: Option<String>,
     /// User's email address
     pub email: String,
     /// User's display name
@@ -179,6 +182,7 @@ impl StoredCredentials {
         Self {
             api_key: exchange.api_key,
             org_id: exchange.organization_id,
+            org_name: None,
             email: user.email,
             name: user.name,
             user_id: user.user_id,
@@ -195,6 +199,7 @@ impl StoredCredentials {
         Self {
             api_key: String::new(),
             org_id: String::new(),
+            org_name: None,
             email: user.email,
             name: user.name,
             user_id: user.user_id,

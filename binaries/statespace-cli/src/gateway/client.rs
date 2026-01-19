@@ -3,8 +3,8 @@
 use crate::config::Credentials;
 use crate::error::{GatewayError, Result};
 use crate::gateway::types::{
-    DeployResult, DeviceCodeResponse, DeviceTokenResponse, Environment, EnvironmentFile, Token,
-    TokenCreateResult, UpsertResult,
+    DeployResult, DeviceCodeResponse, DeviceTokenResponse, Environment, EnvironmentFile,
+    Organization, Token, TokenCreateResult, UpsertResult,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use reqwest::Client;
@@ -327,6 +327,17 @@ impl GatewayClient {
             .await?;
 
         check_api_response(resp).await
+    }
+
+    pub(crate) async fn list_organizations(&self) -> Result<Vec<Organization>> {
+        let url = format!("{}/api/v1/dashboard/organizations", self.base_url);
+        let resp = self
+            .http
+            .get(&url)
+            .header("Authorization", self.auth_header())
+            .send()
+            .await?;
+        parse_api_list_response(resp).await
     }
 }
 
