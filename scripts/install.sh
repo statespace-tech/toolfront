@@ -128,40 +128,41 @@ Please report this at: https://github.com/${REPO}/issues"
 
 # --- PATH ---
 
-setup_path() {
-    # Already in PATH
+print_path_instructions() {
+    # Already in PATH - no instructions needed
     if command -v "$BINARY_NAME" &>/dev/null; then
         return 0
     fi
 
-    local shell_name rc_file=""
+    local shell_name
     shell_name=$(basename "${SHELL:-bash}")
+
+    printf '\nTo add statespace to your PATH:\n\n'
 
     case "$shell_name" in
         bash)
-            # Prefer .bashrc for interactive, .bash_profile for login
-            if [[ -f "$HOME/.bashrc" ]]; then
-                rc_file="$HOME/.bashrc"
-            elif [[ -f "$HOME/.bash_profile" ]]; then
-                rc_file="$HOME/.bash_profile"
-            fi
+            printf '  # Add to ~/.bashrc or ~/.bash_profile:\n'
+            printf '  export PATH="%s:$PATH"\n' "$BIN_DIR"
             ;;
         zsh)
-            [[ -f "$HOME/.zshrc" ]] && rc_file="$HOME/.zshrc"
+            printf '  # Add to ~/.zshrc:\n'
+            printf '  export PATH="%s:$PATH"\n' "$BIN_DIR"
             ;;
         fish)
-            [[ -f "$HOME/.config/fish/config.fish" ]] && rc_file="$HOME/.config/fish/config.fish"
+            printf '  # Add to ~/.config/fish/config.fish:\n'
+            printf '  fish_add_path "%s"\n' "$BIN_DIR"
+            ;;
+        nu|nushell)
+            printf '  # Add to ~/.config/nushell/env.nu:\n'
+            printf '  $env.PATH = ($env.PATH | prepend "%s")\n' "$BIN_DIR"
+            ;;
+        *)
+            printf '  # Add to your shell config:\n'
+            printf '  export PATH="%s:$PATH"\n' "$BIN_DIR"
             ;;
     esac
 
-    if [[ -n "$rc_file" ]] && ! grep -qF "$BIN_DIR" "$rc_file" 2>/dev/null; then
-        if [[ "$shell_name" == "fish" ]]; then
-            printf '\nfish_add_path "%s"\n' "$BIN_DIR" >> "$rc_file"
-        else
-            printf '\nexport PATH="%s:$PATH"\n' "$BIN_DIR" >> "$rc_file"
-        fi
-        info "added $BIN_DIR to PATH in $rc_file"
-    fi
+    printf '\nOr run now with:\n  %s/%s --help\n' "$BIN_DIR" "$BINARY_NAME"
 }
 
 # --- Main ---
@@ -227,14 +228,9 @@ main() {
 
     info "installed to $BIN_DIR/$BINARY_NAME"
 
-    setup_path
-
     printf '\n%sInstalled successfully!%s\n' "$GREEN" "$NC"
-    printf 'Run: %s --help\n' "$BINARY_NAME"
 
-    if ! command -v "$BINARY_NAME" &>/dev/null; then
-        printf '\nTo use now, run:\n  export PATH="%s:$PATH"\n' "$BIN_DIR"
-    fi
+    print_path_instructions
 }
 
 main "$@"
