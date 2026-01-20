@@ -159,7 +159,122 @@ impl BuiltinTool {
             Self::Exec { .. } => "exec",
         }
     }
+
+    /// Returns true if this tool requires network egress.
+    ///
+    /// Used by environment-server to enforce egress restrictions on free tier.
+    /// Only `curl` requires network access; `glob` and `exec` are local-only.
+    pub const fn requires_egress(&self) -> bool {
+        matches!(self, Self::Curl { .. })
+    }
+
+    /// Check if this tool is allowed on free tier (base image only).
+    ///
+    /// Free tier environments can only use tools from the base image.
+    /// This is an allowlist of safe filesystem commands.
+    pub fn is_free_tier_allowed(&self) -> bool {
+        match self {
+            // Glob is always allowed (built-in, no shell exec)
+            Self::Glob { .. } => true,
+            // Curl is blocked (network access)
+            Self::Curl { .. } => false,
+            // Exec commands must be in the allowlist
+            Self::Exec { command, .. } => FREE_TIER_COMMAND_ALLOWLIST.contains(&command.as_str()),
+        }
+    }
 }
+
+/// Commands allowed on free tier (base image only).
+///
+/// This list includes:
+/// - Core filesystem utilities (coreutils)
+/// - Text processing tools
+/// - Built-in glob command
+///
+/// Notably excluded:
+/// - Network tools (curl, wget, nc, ssh, etc.)
+/// - Package managers (apt, pip, npm)
+/// - Interpreters that could make network calls (python, node, ruby)
+pub const FREE_TIER_COMMAND_ALLOWLIST: &[&str] = &[
+    // Coreutils - file operations
+    "cat",
+    "head",
+    "tail",
+    "less",
+    "more",
+    "wc",
+    "sort",
+    "uniq",
+    "cut",
+    "paste",
+    "tr",
+    "tee",
+    "split",
+    "csplit",
+    // Coreutils - file info
+    "ls",
+    "stat",
+    "file",
+    "du",
+    "df",
+    "find",
+    "which",
+    "whereis",
+    // Coreutils - file manipulation
+    "cp",
+    "mv",
+    "rm",
+    "mkdir",
+    "rmdir",
+    "touch",
+    "ln",
+    // Text processing
+    "grep",
+    "egrep",
+    "fgrep",
+    "sed",
+    "awk",
+    "diff",
+    "comm",
+    "cmp",
+    // JSON processing (commonly needed)
+    "jq",
+    // Archive (read-only operations are safe)
+    "tar",
+    "gzip",
+    "gunzip",
+    "zcat",
+    "bzip2",
+    "bunzip2",
+    "xz",
+    "unxz",
+    // Misc utilities
+    "echo",
+    "printf",
+    "true",
+    "false",
+    "yes",
+    "date",
+    "cal",
+    "env",
+    "printenv",
+    "basename",
+    "dirname",
+    "realpath",
+    "readlink",
+    "pwd",
+    "id",
+    "whoami",
+    "uname",
+    "hostname",
+    // Markdown/text utilities that might be useful
+    "md5sum",
+    "sha256sum",
+    "base64",
+    "xxd",
+    "hexdump",
+    "od",
+];
 
 #[cfg(test)]
 mod tests {
@@ -260,5 +375,66 @@ mod tests {
         assert_eq!("GET".parse::<HttpMethod>().unwrap(), HttpMethod::Get);
         assert_eq!("post".parse::<HttpMethod>().unwrap(), HttpMethod::Post);
         assert!("INVALID".parse::<HttpMethod>().is_err());
+    }
+
+    #[test]
+    fn test_is_free_tier_allowed_glob() {
+        let tool = BuiltinTool::Glob {
+            pattern: "*.md".to_string(),
+        };
+        assert!(tool.is_free_tier_allowed());
+    }
+
+    #[test]
+    fn test_is_free_tier_allowed_curl_blocked() {
+        let tool = BuiltinTool::Curl {
+            url: "https://example.com".to_string(),
+            method: HttpMethod::Get,
+        };
+        assert!(!tool.is_free_tier_allowed());
+    }
+
+    #[test]
+    fn test_is_free_tier_allowed_allowlisted_commands() {
+        // Coreutils should be allowed
+        for cmd in ["cat", "ls", "grep", "sed", "awk", "jq", "head", "tail"] {
+            let tool = BuiltinTool::Exec {
+                command: cmd.to_string(),
+                args: vec![],
+            };
+            assert!(tool.is_free_tier_allowed(), "{cmd} should be allowed");
+        }
+    }
+
+    #[test]
+    fn test_is_free_tier_blocked_dangerous_commands() {
+        // Network tools and interpreters should be blocked
+        for cmd in ["wget", "nc", "ssh", "python", "node", "ruby", "curl", "apt", "pip", "npm"] {
+            let tool = BuiltinTool::Exec {
+                command: cmd.to_string(),
+                args: vec![],
+            };
+            assert!(!tool.is_free_tier_allowed(), "{cmd} should be blocked");
+        }
+    }
+
+    #[test]
+    fn test_requires_egress() {
+        assert!(BuiltinTool::Curl {
+            url: "https://example.com".to_string(),
+            method: HttpMethod::Get,
+        }
+        .requires_egress());
+
+        assert!(!BuiltinTool::Glob {
+            pattern: "*.md".to_string(),
+        }
+        .requires_egress());
+
+        assert!(!BuiltinTool::Exec {
+            command: "ls".to_string(),
+            args: vec![],
+        }
+        .requires_egress());
     }
 }
