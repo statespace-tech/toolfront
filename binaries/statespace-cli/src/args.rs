@@ -54,6 +54,12 @@ pub(crate) enum Commands {
         #[command(subcommand)]
         command: OrgCommands,
     },
+
+    /// Manage SSH keys for your organization
+    SshKeys {
+        #[command(subcommand)]
+        command: SshKeysCommands,
+    },
 }
 
 #[derive(Debug, Clone, Subcommand)]
@@ -328,4 +334,41 @@ pub(crate) enum OrgCommands {
         /// Organization name or ID (interactive picker if omitted)
         org: Option<String>,
     },
+}
+
+#[derive(Debug, Clone, Subcommand)]
+pub(crate) enum SshKeysCommands {
+    /// Add an SSH public key to your organization
+    ///
+    /// The key will be deployed to all sprite environments in your org,
+    /// allowing SSH access via `statespace app ssh <app>`.
+    Add(SshKeyAddArgs),
+
+    /// List SSH keys in your organization
+    List,
+
+    /// Remove an SSH key by fingerprint
+    Remove(SshKeyRemoveArgs),
+}
+
+#[derive(Debug, Clone, Args)]
+pub(crate) struct SshKeyAddArgs {
+    /// Path to SSH public key file (default: auto-detect from ~/.ssh)
+    #[arg(value_name = "KEY_FILE")]
+    pub key_file: Option<PathBuf>,
+
+    /// Name for this key (default: derived from key comment or filename)
+    #[arg(long)]
+    pub name: Option<String>,
+}
+
+#[derive(Debug, Clone, Args)]
+pub(crate) struct SshKeyRemoveArgs {
+    /// Key fingerprint (SHA256:...) or partial match
+    #[arg(value_name = "FINGERPRINT")]
+    pub fingerprint: String,
+
+    /// Skip confirmation prompt
+    #[arg(long, short)]
+    pub yes: bool,
 }

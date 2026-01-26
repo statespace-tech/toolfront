@@ -136,3 +136,12 @@ pub(crate) struct SshConnectionConfig {
     /// Sprites API token for authentication
     pub sprites_token: String,
 }
+
+/// Organization SSH key
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct SshKey {
+    pub id: String,
+    pub name: String,
+    pub fingerprint: String,
+    pub created_at: String,
+}

@@ -4,7 +4,7 @@ use crate::config::Credentials;
 use crate::error::{GatewayError, Result};
 use crate::gateway::types::{
     DeployResult, DeviceCodeResponse, DeviceTokenResponse, Environment, EnvironmentFile,
-    Organization, SshConnectionConfig, Token, TokenCreateResult, UpsertResult,
+    Organization, SshConnectionConfig, SshKey, Token, TokenCreateResult, UpsertResult,
 };
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
 use reqwest::Client;
@@ -332,6 +332,44 @@ impl GatewayClient {
         );
         let resp = self.with_headers(self.http.get(&url)).send().await?;
         parse_api_response(resp).await
+    }
+
+    /// Add an SSH public key to the organization.
+    ///
+    /// Keys are applied to all sprite environments in the org during provisioning.
+    pub(crate) async fn add_ssh_key(&self, name: &str, public_key: &str) -> Result<SshKey> {
+        #[derive(Serialize)]
+        struct Payload<'a> {
+            name: &'a str,
+            public_key: &'a str,
+        }
+
+        let url = format!("{}/api/v1/ssh-keys", self.base_url);
+        let resp = self
+            .with_headers(self.http.post(&url))
+            .json(&Payload { name, public_key })
+            .send()
+            .await?;
+
+        parse_api_response(resp).await
+    }
+
+    /// List all SSH keys for the organization.
+    pub(crate) async fn list_ssh_keys(&self) -> Result<Vec<SshKey>> {
+        let url = format!("{}/api/v1/ssh-keys", self.base_url);
+        let resp = self.with_headers(self.http.get(&url)).send().await?;
+        parse_api_list_response(resp).await
+    }
+
+    /// Remove an SSH key by its fingerprint.
+    pub(crate) async fn remove_ssh_key(&self, fingerprint: &str) -> Result<()> {
+        let url = format!(
+            "{}/api/v1/ssh-keys/{}",
+            self.base_url,
+            urlencoding::encode(fingerprint)
+        );
+        let resp = self.with_headers(self.http.delete(&url)).send().await?;
+        check_api_response(resp).await
     }
 }
 

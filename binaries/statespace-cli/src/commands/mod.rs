@@ -4,6 +4,7 @@ mod app;
 mod auth;
 mod org;
 pub(crate) mod ssh;
+mod ssh_keys;
 mod tokens;
 
 use crate::args::{AppCommands, Cli, Commands};
@@ -32,6 +33,10 @@ pub(crate) async fn run(cli: Cli) -> Result<()> {
         Commands::Org { command } => {
             let gateway = create_gateway(&cli)?;
             org::run(command.clone(), gateway).await
+        }
+        Commands::SshKeys { command } => {
+            let gateway = create_gateway(&cli)?;
+            ssh_keys::run(command.clone(), gateway).await
         }
     }
 }
