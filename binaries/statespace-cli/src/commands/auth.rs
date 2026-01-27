@@ -2,8 +2,8 @@
 
 use crate::args::{AuthCommands, TokenOutputFormat};
 use crate::config::{
-    credentials_path, delete_stored_credentials, load_stored_credentials, save_stored_credentials,
-    StoredCredentials,
+    StoredCredentials, credentials_path, delete_stored_credentials, load_stored_credentials,
+    save_stored_credentials,
 };
 use crate::error::Result;
 use crate::gateway::{AuthClient, DeviceTokenResponse};
@@ -85,11 +85,8 @@ async fn run_login(api_url: Option<&str>) -> Result<()> {
                 println!("Exchanging token for API key...");
                 let exchange_result = client.exchange_token(&user.access_token).await?;
 
-                let creds = StoredCredentials::from_exchange(
-                    user,
-                    exchange_result,
-                    api_url.to_string(),
-                );
+                let creds =
+                    StoredCredentials::from_exchange(user, exchange_result, api_url.to_string());
                 save_stored_credentials(&creds)?;
 
                 println!("✓ Logged in as {}", creds.email);
@@ -160,7 +157,10 @@ fn run_token(format: TokenOutputFormat) -> Result<()> {
                 "user_id": creds.user_id,
                 "expires_at": creds.expires_at,
             });
-            println!("{}", serde_json::to_string_pretty(&output).unwrap_or_default());
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&output).unwrap_or_default()
+            );
         }
     }
     Ok(())

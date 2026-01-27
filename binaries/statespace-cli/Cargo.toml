@@ -4,51 +4,43 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Statespace CLI - manage and deploy AI tool applications"
-readme = "../../README.md"
-keywords = ["ai", "tools", "cli", "agents"]
-categories = ["command-line-utilities"]
+repository.workspace = true
+description = "Statespace command-line interface"
 
 [[bin]]
 name = "statespace"
 path = "src/main.rs"
 
 [dependencies]
-# Internal crates
-statespace-server.workspace = true
-statespace-tool-runtime.workspace = true
-
 # CLI
-clap.workspace = true
-tracing.workspace = true
-tracing-subscriber.workspace = true
+clap = { workspace = true }
+dirs = { workspace = true }
 
-# Web/async (for local server)
-axum.workspace = true
-tokio.workspace = true
+# Async runtime
+tokio = { workspace = true }
+futures-util = { version = "0.3", features = ["sink"] }
 
-# HTTP client (for gateway API)
-reqwest.workspace = true
+# WebSocket
+tokio-tungstenite = { version = "0.26", features = ["rustls-tls-webpki-roots"] }
 
-# WebSocket (for SSH proxy)
-tokio-tungstenite = { version = "0.24", features = ["rustls-tls-native-roots"] }
-futures-util = "0.3"
+# HTTP client
+reqwest = { workspace = true }
 
 # Serialization
-serde.workspace = true
-serde_json.workspace = true
-toml.workspace = true
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+
+# Time
+chrono = { workspace = true }
 
 # Error handling
-thiserror.workspace = true
+thiserror = { workspace = true }
 
-# Utilities
-dirs = "6"
-sha2 = "0.10"
-base64 = "0.22"
-chrono.workspace = true
+# Browser opening
 open = "5"
-urlencoding = "2"
+
+# Interactive prompts
 inquire = "0.7"
 
 [dev-dependencies]

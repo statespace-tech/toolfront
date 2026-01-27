@@ -113,18 +113,31 @@ pub(crate) async fn run_ssh_proxy(args: AppSshProxyArgs, gateway: GatewayClient)
         .ok_or_else(|| Error::cli("Connection closed before status"))?
         .map_err(|e| Error::cli(format!("Failed to read status: {e}")))?;
 
-    if let Message::Text(text) = status_msg {
-        let status: ProxyStatus = serde_json::from_str(&text)
-            .map_err(|e| Error::cli(format!("Invalid status JSON: {e}")))?;
+    match &status_msg {
+        Message::Text(text) => {
+            let status: ProxyStatus = serde_json::from_str(text)
+                .map_err(|e| Error::cli(format!("Invalid status JSON: {e}")))?;
 
-        if status.status != "connected" {
+            if status.status != "connected" {
+                return Err(Error::cli(format!(
+                    "Proxy connection failed: {}",
+                    status.status
+                )));
+            }
+        }
+        Message::Binary(data) => {
             return Err(Error::cli(format!(
-                "Proxy connection failed: {}",
-                status.status
+                "Expected text status, got binary ({} bytes): {:?}",
+                data.len(),
+                String::from_utf8_lossy(&data[..data.len().min(100)])
             )));
         }
-    } else {
-        return Err(Error::cli("Expected text status message"));
+        Message::Close(frame) => {
+            return Err(Error::cli(format!("Connection closed: {:?}", frame)));
+        }
+        other => {
+            return Err(Error::cli(format!("Unexpected message type: {:?}", other)));
+        }
     }
 
     let mut stdin = tokio::io::stdin();

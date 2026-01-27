@@ -1,12 +1,13 @@
-{ pkgs ? import <nixpkgs> { } }:
+{ pkgs ? import <nixpkgs> {} }:
 
 pkgs.mkShell {
   buildInputs = with pkgs; [
-    rustup
+    cairo
+    pkg-config
     libiconv
   ];
 
-  LIBRARY_PATH = pkgs.lib.makeLibraryPath (with pkgs; [
-    libiconv
-  ]);
+  shellHook = ''
+    export DYLD_FALLBACK_LIBRARY_PATH="${pkgs.cairo}/lib"
+  '';
 }

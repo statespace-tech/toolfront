@@ -1,5 +1,6 @@
-//! CLI error types.
+//! Error types for the Statespace CLI.
 
+use std::io;
 use thiserror::Error;
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;
@@ -7,64 +8,53 @@ pub(crate) type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Error)]
 pub(crate) enum Error {
     #[error("{0}")]
+    Cli(String),
+
+    #[error(transparent)]
     Config(#[from] ConfigError),
 
-    #[error("{0}")]
+    #[error(transparent)]
     Gateway(#[from] GatewayError),
 
-    #[error("{0}")]
-    Io(#[from] std::io::Error),
-
-    #[error("{0}")]
-    Http(#[from] reqwest::Error),
-
-    #[error("invalid address: {0}")]
-    AddrParse(#[from] std::net::AddrParseError),
-
-    #[error("{0}")]
-    Runtime(#[from] statespace_tool_runtime::Error),
-
-    #[error("{0}")]
-    Cli(String),
-}
-
-#[derive(Debug, Error)]
-pub(crate) enum ConfigError {
-    #[allow(dead_code)]
-    #[error("config file not found: {0}")]
-    NotFound(std::path::PathBuf),
-
-    #[allow(dead_code)]
-    #[error("invalid config: {0}")]
-    Invalid(String),
-
-    #[error(
-        "API key not configured.\n\
-         Configure credentials using one of:\n  \
-         1. Config file at {config_path}\n  \
-         2. --api-key flag\n  \
-         3. STATESPACE_API_KEY environment variable"
-    )]
-    MissingApiKey { config_path: String },
-}
-
-#[derive(Debug, Error)]
-pub(crate) enum GatewayError {
-    #[error("API request failed ({status}): {message}")]
-    Api {
-        status: reqwest::StatusCode,
-        message: String,
-    },
-
-    #[error("failed to build HTTP client: {0}")]
-    ClientBuild(String),
-
-    #[error("organization ID required for this operation")]
-    MissingOrgId,
+    #[error(transparent)]
+    Io(#[from] io::Error),
 }
 
 impl Error {
     pub(crate) fn cli(msg: impl Into<String>) -> Self {
         Self::Cli(msg.into())
+    }
+}
+
+#[derive(Debug, Error)]
+pub(crate) enum ConfigError {
+    #[error("API key not found. Set STATESPACE_API_KEY or run `statespace auth login`.\nConfig file: {config_path}")]
+    MissingApiKey { config_path: String },
+
+    #[error("Invalid configuration: {0}")]
+    Invalid(String),
+}
+
+#[derive(Debug, Error)]
+pub(crate) enum GatewayError {
+    #[error("HTTP request failed: {0}")]
+    Http(String),
+
+    #[error("API error ({status}): {message}")]
+    Api { status: u16, message: String },
+
+    #[error("Failed to parse response: {0}")]
+    Parse(String),
+
+    #[error("Authentication required. Run `statespace auth login`.")]
+    Unauthorized,
+
+    #[error("Not found: {0}")]
+    NotFound(String),
+}
+
+impl From<reqwest::Error> for GatewayError {
+    fn from(e: reqwest::Error) -> Self {
+        GatewayError::Http(e.to_string())
     }
 }

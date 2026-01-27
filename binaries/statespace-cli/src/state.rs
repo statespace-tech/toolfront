@@ -9,10 +9,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 
+#[allow(dead_code)]
 const STATE_DIR: &str = ".statespace";
+#[allow(dead_code)]
 const STATE_FILE: &str = "state.json";
 
 /// Local sync state stored in `.statespace/state.json`.
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct SyncState {
     /// Deployment ID from the gateway
@@ -35,6 +38,7 @@ pub(crate) struct SyncState {
     pub checksums: HashMap<String, String>,
 }
 
+#[allow(dead_code)]
 impl SyncState {
     /// Create a new sync state from deployment result.
     pub(crate) fn new(
@@ -64,11 +68,13 @@ impl SyncState {
 // --- Pure Functions (no I/O) ---
 
 /// Compute the state file path for a given project directory.
+#[allow(dead_code)]
 pub(crate) fn state_file_path(project_dir: &Path) -> std::path::PathBuf {
     project_dir.join(STATE_DIR).join(STATE_FILE)
 }
 
 /// Compute the state directory path for a given project directory.
+#[allow(dead_code)]
 fn state_dir_path(project_dir: &Path) -> std::path::PathBuf {
     project_dir.join(STATE_DIR)
 }
@@ -76,6 +82,7 @@ fn state_dir_path(project_dir: &Path) -> std::path::PathBuf {
 // --- I/O Functions (effects at edges) ---
 
 /// Load sync state from disk. Returns None if file doesn't exist.
+#[allow(dead_code)]
 pub(crate) fn load_state(project_dir: &Path) -> Result<Option<SyncState>> {
     let path = state_file_path(project_dir);
 
@@ -101,6 +108,7 @@ pub(crate) fn load_state(project_dir: &Path) -> Result<Option<SyncState>> {
 }
 
 /// Save sync state to disk. Creates the state directory if needed.
+#[allow(dead_code)]
 pub(crate) fn save_state(project_dir: &Path, state: &SyncState) -> Result<()> {
     let dir_path = state_dir_path(project_dir);
     let file_path = state_file_path(project_dir);
@@ -122,9 +130,8 @@ pub(crate) fn save_state(project_dir: &Path, state: &SyncState) -> Result<()> {
         let _ = std::fs::write(&gitignore_path, "state.json\n");
     }
 
-    let content = serde_json::to_string_pretty(state).map_err(|e| {
-        Error::cli(format!("Failed to serialize state: {e}"))
-    })?;
+    let content = serde_json::to_string_pretty(state)
+        .map_err(|e| Error::cli(format!("Failed to serialize state: {e}")))?;
 
     std::fs::write(&file_path, content).map_err(|e| {
         Error::cli(format!(
@@ -167,12 +174,7 @@ mod tests {
 
     #[test]
     fn test_sync_state_with_checksums() {
-        let state = SyncState::new(
-            "abc123".to_string(),
-            "my-app".to_string(),
-            None,
-            None,
-        );
+        let state = SyncState::new("abc123".to_string(), "my-app".to_string(), None, None);
 
         let files = vec![
             ("README.md".to_string(), "sha256:abc".to_string()),
@@ -181,7 +183,10 @@ mod tests {
 
         let state = state.with_checksums(&files);
         assert_eq!(state.checksums.len(), 2);
-        assert_eq!(state.checksums.get("README.md"), Some(&"sha256:abc".to_string()));
+        assert_eq!(
+            state.checksums.get("README.md"),
+            Some(&"sha256:abc".to_string())
+        );
     }
 
     #[test]
@@ -214,12 +219,7 @@ mod tests {
     fn test_save_creates_gitignore() {
         let dir = TempDir::new().unwrap();
 
-        let state = SyncState::new(
-            "abc123".to_string(),
-            "my-app".to_string(),
-            None,
-            None,
-        );
+        let state = SyncState::new("abc123".to_string(), "my-app".to_string(), None, None);
 
         save_state(dir.path(), &state).unwrap();
 

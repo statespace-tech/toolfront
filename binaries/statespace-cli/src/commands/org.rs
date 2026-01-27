@@ -6,7 +6,7 @@ use crate::error::Result;
 use crate::gateway::GatewayClient;
 use inquire::Select;
 
-pub(super) async fn run(cmd: OrgCommands, gateway: GatewayClient) -> Result<()> {
+pub(crate) async fn run(cmd: OrgCommands, gateway: GatewayClient) -> Result<()> {
     match cmd {
         OrgCommands::List => run_list(gateway).await,
         OrgCommands::Current => run_current(),
@@ -47,9 +47,7 @@ fn run_current() -> Result<()> {
         return Ok(());
     }
 
-    let display = creds
-        .org_name
-        .unwrap_or_else(|| creds.org_id.clone());
+    let display = creds.org_name.unwrap_or_else(|| creds.org_id.clone());
     println!("{display}");
 
     Ok(())

@@ -36,10 +36,7 @@ pub(crate) fn config_path() -> PathBuf {
     }
 
     let base = if cfg!(target_os = "windows") {
-        dirs::home_dir().map_or_else(
-            || PathBuf::from("."),
-            |h| h.join("AppData").join("Roaming"),
-        )
+        dirs::home_dir().map_or_else(|| PathBuf::from("."), |h| h.join("AppData").join("Roaming"))
     } else {
         dirs::home_dir().map_or_else(|| PathBuf::from("."), |h| h.join(".config"))
     };
@@ -72,14 +69,22 @@ pub(crate) fn resolve_credentials(
     cli_org_id: Option<&str>,
 ) -> Result<Credentials> {
     // Priority: CLI flags > stored credentials > config file > env vars > defaults
-    
+
     // 1. Check for stored credentials from `auth login`
     let stored = load_stored_credentials().ok().flatten();
     let stored_key = stored.as_ref().and_then(|c| {
-        if c.api_key.is_empty() { None } else { Some(c.api_key.clone()) }
+        if c.api_key.is_empty() {
+            None
+        } else {
+            Some(c.api_key.clone())
+        }
     });
     let stored_org = stored.as_ref().and_then(|c| {
-        if c.org_id.is_empty() { None } else { Some(c.org_id.clone()) }
+        if c.org_id.is_empty() {
+            None
+        } else {
+            Some(c.org_id.clone())
+        }
     });
     let stored_url = stored.as_ref().map(|c| c.api_url.clone());
 
@@ -136,10 +141,7 @@ fn config_dir() -> PathBuf {
     }
 
     let base = if cfg!(target_os = "windows") {
-        dirs::home_dir().map_or_else(
-            || PathBuf::from("."),
-            |h| h.join("AppData").join("Roaming"),
-        )
+        dirs::home_dir().map_or_else(|| PathBuf::from("."), |h| h.join("AppData").join("Roaming"))
     } else {
         dirs::home_dir().map_or_else(|| PathBuf::from("."), |h| h.join(".config"))
     };
@@ -216,13 +218,11 @@ pub(crate) fn load_stored_credentials() -> Result<Option<StoredCredentials>> {
         return Ok(None);
     }
 
-    let content = std::fs::read_to_string(&path).map_err(|e| {
-        ConfigError::Invalid(format!("Failed to read credentials: {e}"))
-    })?;
+    let content = std::fs::read_to_string(&path)
+        .map_err(|e| ConfigError::Invalid(format!("Failed to read credentials: {e}")))?;
 
-    let creds: StoredCredentials = serde_json::from_str(&content).map_err(|e| {
-        ConfigError::Invalid(format!("Failed to parse credentials: {e}"))
-    })?;
+    let creds: StoredCredentials = serde_json::from_str(&content)
+        .map_err(|e| ConfigError::Invalid(format!("Failed to parse credentials: {e}")))?;
 
     Ok(Some(creds))
 }
@@ -230,19 +230,16 @@ pub(crate) fn load_stored_credentials() -> Result<Option<StoredCredentials>> {
 pub(crate) fn save_stored_credentials(creds: &StoredCredentials) -> Result<()> {
     let dir = config_dir();
     if !dir.exists() {
-        std::fs::create_dir_all(&dir).map_err(|e| {
-            ConfigError::Invalid(format!("Failed to create config directory: {e}"))
-        })?;
+        std::fs::create_dir_all(&dir)
+            .map_err(|e| ConfigError::Invalid(format!("Failed to create config directory: {e}")))?;
     }
 
     let path = credentials_path();
-    let content = serde_json::to_string_pretty(creds).map_err(|e| {
-        ConfigError::Invalid(format!("Failed to serialize credentials: {e}"))
-    })?;
+    let content = serde_json::to_string_pretty(creds)
+        .map_err(|e| ConfigError::Invalid(format!("Failed to serialize credentials: {e}")))?;
 
-    std::fs::write(&path, content).map_err(|e| {
-        ConfigError::Invalid(format!("Failed to write credentials: {e}"))
-    })?;
+    std::fs::write(&path, content)
+        .map_err(|e| ConfigError::Invalid(format!("Failed to write credentials: {e}")))?;
 
     // Set restrictive permissions on Unix
     #[cfg(unix)]
@@ -258,9 +255,8 @@ pub(crate) fn save_stored_credentials(creds: &StoredCredentials) -> Result<()> {
 pub(crate) fn delete_stored_credentials() -> Result<()> {
     let path = credentials_path();
     if path.exists() {
-        std::fs::remove_file(&path).map_err(|e| {
-            ConfigError::Invalid(format!("Failed to delete credentials: {e}"))
-        })?;
+        std::fs::remove_file(&path)
+            .map_err(|e| ConfigError::Invalid(format!("Failed to delete credentials: {e}")))?;
     }
     Ok(())
 }

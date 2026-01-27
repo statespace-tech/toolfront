@@ -1,329 +1,85 @@
-//! CLI argument definitions using clap
+//! CLI argument definitions using clap derive.
 
-use clap::{Args, Parser, Subcommand};
-use std::path::PathBuf;
+use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Debug, Parser)]
 #[command(name = "statespace")]
-#[command(author, version, about = "Statespace - AI tool execution runtime")]
+#[command(about = "Statespace CLI - deploy and manage environments")]
+#[command(version)]
 pub(crate) struct Cli {
-    #[command(flatten)]
-    pub global: GlobalArgs,
+    /// API URL override
+    #[arg(long, global = true, env = "STATESPACE_API_URL")]
+    pub api_url: Option<String>,
+
+    /// API key override
+    #[arg(long, global = true, env = "STATESPACE_API_KEY")]
+    pub api_key: Option<String>,
+
+    /// Organization ID override
+    #[arg(long, global = true, env = "STATESPACE_ORG_ID")]
+    pub org_id: Option<String>,
 
     #[command(subcommand)]
     pub command: Commands,
 }
 
-#[derive(Debug, Args)]
-pub(crate) struct GlobalArgs {
-    /// API gateway URL (default: https://api.statespace.com)
-    #[arg(long, global = true)]
-    pub api_url: Option<String>,
-
-    /// API key for authentication
-    #[arg(long, global = true, env = "STATESPACE_API_KEY")]
-    pub api_key: Option<String>,
-
-    /// Organization ID (required for token operations)
-    #[arg(long, global = true)]
-    pub org_id: Option<String>,
-}
-
 #[derive(Debug, Subcommand)]
 pub(crate) enum Commands {
-    /// Manage and serve tool site applications
-    App {
-        #[command(subcommand)]
-        command: AppCommands,
-    },
-
-    /// Manage personal access tokens
-    Tokens {
-        #[command(subcommand)]
-        command: TokensCommands,
-    },
-
-    /// Authenticate with Statespace
+    /// Authentication commands
     Auth {
         #[command(subcommand)]
         command: AuthCommands,
     },
 
-    /// Manage organizations
+    /// Organization commands
     Org {
         #[command(subcommand)]
         command: OrgCommands,
     },
 
-    /// Manage SSH keys for your organization
-    SshKeys {
+    /// Application commands
+    App {
         #[command(subcommand)]
-        command: SshKeysCommands,
+        command: AppCommands,
+    },
+
+    /// SSH key management
+    #[command(name = "ssh-key")]
+    SshKey {
+        #[command(subcommand)]
+        command: SshKeyCommands,
     },
 }
 
-#[derive(Debug, Clone, Subcommand)]
-pub(crate) enum AppCommands {
-    /// Serve a tool site from a local directory
-    Serve(AppServeArgs),
-
-    /// Deploy a tool site to the cloud
-    Deploy(AppDeployArgs),
-
-    /// List deployed apps
-    List,
-
-    /// Delete a deployed app
-    Delete(AppDeleteArgs),
-
-    /// Sync local directory to cloud (create or update)
-    ///
-    /// Declarative sync: creates a new deployment if none exists,
-    /// or updates the existing one. Caches deployment ID locally
-    /// in `.statespace/state.json` for subsequent syncs.
-    Sync(AppSyncArgs),
-
-    /// SSH into an app's environment
-    ///
-    /// Opens an interactive SSH session to the app's underlying
-    /// sprite VM. Requires sshd to be installed in the sprite.
-    Ssh(AppSshArgs),
-
-    /// Internal: raw SSH proxy for ProxyCommand
-    #[command(hide = true)]
-    SshProxy(AppSshProxyArgs),
-}
-
-#[derive(Debug, Clone, Args)]
-pub(crate) struct AppSshArgs {
-    /// App ID or name to SSH into
-    #[arg(value_name = "APP")]
-    pub app: String,
-
-    /// SSH user (default: ubuntu)
-    #[arg(short, long, default_value = "ubuntu")]
-    pub user: String,
-
-    /// Port to connect to (default: 22)
-    #[arg(short, long, default_value_t = 22)]
-    pub port: u16,
-}
-
-/// Internal proxy command - used by SSH's ProxyCommand
-#[derive(Debug, Clone, Args)]
-pub(crate) struct AppSshProxyArgs {
-    /// App ID
-    #[arg(value_name = "APP")]
-    pub app: String,
-
-    /// Port (default: 22)
-    #[arg(short, long, default_value_t = 22)]
-    pub port: u16,
-
-    /// Host inside sprite (default: localhost)
-    #[arg(long, default_value = "localhost")]
-    pub host: String,
-}
-
-#[derive(Debug, Clone, Args)]
-pub(crate) struct AppServeArgs {
-    /// Path to the tool site directory (must contain README.md)
-    #[arg(value_name = "DIRECTORY", default_value = ".")]
-    pub directory: PathBuf,
-
-    /// Host to bind to
-    #[arg(short = 'H', long, default_value = "127.0.0.1")]
-    pub host: String,
-
-    /// Port to bind to
-    #[arg(short, long, default_value_t = 8000)]
-    pub port: u16,
-
-    /// Execution timeout in seconds
-    #[arg(long, default_value_t = 30)]
-    pub timeout: u64,
-
-    /// Maximum output size in bytes
-    #[arg(long, default_value_t = 1_048_576)]
-    pub max_output: usize,
-
-    /// Skip template initialization
-    #[arg(long)]
-    pub no_init: bool,
-}
-
-#[derive(Debug, Clone, Args)]
-pub(crate) struct AppDeployArgs {
-    /// Path to the tool site directory
-    #[arg(value_name = "PATH", default_value = ".")]
-    pub path: PathBuf,
-
-    /// App name (defaults to directory name)
-    #[arg(long)]
-    pub name: Option<String>,
-
-    /// Wait for the app to be ready
-    #[arg(long)]
-    pub verify: bool,
-}
-
-#[derive(Debug, Clone, Args)]
-pub(crate) struct AppDeleteArgs {
-    /// App ID to delete
-    #[arg(value_name = "ID")]
-    pub id: String,
-
-    /// Skip confirmation prompt
-    #[arg(long, short)]
-    pub yes: bool,
-}
-
-#[derive(Debug, Clone, Args)]
-pub(crate) struct AppSyncArgs {
-    /// Path to the tool site directory
-    #[arg(value_name = "PATH", default_value = ".")]
-    pub path: PathBuf,
-
-    /// App name (defaults to directory name or cached name)
-    #[arg(long)]
-    pub name: Option<String>,
-
-    /// Force fresh deployment (ignore cached state)
-    #[arg(long)]
-    pub force: bool,
-
-    /// Wait for the app to be ready after sync
-    #[arg(long)]
-    pub verify: bool,
-}
-
-#[derive(Debug, Clone, Subcommand)]
-pub(crate) enum TokensCommands {
-    /// Create a new personal access token
-    Create(TokenCreateArgs),
-
-    /// List all tokens
-    List(TokenListArgs),
-
-    /// Get details for a specific token
-    Get(TokenGetArgs),
-
-    /// Rotate a token (generates new value, revokes old)
-    Rotate(TokenRotateArgs),
-
-    /// Revoke a token (cannot be undone)
-    Revoke(TokenRevokeArgs),
-}
-
-#[derive(Debug, Clone, Args)]
-pub(crate) struct TokenCreateArgs {
-    /// Name for the token
-    #[arg(long)]
-    pub name: String,
-
-    /// Token scope (read, execute, admin)
-    #[arg(long, default_value = "execute")]
-    pub scope: String,
-
-    /// Restrict to specific app IDs
-    #[arg(long = "app")]
-    pub app_ids: Vec<String>,
-
-    /// Expiration date (ISO 8601 format)
-    #[arg(long)]
-    pub expires: Option<String>,
-}
-
-#[derive(Debug, Clone, Args)]
-pub(crate) struct TokenListArgs {
-    /// Show inactive tokens too
-    #[arg(long)]
-    pub all: bool,
-
-    /// Maximum number of tokens to return
-    #[arg(long, default_value_t = 100)]
-    pub limit: u32,
-}
-
-#[derive(Debug, Clone, Args)]
-pub(crate) struct TokenGetArgs {
-    /// Token ID
-    pub token_id: String,
-}
-
-#[derive(Debug, Clone, Args)]
-pub(crate) struct TokenRotateArgs {
-    /// Token ID to rotate
-    pub token_id: String,
-
-    /// New name for the token
-    #[arg(long)]
-    pub name: Option<String>,
-
-    /// New scope (read, execute, admin)
-    #[arg(long)]
-    pub scope: Option<String>,
-
-    /// New app restrictions
-    #[arg(long = "app")]
-    pub app_ids: Vec<String>,
-
-    /// New expiration date
-    #[arg(long)]
-    pub expires: Option<String>,
-}
-
-#[derive(Debug, Clone, Args)]
-pub(crate) struct TokenRevokeArgs {
-    /// Token ID to revoke
-    pub token_id: String,
-
-    /// Reason for revocation
-    #[arg(long)]
-    pub reason: Option<String>,
-
-    /// Skip confirmation prompt
-    #[arg(long, short)]
-    pub yes: bool,
-}
-
-#[derive(Debug, Clone, Subcommand)]
+#[derive(Debug, Subcommand)]
 pub(crate) enum AuthCommands {
-    /// Log in to Statespace via browser
-    ///
-    /// Opens your browser to authenticate with GitHub or Google.
-    /// After authentication, credentials are saved locally.
+    /// Log in via browser (device auth flow)
     Login,
 
-    /// Log out and clear saved credentials
+    /// Log out and clear stored credentials
     Logout,
 
     /// Show current authentication status
     Status,
 
-    /// Print access token for scripting
-    ///
-    /// Outputs the current access token to stdout for use in scripts
-    /// or piping to other commands.
+    /// Print the current API token
     Token {
         /// Output format
-        #[arg(long, value_enum, default_value = "plain")]
+        #[arg(long, short, default_value = "plain")]
         format: TokenOutputFormat,
     },
 }
 
-#[derive(Debug, Clone, Copy, Default, clap::ValueEnum)]
+#[derive(Debug, Clone, Copy, Default, ValueEnum)]
 pub(crate) enum TokenOutputFormat {
-    /// Plain text token
     #[default]
     Plain,
-    /// JSON with token and metadata
     Json,
 }
 
-#[derive(Debug, Clone, Subcommand)]
+#[derive(Debug, Subcommand)]
 pub(crate) enum OrgCommands {
-    /// List organizations you belong to
+    /// List available organizations
     List,
 
     /// Show current organization
@@ -331,44 +87,68 @@ pub(crate) enum OrgCommands {
 
     /// Switch to a different organization
     Use {
-        /// Organization name or ID (interactive picker if omitted)
+        /// Organization name or ID (interactive if omitted)
         org: Option<String>,
     },
 }
 
-#[derive(Debug, Clone, Subcommand)]
-pub(crate) enum SshKeysCommands {
-    /// Add an SSH public key to your organization
-    ///
-    /// The key will be deployed to all sprite environments in your org,
-    /// allowing SSH access via `statespace app ssh <app>`.
-    Add(SshKeyAddArgs),
+#[derive(Debug, Subcommand)]
+pub(crate) enum AppCommands {
+    /// SSH into an environment
+    Ssh(AppSshArgs),
 
-    /// List SSH keys in your organization
+    /// Internal: SSH proxy command (used by ProxyCommand)
+    #[command(name = "ssh-proxy", hide = true)]
+    SshProxy(AppSshProxyArgs),
+}
+
+#[derive(Debug, Parser)]
+pub(crate) struct AppSshArgs {
+    /// Environment ID or name
+    pub app: String,
+
+    /// SSH user (default: env)
+    #[arg(long, short, default_value = "env")]
+    pub user: String,
+
+    /// SSH port (default: 22)
+    #[arg(long, short, default_value = "22")]
+    pub port: u16,
+}
+
+#[derive(Debug, Parser)]
+pub(crate) struct AppSshProxyArgs {
+    /// Environment ID or name
+    pub app: String,
+
+    /// Target host within the environment
+    #[arg(long, default_value = "localhost")]
+    pub host: String,
+
+    /// Target port within the environment
+    #[arg(long, short, default_value = "22")]
+    pub port: u16,
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum SshKeyCommands {
+    /// List your SSH public keys
     List,
 
-    /// Remove an SSH key by fingerprint
-    Remove(SshKeyRemoveArgs),
-}
+    /// Add an SSH public key
+    Add {
+        /// Path to public key file (default: ~/.ssh/id_ed25519.pub or ~/.ssh/id_rsa.pub)
+        #[arg(long, short)]
+        file: Option<String>,
 
-#[derive(Debug, Clone, Args)]
-pub(crate) struct SshKeyAddArgs {
-    /// Path to SSH public key file (default: auto-detect from ~/.ssh)
-    #[arg(value_name = "KEY_FILE")]
-    pub key_file: Option<PathBuf>,
+        /// Key name/label
+        #[arg(long, short)]
+        name: Option<String>,
+    },
 
-    /// Name for this key (default: derived from key comment or filename)
-    #[arg(long)]
-    pub name: Option<String>,
-}
-
-#[derive(Debug, Clone, Args)]
-pub(crate) struct SshKeyRemoveArgs {
-    /// Key fingerprint (SHA256:...) or partial match
-    #[arg(value_name = "FINGERPRINT")]
-    pub fingerprint: String,
-
-    /// Skip confirmation prompt
-    #[arg(long, short)]
-    pub yes: bool,
+    /// Remove an SSH public key
+    Remove {
+        /// Key ID to remove
+        id: String,
+    },
 }

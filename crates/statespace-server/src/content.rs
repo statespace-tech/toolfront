@@ -1,7 +1,7 @@
 //! Content resolution from a content root directory.
 
-use statespace_tool_runtime::Error;
 use async_trait::async_trait;
+use statespace_tool_runtime::Error;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
@@ -74,7 +74,9 @@ impl ContentResolver for LocalContentResolver {
         let target = self.validate_path(path)?;
         let resolved = self.resolve_to_file(&target, path).await?;
 
-        let resolved = resolved.canonicalize().map_err(|_| Error::NotFound(path.to_string()))?;
+        let resolved = resolved
+            .canonicalize()
+            .map_err(|_| Error::NotFound(path.to_string()))?;
         if !resolved.starts_with(&self.root) {
             return Err(Error::PathTraversal {
                 attempted: path.to_string(),
@@ -82,16 +84,16 @@ impl ContentResolver for LocalContentResolver {
             });
         }
 
-        fs::read_to_string(&resolved)
-            .await
-            .map_err(Error::Io)
+        fs::read_to_string(&resolved).await.map_err(Error::Io)
     }
 
     async fn resolve_path(&self, path: &str) -> Result<PathBuf, Error> {
         let target = self.validate_path(path)?;
         let resolved = self.resolve_to_file(&target, path).await?;
 
-        let resolved = resolved.canonicalize().map_err(|_| Error::NotFound(path.to_string()))?;
+        let resolved = resolved
+            .canonicalize()
+            .map_err(|_| Error::NotFound(path.to_string()))?;
         if !resolved.starts_with(&self.root) {
             return Err(Error::PathTraversal {
                 attempted: path.to_string(),
