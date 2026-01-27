@@ -1,0 +1,87 @@
+[workspace]
+resolver = "2"
+members = ["binaries/statespace-cli"]
+exclude = ["binaries/statespace-exec"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["Statespace Authors"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/statespace-tech/statespace"
+
+[workspace.dependencies]
+# Internal crates
+statespace-tool-runtime = { path = "crates/statespace-tool-runtime" }
+statespace-server = { path = "crates/statespace-server" }
+
+# Web framework
+axum = "0.8"
+tokio = { version = "1", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+toml = "0.8"
+
+# Async/utilities
+futures = "0.3"
+async-trait = "0.1"
+
+# CLI
+clap = { version = "4", features = ["derive", "env"] }
+dirs = "5"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# HTTP client (for curl tool)
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+
+# Utilities
+glob = "0.3"
+regex = "1"
+chrono = { version = "0.4", features = ["serde"] }
+base64 = "0.22"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+
+# Deny panicking code in non-test code
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+dbg_macro = "deny"
+
+# Additional safety lints
+missing_panics_doc = "warn"
+missing_errors_doc = "warn"
+enum_variant_names = "warn"
+large_enum_variant = "warn"
+map_err_ignore = "warn"
+
+# Allow common patterns
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_docs_in_private_items = "allow"
+doc_markdown = "allow"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

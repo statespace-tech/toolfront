@@ -4,6 +4,7 @@ pkgs.mkShell {
   buildInputs = with pkgs; [
     cairo
     pkg-config
+    libiconv
   ];
 
   shellHook = ''
