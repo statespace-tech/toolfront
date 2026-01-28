@@ -1,5 +1,7 @@
 //! Gateway API client.
 
+#![allow(clippy::items_after_statements)]
+
 use crate::config::Credentials;
 use crate::error::{GatewayError, Result};
 use crate::gateway::types::{
@@ -46,6 +48,14 @@ impl GatewayClient {
 
     fn auth_header(&self) -> String {
         format!("Bearer {}", self.api_key)
+    }
+
+    pub(crate) fn base_url(&self) -> &str {
+        &self.base_url
+    }
+
+    pub(crate) fn api_key(&self) -> &str {
+        &self.api_key
     }
 
     fn require_org_id(&self) -> Result<&str> {
@@ -125,6 +135,13 @@ impl GatewayClient {
         let resp = self.with_headers(self.http.get(&url)).send().await?;
 
         parse_api_list_response(resp).await
+    }
+
+    pub(crate) async fn get_environment(&self, id_or_name: &str) -> Result<Environment> {
+        let url = format!("{}/api/v1/environments/{}", self.base_url, id_or_name);
+        let resp = self.with_headers(self.http.get(&url)).send().await?;
+
+        parse_api_response(resp).await
     }
 
     /// Upsert an environment by name: creates if not exists, updates if exists.
@@ -406,7 +423,11 @@ async fn check_api_response(resp: reqwest::Response) -> Result<()> {
         .await
         .unwrap_or_else(|e| format!("(failed to read body: {e})"));
     let message = text.chars().take(512).collect();
-    Err(GatewayError::Api { status, message }.into())
+    Err(GatewayError::Api {
+        status: status.as_u16(),
+        message,
+    }
+    .into())
 }
 
 async fn parse_api_response<T: serde::de::DeserializeOwned>(resp: reqwest::Response) -> Result<T> {
@@ -418,11 +439,16 @@ async fn parse_api_response<T: serde::de::DeserializeOwned>(resp: reqwest::Respo
 
     if !status.is_success() {
         let message = text.chars().take(512).collect();
-        return Err(GatewayError::Api { status, message }.into());
+        return Err(GatewayError::Api {
+            status: status.as_u16(),
+            message,
+        }
+        .into());
     }
 
+    let status_code = status.as_u16();
     let value: Value = serde_json::from_str(&text).map_err(|e| GatewayError::Api {
-        status,
+        status: status_code,
         message: format!("invalid JSON: {e}"),
     })?;
 
@@ -430,7 +456,7 @@ async fn parse_api_response<T: serde::de::DeserializeOwned>(resp: reqwest::Respo
 
     serde_json::from_value(data.clone()).map_err(|e| {
         GatewayError::Api {
-            status,
+            status: status_code,
             message: format!("failed to parse response: {e}"),
         }
         .into()
@@ -441,6 +467,7 @@ async fn parse_api_list_response<T: serde::de::DeserializeOwned>(
     resp: reqwest::Response,
 ) -> Result<Vec<T>> {
     let status = resp.status();
+    let status_code = status.as_u16();
     let text = resp
         .text()
         .await
@@ -448,11 +475,15 @@ async fn parse_api_list_response<T: serde::de::DeserializeOwned>(
 
     if !status.is_success() {
         let message = text.chars().take(512).collect();
-        return Err(GatewayError::Api { status, message }.into());
+        return Err(GatewayError::Api {
+            status: status_code,
+            message,
+        }
+        .into());
     }
 
     let value: Value = serde_json::from_str(&text).map_err(|e| GatewayError::Api {
-        status,
+        status: status_code,
         message: format!("invalid JSON: {e}"),
     })?;
 
@@ -461,14 +492,14 @@ async fn parse_api_list_response<T: serde::de::DeserializeOwned>(
     if data.is_array() {
         serde_json::from_value(data.clone()).map_err(|e| {
             GatewayError::Api {
-                status,
+                status: status_code,
                 message: format!("failed to parse list: {e}"),
             }
             .into()
         })
     } else {
         let single: T = serde_json::from_value(data.clone()).map_err(|e| GatewayError::Api {
-            status,
+            status: status_code,
             message: format!("failed to parse item: {e}"),
         })?;
         Ok(vec![single])
@@ -540,7 +571,7 @@ impl AuthClient {
         let resp = self
             .http
             .post(&url)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {access_token}"))
             .send()
             .await?;
 

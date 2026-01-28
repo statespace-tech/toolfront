@@ -49,6 +49,12 @@ pub(crate) enum Commands {
         #[command(subcommand)]
         command: SshKeyCommands,
     },
+
+    /// SSH configuration management
+    Ssh {
+        #[command(subcommand)]
+        command: SshCommands,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -150,5 +156,21 @@ pub(crate) enum SshKeyCommands {
     Remove {
         /// Key ID to remove
         id: String,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum SshCommands {
+    /// Configure SSH for native scp/rsync/ssh access
+    Setup {
+        /// Skip confirmation prompt
+        #[arg(long)]
+        yes: bool,
+    },
+    /// Remove Statespace SSH configuration
+    Uninstall {
+        /// Skip confirmation prompt
+        #[arg(long)]
+        yes: bool,
     },
 }

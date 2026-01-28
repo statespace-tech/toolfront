@@ -66,28 +66,23 @@ async fn run_use(org: Option<String>, gateway: GatewayClient) -> Result<()> {
         return Err(crate::error::Error::cli("No organizations available"));
     }
 
-    let selected = match org {
-        Some(query) => {
-            let query_lower = query.to_lowercase();
-            orgs.iter()
-                .find(|o| o.id == query || o.name.to_lowercase().contains(&query_lower))
-                .ok_or_else(|| {
-                    crate::error::Error::cli(format!("Organization not found: {query}"))
-                })?
-                .clone()
-        }
-        None => {
-            let org_names: Vec<&str> = orgs.iter().map(|o| o.name.as_str()).collect();
-            let selection = Select::new("Select organization:", org_names)
-                .with_vim_mode(true)
-                .prompt()
-                .map_err(|e| crate::error::Error::cli(format!("Selection cancelled: {e}")))?;
+    let selected = if let Some(query) = org {
+        let query_lower = query.to_lowercase();
+        orgs.iter()
+            .find(|o| o.id == query || o.name.to_lowercase().contains(&query_lower))
+            .ok_or_else(|| crate::error::Error::cli(format!("Organization not found: {query}")))?
+            .clone()
+    } else {
+        let org_names: Vec<&str> = orgs.iter().map(|o| o.name.as_str()).collect();
+        let selection = Select::new("Select organization:", org_names)
+            .with_vim_mode(true)
+            .prompt()
+            .map_err(|e| crate::error::Error::cli(format!("Selection cancelled: {e}")))?;
 
-            orgs.iter()
-                .find(|o| o.name == selection)
-                .ok_or_else(|| crate::error::Error::cli("Organization not found"))?
-                .clone()
-        }
+        orgs.iter()
+            .find(|o| o.name == selection)
+            .ok_or_else(|| crate::error::Error::cli("Organization not found"))?
+            .clone()
     };
 
     creds.org_id = selected.id;

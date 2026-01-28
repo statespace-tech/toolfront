@@ -125,7 +125,10 @@ cython_debug/
 
 # Additional project-specific files
 .ruff_cache/
+
+# AI agent instruction files
 AGENT.md
+AGENTS.md
 CLAUDE.md
 
 # MacOS

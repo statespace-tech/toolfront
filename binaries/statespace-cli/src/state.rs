@@ -144,6 +144,7 @@ pub(crate) fn save_state(project_dir: &Path, state: &SyncState) -> Result<()> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
     use tempfile::TempDir;

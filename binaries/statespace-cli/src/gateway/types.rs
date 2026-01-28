@@ -40,6 +40,8 @@ pub(crate) struct Environment {
     pub fly_url: Option<String>,
     #[allow(dead_code)]
     pub created_at: String,
+    /// Auth token for accessing the environment (for SSH, etc.)
+    pub auth_token: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

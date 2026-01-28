@@ -60,8 +60,7 @@ async fn run_add(file: Option<String>, name: Option<String>, gateway: GatewayCli
         key_path
             .file_stem()
             .and_then(|s| s.to_str())
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| "cli-key".to_string())
+            .map_or_else(|| "cli-key".to_string(), std::string::ToString::to_string)
     });
 
     let key = gateway.add_ssh_key(&key_name, public_key).await?;

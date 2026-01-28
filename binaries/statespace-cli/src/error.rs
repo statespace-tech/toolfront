@@ -18,6 +18,9 @@ pub(crate) enum Error {
 
     #[error(transparent)]
     Io(#[from] io::Error),
+
+    #[error(transparent)]
+    Http(#[from] reqwest::Error),
 }
 
 impl Error {
@@ -28,7 +31,9 @@ impl Error {
 
 #[derive(Debug, Error)]
 pub(crate) enum ConfigError {
-    #[error("API key not found. Set STATESPACE_API_KEY or run `statespace auth login`.\nConfig file: {config_path}")]
+    #[error(
+        "API key not found. Set STATESPACE_API_KEY or run `statespace auth login`.\nConfig file: {config_path}"
+    )]
     MissingApiKey { config_path: String },
 
     #[error("Invalid configuration: {0}")]
@@ -36,7 +41,11 @@ pub(crate) enum ConfigError {
 }
 
 #[derive(Debug, Error)]
+#[allow(dead_code)] // Variants used by gateway client methods
 pub(crate) enum GatewayError {
+    #[error("Failed to build HTTP client: {0}")]
+    ClientBuild(String),
+
     #[error("HTTP request failed: {0}")]
     Http(String),
 
@@ -51,6 +60,9 @@ pub(crate) enum GatewayError {
 
     #[error("Not found: {0}")]
     NotFound(String),
+
+    #[error("Organization ID required. Run `statespace org use` to select one.")]
+    MissingOrgId,
 }
 
 impl From<reqwest::Error> for GatewayError {
