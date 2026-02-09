@@ -1,37 +1,47 @@
-# Contributing to ToolFront
+# Contributing to Statespace
 
-We welcome contributions to ToolFront! Here's how you can help:
+Contributions are welcome. This document covers the basics.
 
 ## Getting Started
 
-1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/toolfront.git`
-3. Install dependencies: `uv sync`
-4. Create a new branch: `git checkout -b feature/your-feature-name`
+1. Fork and clone the repository:
+   ```
+   git clone https://github.com/<your-username>/statespace.git
+   cd statespace
+   ```
+2. Build the project:
+   ```
+   cargo build
+   ```
+   The CLI binary is located in `binaries/statespace-cli`.
 
-## Development Guidelines
+## Development
 
-- Follow the existing code style and conventions
-- Add tests for new features or bug fixes
-- Update documentation as needed
-- Ensure all tests pass before submitting
+Before submitting changes, ensure your code passes all checks:
+
+```
+cargo fmt --all -- --check
+cargo clippy --workspace -- -D warnings
+cargo test --workspace
+```
+
+The project uses strict Clippy lints. Calls to `unwrap()`, `expect()`, and `panic!()` are denied. Handle errors explicitly using `Result` or `Option` combinators.
 
 ## Submitting Changes
 
-1. Push your changes to your fork
-2. Create a Pull Request with a clear description of your changes
-3. Wait for review and address any feedback
+1. Create a branch from `main`.
+2. Make your changes in small, focused commits.
+3. Ensure all checks listed above pass.
+4. Open a pull request against `main` with a clear description of the change.
+5. Address review feedback.
 
-## Reporting Issues
+## Code Style
 
-- Use GitHub Issues to report bugs or request features
-- Provide detailed information about the issue
-- Include steps to reproduce for bug reports
+- Run `cargo fmt` before committing.
+- Follow existing conventions in the codebase.
+- No `unwrap()`, `expect()`, or `panic!()`.
+- Write tests for new functionality.
 
-## Code of Conduct
+## License
 
-Please be respectful and constructive in all interactions. We're committed to providing a welcoming and inclusive environment for all contributors.
-
-## Questions?
-
-If you have questions about contributing, feel free to open an issue or reach out to the maintainers. 
+Contributions are accepted under the [MIT License](LICENSE).

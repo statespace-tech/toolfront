@@ -8,19 +8,21 @@ release-cli version:
     git diff --quiet HEAD || { echo "error: uncommitted changes"; exit 1; }
 
     echo "Release cli-v{{version}}:"
-    echo "  - Update core/Cargo.toml"
+    echo "  - Update Cargo.toml workspace version"
     echo "  - Commit, tag, push"
     read -p "Continue? [y/N] " c && [[ "$c" =~ ^[Yy]$ ]] || exit 0
 
     if [[ "$OSTYPE" == darwin* ]]; then
-        sed -i '' 's/^version = ".*"/version = "{{version}}"/' core/Cargo.toml
+        sed -i '' 's/^version = ".*"/version = "{{version}}"/' Cargo.toml
     else
-        sed -i 's/^version = ".*"/version = "{{version}}"/' core/Cargo.toml
+        sed -i 's/^version = ".*"/version = "{{version}}"/' Cargo.toml
     fi
 
-    git add core/Cargo.toml
+    cargo check -p statespace-cli
+
+    git add Cargo.toml
     git commit -m "chore(cli): release v{{version}}"
     git tag "cli-v{{version}}"
     git push origin HEAD "cli-v{{version}}"
 
-    echo "https://github.com/statespace-ai/toolfront/actions"
+    echo "https://github.com/statespace-tech/statespace/actions"
