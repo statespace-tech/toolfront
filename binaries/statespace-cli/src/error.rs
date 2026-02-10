@@ -1,5 +1,3 @@
-//! Error types for the Statespace CLI.
-
 use std::io;
 use thiserror::Error;
 
@@ -41,7 +39,7 @@ pub(crate) enum ConfigError {
 }
 
 #[derive(Debug, Error)]
-#[allow(dead_code)] // Variants used by gateway client methods
+#[allow(dead_code)]
 pub(crate) enum GatewayError {
     #[error("Failed to build HTTP client: {0}")]
     ClientBuild(String),

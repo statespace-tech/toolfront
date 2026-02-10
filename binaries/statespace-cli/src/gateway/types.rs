@@ -1,4 +1,4 @@
-//! Gateway API types.
+#![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};
 
@@ -17,12 +17,8 @@ pub(crate) struct DeployResult {
     pub fly_url: Option<String>,
 }
 
-/// Response from `PUT /api/v1/environments/by-name/{name}`.
-///
-/// Upsert semantics: creates if not exists, updates if exists.
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct UpsertResult {
-    /// Whether a new environment was created (false = updated existing)
     pub created: bool,
     pub id: String,
     pub name: String,
@@ -36,11 +32,8 @@ pub(crate) struct Environment {
     pub name: String,
     pub status: String,
     pub url: Option<String>,
-    #[allow(dead_code)]
     pub fly_url: Option<String>,
-    #[allow(dead_code)]
     pub created_at: String,
-    /// Auth token for accessing the environment (for SSH, etc.)
     pub auth_token: Option<String>,
 }
 
@@ -72,7 +65,6 @@ pub(crate) struct TokenCreateResult {
     pub expires_at: Option<String>,
 }
 
-/// Response from `POST /api/v1/auth/device/code` (RFC 8628).
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct DeviceCodeResponse {
     pub device_code: String,
@@ -92,7 +84,6 @@ fn default_expires_in() -> u64 {
     900
 }
 
-/// Response from `POST /api/v1/auth/device/token` polling endpoint.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub(crate) enum DeviceTokenResponse {
@@ -101,7 +92,6 @@ pub(crate) enum DeviceTokenResponse {
     Expired,
 }
 
-/// User info returned after successful device authorization.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub(crate) struct AuthorizedUser {
     pub access_token: String,
@@ -111,7 +101,6 @@ pub(crate) struct AuthorizedUser {
     pub expires_at: Option<String>,
 }
 
-/// Response from `POST /api/v1/cli/tokens:exchange`.
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct ExchangeTokenResponse {
     pub api_key: String,
@@ -128,18 +117,13 @@ pub(crate) struct Organization {
     pub tier: Option<String>,
 }
 
-/// SSH connection configuration for sprites
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct SshConnectionConfig {
-    /// Sprite name (e.g., env-{uuid})
     pub sprite_name: String,
-    /// Sprites API URL (e.g., https://api.sprites.dev)
     pub sprites_api_url: String,
-    /// Sprites API token for authentication
     pub sprites_token: String,
 }
 
-/// Organization SSH key
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct SshKey {
     pub id: String,

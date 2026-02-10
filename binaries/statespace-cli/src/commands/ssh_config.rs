@@ -1,5 +1,3 @@
-//! SSH configuration for native scp/rsync/ssh access to Statespace environments.
-
 use crate::args::SshCommands;
 use crate::config::{Credentials, load_stored_credentials};
 use crate::error::{Error, Result};
@@ -12,18 +10,7 @@ use std::process::Command;
 const STATESPACE_CONFIG_FILENAME: &str = "statespace_config";
 const INCLUDE_LINE: &str = "Include ~/.ssh/statespace_config";
 
-/// SSH configuration for direct access to environments via stable SSH ingress.
-///
-/// With RFD 023, users connect directly to ssh.statespace.com with env-{short_id}
-/// as the username. The ssh-proxy on the gateway handles routing.
-///
-/// This config provides convenience aliases so users can do:
-///   ssh myapp.statespace
-/// instead of:
-///   ssh env-abc12345@ssh.statespace.com
 const STATESPACE_SSH_CONFIG: &str = r"# --- BEGIN STATESPACE MANAGED ---
-# Statespace SSH configuration
-# Direct connection via stable SSH ingress (RFD 023)
 Host *.statespace
   User env
   RequestTTY auto

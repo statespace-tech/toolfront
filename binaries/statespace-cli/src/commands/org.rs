@@ -1,5 +1,3 @@
-//! Org subcommand handlers
-
 use crate::args::OrgCommands;
 use crate::config::{load_stored_credentials, save_stored_credentials};
 use crate::error::Result;

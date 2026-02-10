@@ -1,17 +1,9 @@
-//! SSH to environments via stable SSH ingress (RFD 023).
-//!
-//! Users connect to ssh.statespace.com with env-{short_id} as username.
-//! The ssh-proxy on the gateway handles routing and wake-on-connect.
-
 use crate::args::AppSshArgs;
 use crate::error::{Error, Result};
 use crate::gateway::GatewayClient;
 use std::process::Stdio;
 use tokio::process::Command;
 
-/// Derive SSH host from API URL
-/// api.statespace.com -> ssh.statespace.com
-/// api.staging.statespace.com -> ssh.staging.statespace.com
 fn ssh_host_from_api_url(api_url: &str) -> String {
     let url = api_url
         .trim_end_matches('/')
@@ -23,7 +15,6 @@ fn ssh_host_from_api_url(api_url: &str) -> String {
     } else if url.starts_with("api.") {
         url.replace("api.", "ssh.")
     } else {
-        // Fallback for local dev or custom URLs
         format!("ssh.{url}")
     }
 }

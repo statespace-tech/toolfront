@@ -1,5 +1,3 @@
-//! Auth subcommand handlers implementing RFC 8628 device authorization flow.
-
 use crate::args::{AuthCommands, TokenOutputFormat};
 use crate::commands::ssh_config;
 use crate::config::{
@@ -82,7 +80,6 @@ async fn run_login(api_url: Option<&str>) -> Result<()> {
                 println!();
                 println!();
 
-                // Exchange JWT for CLI API key
                 println!("Exchanging token for API key...");
                 let exchange_result = client.exchange_token(&user.access_token).await?;
 
@@ -94,7 +91,6 @@ async fn run_login(api_url: Option<&str>) -> Result<()> {
                 println!();
                 println!("Credentials saved to {}", credentials_path().display());
 
-                // Prompt for SSH setup
                 println!();
                 println!("SSH Access Setup");
                 println!("────────────────");

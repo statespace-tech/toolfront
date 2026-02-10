@@ -1,5 +1,3 @@
-//! SSH key management commands.
-
 use crate::args::SshKeyCommands;
 use crate::error::{Error, Result};
 use crate::gateway::GatewayClient;

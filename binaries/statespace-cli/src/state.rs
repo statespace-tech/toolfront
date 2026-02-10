@@ -1,46 +1,26 @@
-//! Local state management for sync operations.
-//!
-//! Stores deployment state in `.statespace/state.json` within the project directory.
-//! This enables stateless CLI invocations by caching deployment IDs locally.
-
 use crate::error::{Error, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 
-#[allow(dead_code)]
 const STATE_DIR: &str = ".statespace";
-#[allow(dead_code)]
 const STATE_FILE: &str = "state.json";
 
-/// Local sync state stored in `.statespace/state.json`.
-#[allow(dead_code)]
+/// Local sync state stored in `.statespace/state.json` within the project directory.
+/// Enables incremental deploys by caching deployment IDs and file checksums.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct SyncState {
-    /// Deployment ID from the gateway
     pub deployment_id: String,
-
-    /// Environment name
     pub name: String,
-
-    /// Public URL of the deployment
     pub url: Option<String>,
-
-    /// Auth token for the deployment
     pub auth_token: Option<String>,
-
-    /// Last sync timestamp
     pub last_synced: DateTime<Utc>,
-
-    /// Checksums of files at last sync (path -> checksum)
     #[serde(default)]
     pub checksums: HashMap<String, String>,
 }
 
-#[allow(dead_code)]
 impl SyncState {
-    /// Create a new sync state from deployment result.
     pub(crate) fn new(
         deployment_id: String,
         name: String,
@@ -57,7 +37,6 @@ impl SyncState {
         }
     }
 
-    /// Update checksums from a list of files.
     pub(crate) fn with_checksums(mut self, files: &[(String, String)]) -> Self {
         self.checksums = files.iter().cloned().collect();
         self.last_synced = Utc::now();
@@ -65,24 +44,14 @@ impl SyncState {
     }
 }
 
-// --- Pure Functions (no I/O) ---
-
-/// Compute the state file path for a given project directory.
-#[allow(dead_code)]
 pub(crate) fn state_file_path(project_dir: &Path) -> std::path::PathBuf {
     project_dir.join(STATE_DIR).join(STATE_FILE)
 }
 
-/// Compute the state directory path for a given project directory.
-#[allow(dead_code)]
 fn state_dir_path(project_dir: &Path) -> std::path::PathBuf {
     project_dir.join(STATE_DIR)
 }
 
-// --- I/O Functions (effects at edges) ---
-
-/// Load sync state from disk. Returns None if file doesn't exist.
-#[allow(dead_code)]
 pub(crate) fn load_state(project_dir: &Path) -> Result<Option<SyncState>> {
     let path = state_file_path(project_dir);
 
@@ -107,13 +76,10 @@ pub(crate) fn load_state(project_dir: &Path) -> Result<Option<SyncState>> {
     Ok(Some(state))
 }
 
-/// Save sync state to disk. Creates the state directory if needed.
-#[allow(dead_code)]
 pub(crate) fn save_state(project_dir: &Path, state: &SyncState) -> Result<()> {
     let dir_path = state_dir_path(project_dir);
     let file_path = state_file_path(project_dir);
 
-    // Create state directory if it doesn't exist
     if !dir_path.exists() {
         std::fs::create_dir_all(&dir_path).map_err(|e| {
             Error::cli(format!(
@@ -123,10 +89,8 @@ pub(crate) fn save_state(project_dir: &Path, state: &SyncState) -> Result<()> {
         })?;
     }
 
-    // Write gitignore if it doesn't exist
     let gitignore_path = dir_path.join(".gitignore");
     if !gitignore_path.exists() {
-        // Ignore the state file but not the directory itself
         let _ = std::fs::write(&gitignore_path, "state.json\n");
     }
 

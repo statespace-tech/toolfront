@@ -1,6 +1,5 @@
-//! CLI argument definitions using clap derive.
-
 use clap::{Parser, Subcommand, ValueEnum};
+use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
 #[command(name = "statespace")]
@@ -102,6 +101,9 @@ pub(crate) enum OrgCommands {
 pub(crate) enum AppCommands {
     /// SSH into an environment
     Ssh(AppSshArgs),
+
+    /// Sync markdown files to an environment
+    Sync(AppSyncArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -116,6 +118,17 @@ pub(crate) struct AppSshArgs {
     /// SSH port (default: 22)
     #[arg(long, short, default_value = "22")]
     pub port: u16,
+}
+
+#[derive(Debug, Parser)]
+pub(crate) struct AppSyncArgs {
+    /// Directory to sync (default: current directory)
+    #[arg(default_value = ".")]
+    pub path: PathBuf,
+
+    /// Environment name (default: directory name)
+    #[arg(long, short)]
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Subcommand)]

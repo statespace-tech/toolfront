@@ -1,7 +1,3 @@
-//! Gateway API client.
-
-#![allow(dead_code)] // Gateway client has methods for future commands
-
 mod client;
 mod types;
 

@@ -1,6 +1,5 @@
-//! Gateway API client.
-
-#![allow(clippy::items_after_statements)]
+#![allow(dead_code)] // API methods for upcoming commands (deploy, sync, tokens)
+#![allow(clippy::items_after_statements)] // Inline Payload structs kept near their method
 
 use crate::config::Credentials;
 use crate::error::{GatewayError, Result};
@@ -64,7 +63,6 @@ impl GatewayClient {
             .ok_or_else(|| GatewayError::MissingOrgId.into())
     }
 
-    /// Add standard headers (auth + org context) to a request builder.
     fn with_headers(&self, builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
         let builder = builder.header("Authorization", self.auth_header());
         if let Some(ref org_id) = self.org_id {
@@ -144,11 +142,6 @@ impl GatewayClient {
         parse_api_response(resp).await
     }
 
-    /// Upsert an environment by name: creates if not exists, updates if exists.
-    ///
-    /// This is the preferred method for `sync` operations as it handles the
-    /// create-or-update decision server-side, enabling consistent behavior
-    /// across CLI and UI.
     pub(crate) async fn upsert_environment(
         &self,
         name: &str,
@@ -279,7 +272,7 @@ impl GatewayClient {
         expires_at: Option<&str>,
     ) -> Result<TokenCreateResult> {
         #[derive(Serialize)]
-        #[allow(clippy::struct_field_names)] // field names must match gateway API contract
+        #[allow(clippy::struct_field_names)]
         struct Payload<'a> {
             #[serde(skip_serializing_if = "Option::is_none")]
             new_name: Option<&'a str>,
@@ -329,10 +322,6 @@ impl GatewayClient {
         parse_api_list_response(resp).await
     }
 
-    /// Get SSH connection config for an environment.
-    ///
-    /// Returns the sprite name, Sprites API URL, and token needed to
-    /// establish an SSH connection through the Sprites WebSocket proxy.
     pub(crate) async fn get_ssh_config(&self, app_id_or_name: &str) -> Result<SshConnectionConfig> {
         let url = format!(
             "{}/api/v1/environments/{}/ssh-config",
@@ -342,9 +331,6 @@ impl GatewayClient {
         parse_api_response(resp).await
     }
 
-    /// Add an SSH public key to the organization.
-    ///
-    /// Keys are applied to all sprite environments in the org during provisioning.
     pub(crate) async fn add_ssh_key(&self, name: &str, public_key: &str) -> Result<SshKey> {
         #[derive(Serialize)]
         struct Payload<'a> {
@@ -362,14 +348,12 @@ impl GatewayClient {
         parse_api_response(resp).await
     }
 
-    /// List all SSH keys for the organization.
     pub(crate) async fn list_ssh_keys(&self) -> Result<Vec<SshKey>> {
         let url = format!("{}/api/v1/ssh-keys", self.base_url);
         let resp = self.with_headers(self.http.get(&url)).send().await?;
         parse_api_list_response(resp).await
     }
 
-    /// Remove an SSH key by its fingerprint.
     pub(crate) async fn remove_ssh_key(&self, fingerprint: &str) -> Result<()> {
         let url = format!(
             "{}/api/v1/ssh-keys/{}",
@@ -497,15 +481,13 @@ async fn parse_api_list_response<T: serde::de::DeserializeOwned>(
     }
 }
 
-/// Client for device authorization flow (RFC 8628). Unlike `GatewayClient`,
-/// this doesn't require an existing API key since it's used to obtain one.
+/// Unauthenticated client for RFC 8628 device authorization.
 pub(crate) struct AuthClient {
     base_url: String,
     http: Client,
 }
 
 impl AuthClient {
-    /// Create a new auth client with the given API URL.
     pub(crate) fn with_url(base_url: &str) -> Result<Self> {
         let http = Client::builder()
             .user_agent(USER_AGENT)
@@ -519,20 +501,12 @@ impl AuthClient {
         })
     }
 
-    /// Request a device code for the authorization flow.
-    ///
-    /// Returns a device code and user code. Display the user code and
-    /// verification URL to the user, then poll `poll_device_token`.
     pub(crate) async fn request_device_code(&self) -> Result<DeviceCodeResponse> {
         let url = format!("{}/api/v1/auth/device/code", self.base_url);
         let resp = self.http.post(&url).send().await?;
         parse_api_response(resp).await
     }
 
-    /// Poll for device authorization completion.
-    ///
-    /// Returns `Pending` while waiting, `Authorized` when user completes auth,
-    /// or `Expired` if the code timed out.
     pub(crate) async fn poll_device_token(&self, device_code: &str) -> Result<DeviceTokenResponse> {
         #[derive(Serialize)]
         struct Payload<'a> {
@@ -550,10 +524,6 @@ impl AuthClient {
         parse_api_response(resp).await
     }
 
-    /// Exchange a JWT access token for a CLI API key.
-    ///
-    /// This is called after successful device authorization. The JWT is exchanged
-    /// for a scoped API key that can be used for subsequent CLI operations.
     pub(crate) async fn exchange_token(
         &self,
         access_token: &str,
