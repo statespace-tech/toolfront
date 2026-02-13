@@ -5,5 +5,8 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## Unreleased
 ### Added
+- Community docs and GitHub issue/PR templates.
+- Crate release workflow and `just release-crates` helper.
 ### Changed
+- Documented CLI install command and published crate links.
 ### Fixed

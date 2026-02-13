@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and discussion
+    url: https://discord.gg/rRyM7zkZTf
+    about: Ask usage questions and discuss ideas with the community.
+  - name: Security issues
+    url: https://github.com/statespace-tech/statespace/security/advisories/new
+    about: Report vulnerabilities privately.

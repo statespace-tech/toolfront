@@ -43,6 +43,12 @@ _Statespace is a declarative framework for building modular LLM applications in 
 
 All code in this repository is open source. The paid Statespace product is a hosted service that runs this same open-source runtime with managed infrastructure, auth, and billing. No closed-source components are required to run the software yourself.
 
+## Install the CLI
+
+```bash
+curl -fsSL https://statespace.com/install.sh | bash
+```
+
 ## Example
 
 ### Create it
