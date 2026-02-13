@@ -13,19 +13,19 @@ Deploy and manage applications with Statespace's CLI.
 ## Quick start
 
 ```console
-$ toolfront app deploy ./project --private
+$ statespace app create ./project --visibility private
 ```
 
 ## CLI usage
 
-### `toolfront app deploy`
+### `statespace app create`
 
 Deploy your application to the cloud and get a shareable URL.
 
 **Usage:**
 
 ```bash
-toolfront app deploy [OPTIONS] PATH
+statespace app create [OPTIONS] PATH
 ```
 
 **Arguments:**
@@ -40,93 +40,51 @@ toolfront app deploy [OPTIONS] PATH
 
 : Custom environment name (defaults to directory name)
 
-`--api-key`
+`--visibility`
 
-: Gateway API key (overrides config)
-
-`--gateway-url`
-
-: Gateway base URL (overrides config)
+: Environment visibility (`public` or `private`)
 
 `--verify`
 
 : Wait and verify environment is accessible after deployment
 
-### `toolfront app list`
+### `statespace app list`
 
 View all your deployed applications.
 
 **Usage:**
 
 ```bash
-toolfront app list [OPTIONS]
+statespace app list
 ```
 
-**Options:**
+### `statespace app sync`
 
-`--api-key`
-
-: Gateway API key (overrides config)
-
-`--gateway-url`
-
-: Gateway base URL (overrides config)
-
-### `toolfront app update`
-
-Update an existing deployment with new markdown files.
+Sync a directory to an existing environment (create-or-update).
 
 **Usage:**
 
 ```bash
-toolfront app update [OPTIONS] DEPLOYMENT_ID PATH
+statespace app sync [PATH] [--name <NAME>]
 ```
 
-**Arguments:**
-
-`DEPLOYMENT_ID`
-
-: ID of app to update
-
-`PATH`
-
-: Path to application repository
-
-**Options:**
-
-`--api-key`
-
-: Gateway API key (overrides config)
-
-`--gateway-url`
-
-: Gateway base URL (overrides config)
-
-### `toolfront app delete`
+### `statespace app delete`
 
 Remove a deployment from the cloud.
 
 **Usage:**
 
 ```bash
-toolfront app delete [OPTIONS] DEPLOYMENT_ID
+statespace app delete [OPTIONS] ENV_ID_OR_NAME
 ```
 
 **Arguments:**
 
-`DEPLOYMENT_ID`
+`ENV_ID_OR_NAME`
 
-: ID of app to delete
+: Environment ID or name to delete
 
 **Options:**
-
-`--api-key`
-
-: Gateway API key (overrides config)
-
-`--gateway-url`
-
-: Gateway base URL (overrides config)
 
 `--yes, -y`
 

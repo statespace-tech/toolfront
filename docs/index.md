@@ -3,12 +3,12 @@ icon: lucide/home
 ---
 
 <p align="center">
-  <a href="https://github.com/statespace-tech/toolfront">
-    <img src="assets/images/favicon.svg" alt="ToolFront" style="width:20%;">
+  <a href="https://github.com/statespace-tech/statespace">
+    <img src="assets/images/favicon.svg" alt="Statespace" style="width:20%;">
   </a>
 </p>
 <div align="center">
-    <h1 style="font-weight: 800;"><b>ToolFront</b></h1>
+    <h1 style="font-weight: 800;"><b>Statespace</b></h1>
 </div>
 <p align="center">
     <em>
@@ -17,16 +17,10 @@ icon: lucide/home
 </p>
 
 <p align="center">
-  <a href="https://github.com/statespace-tech/toolfront/actions/workflows/test.yml" target="_blank" style="text-decoration: none;">
-    <img src="https://github.com/statespace-tech/toolfront/actions/workflows/test.yml/badge.svg" alt="Test Suite">
+  <a href="https://github.com/statespace-tech/statespace/actions/workflows/test.yml" target="_blank" style="text-decoration: none;">
+    <img src="https://github.com/statespace-tech/statespace/actions/workflows/test.yml/badge.svg" alt="Test Suite">
   </a>
-  <a href="https://www.python.org/downloads/" target="_blank" style="text-decoration: none;">
-    <img src="https://img.shields.io/badge/python-3.10+-3775A9?style=flat-square" alt="Python 3.10+">
-  </a>
-  <a href="https://pypi.org/project/toolfront/" target="_blank" style="text-decoration: none;">
-    <img src="https://img.shields.io/pypi/v/toolfront?color=3775A9&label=pypi%20package&style=flat-square" alt="PyPI package">
-  </a>
-  <a href="https://github.com/statespace-tech/toolfront/blob/main/LICENSE" target="_blank" style="text-decoration: none;">
+  <a href="https://github.com/statespace-tech/statespace/blob/main/LICENSE" target="_blank" style="text-decoration: none;">
     <img src="https://img.shields.io/badge/license-MIT-007ec6?style=flat-square" alt="License">
   </a>
   <a href="https://discord.gg/rRyM7zkZTf" target="_blank" style="text-decoration: none;">
@@ -39,11 +33,11 @@ icon: lucide/home
 
 ---
 
-**Source code: [https://github.com/statespace-tech/toolfront](https://github.com/statespace-tech/toolfront)**
+**Source code: [https://github.com/statespace-tech/statespace](https://github.com/statespace-tech/statespace)**
 
 ---
 
-_ToolFront is a declarative framework for building modular LLM applications in Markdown._
+_Statespace is a declarative framework for building modular LLM applications in Markdown._
 
 ## Example
 
@@ -67,9 +61,8 @@ tools:
 Run your app locally:
 
 ```console
-$ toolfront serve .
+$ statespace serve .
 ```
-> **Note**: Runs on `http://127.0.0.1:8000`
 
 ### Ask it
 
@@ -78,38 +71,22 @@ Include the app URL in your prompts:
 === ":simple-claude: &nbsp; Claude Code"
 
     ```console
-    $ claude "Get today's date from http://127.0.0.1:8000"
+$ claude "Get today's date from http://127.0.0.1:8000"
     ```
 
 === ":simple-githubcopilot: &nbsp; GitHub Copilot"
 
     ```console
-    $ copilot "Get today's date from http://127.0.0.1:8000"
+$ copilot "Get today's date from http://127.0.0.1:8000"
     ```
 
 === ":simple-openai: &nbsp; Codex"
 
     ```console
-    $ codex "Get today's date from http://127.0.0.1:8000"
+$ codex "Get today's date from http://127.0.0.1:8000"
     ```
 
 For custom agents, add an HTTP request tool:
-
-=== ":simple-python: &nbsp; Python"
-
-    ```python
-    import subprocess
-
-    @tool
-    def curl_tool(url: str, args: list[str]) -> str:
-        """Execute curl commands to interact with Statespace apps."""
-        result = subprocess.run(
-            ['curl', *args, url],
-            capture_output=True,
-            text=True
-        )
-        return result.stdout
-    ```
 
 === ":simple-typescript: &nbsp; TypeScript"
 
@@ -230,34 +207,12 @@ Add pages and CLI tools for different workflows:
 Create a free [Statespace account](https://statespace.com/) to deploy authenticated private apps:
 
 ```console
-$ toolfront deploy . --private
+$ statespace app create . --visibility private
 ```
 
 Alternatively, share public apps with the community:
 
 ```console
-$ toolfront deploy . --public
+$ statespace app create . --visibility public
 ```
 > **Note** Statespace gives you app URLs you can paste in prompts and instructions.
-
-## Installation
-
-Install `toolfront` with your favorite PyPI package manager:
-
-=== ":fontawesome-brands-python: &nbsp; pip"
-
-    ```console
-    $ pip install toolfront
-    ```
-
-=== ":simple-uv: &nbsp; uv"
-
-    ```console
-    $ uv add toolfront
-    ```
-
-=== ":simple-poetry: &nbsp; poetry"
-
-    ```console
-    $ poetry add toolfront
-    ```

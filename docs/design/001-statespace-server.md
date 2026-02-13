@@ -24,29 +24,25 @@ This separation allows us to open-source the core execution model while keeping 
 
 We have two implementations of tool-serving:
 
-1. **`toolfront serve`** (Python/FastAPI): A simple server that reads markdown files and executes commands defined in YAML/TOML frontmatter. Lives in the `toolfront` repo.
+1. **Legacy server** (removed): A simple server that reads markdown files and executes commands defined in YAML/TOML frontmatter.
 
 2. **`environment-server`** (Rust/Axum): A full-featured server with S3 storage, search/embeddings, telemetry, rate limiting, gateway sync, and PAT authentication. Lives in the `gateway` repo (proprietary).
 
-The Python implementation is what open-source users run. The Rust implementation is what our cloud offering uses. They share the same protocol (frontmatter format, HTTP API) but the implementations are entirely separate.
+The legacy implementation is what early open-source users ran. The Rust implementation is what our cloud offering uses. They share the same protocol (frontmatter format, HTTP API) but the implementations are entirely separate.
 
 ### Problems
 
-1. **Duplicated logic**: Frontmatter parsing, command validation, and tool execution are implemented twice (Python and Rust)
-2. **Feature drift**: The Python version lacks security features present in Rust (SSRF protection, path traversal validation, env isolation)
+1. **Duplicated logic**: Frontmatter parsing, command validation, and tool execution are implemented twice (legacy and Rust)
+2. **Feature drift**: The legacy version lacks security features present in Rust (SSRF protection, path traversal validation, env isolation)
 3. **No shared testing**: Protocol compatibility is not enforced by shared tests
-4. **Python performance**: For larger tool sites, Python's subprocess handling is slower than Rust
-5. **Deployment complexity**: Python requires runtime dependencies; Rust produces a single static binary
-
-### The Statespace Rename
-
-The `toolfront` project is being renamed to `statespace`. This RFD is part of that transition, introducing the Rust core under the new name.
+4. **Legacy performance**: For larger tool sites, the legacy subprocess handling is slower than Rust
+5. **Deployment complexity**: The legacy runtime required dependencies; Rust produces a single static binary
 
 ## Requirements
 
 ### Must Have
 
-1. **Feature parity with `toolfront serve`**:
+1. **Feature parity with the legacy server**:
    - Serve markdown files from a local directory
    - Parse YAML and TOML frontmatter
    - Validate commands against `tools:` specifications
@@ -79,7 +75,7 @@ The `toolfront` project is being renamed to `statespace`. This RFD is part of th
 3. **Request tracing/telemetry**: Proprietary feature (Parquet, OpenTelemetry)
 4. **Authentication**: Proprietary feature (PAT tokens, gateway sync)
 5. **Rate limiting**: Proprietary feature (per-token limits)
-6. **Python compatibility layer**: The OSS binary replaces the Python version
+6. **Legacy compatibility layer**: The OSS binary replaces the legacy server
 
 ## Design
 
@@ -87,7 +83,7 @@ The `toolfront` project is being renamed to `statespace`. This RFD is part of th
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         toolfront repo (OSS)                        │
+│                        statespace repo (OSS)                        │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  ┌─────────────────────────────────────────────────────────────┐   │
@@ -113,8 +109,6 @@ The `toolfront` project is being renamed to `statespace`. This RFD is part of th
 │  │  └────────────────────────────────────────────────────────┘ │   │
 │  │                                                              │   │
 │  └──────────────────────────────────────────────────────────────┘   │
-│                                                                     │
-│  src/toolfront/ (Python - existing, unchanged for now)              │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 
@@ -433,7 +427,7 @@ sequenceDiagram
 
 ### Phase 1: Core Library (This PR)
 
-1. Set up Rust workspace in `toolfront/core/`
+1. Set up Rust workspace in the main repo
 2. Implement core types: `Frontmatter`, `ToolSpec`, `ActionRequest/Response`
 3. Implement frontmatter parsing (port from gateway `tools` crate)
 4. Implement validation logic (port from gateway `tools` crate)
@@ -449,31 +443,31 @@ sequenceDiagram
 3. Implement `S3ContentResolver` in gateway (wraps `statespace-server` traits)
 4. Add gateway-specific middleware
 
-### Phase 3: Deprecate Python Implementation
+### Phase 3: Remove legacy implementation
 
 1. Update documentation to recommend Rust binary
 2. Add migration guide
-3. Eventually remove Python `toolfront serve`
+3. Eventually remove the legacy server
 
 ## Alternatives Considered
 
-### 1. Keep Python, Don't Unify
+### 1. Keep legacy implementation, Don't Unify
 
-Continue maintaining separate Python and Rust implementations.
+Continue maintaining separate legacy and Rust implementations.
 
 **Problems**:
 - Permanent feature drift
 - Duplicate bug fixes
 - No shared security improvements
-- Python performance limits
+- Legacy performance limits
 
-### 2. Rewrite Python to Call Rust via FFI
+### 2. Wrap Rust via FFI
 
-Use PyO3 to expose Rust logic to Python.
+Use a foreign-function interface to expose Rust logic to another runtime.
 
 **Problems**:
 - Adds complexity (FFI boundary)
-- Still need Python runtime
+- Still need a secondary runtime
 - Harder to debug
 - Distribution becomes more complex
 
@@ -508,6 +502,5 @@ Publish `statespace-server` to crates.io.
 
 - [Statespace Protocol Spec](https://statespace.dev/docs/protocol) (to be written)
 - [Gateway environment-server](../../../gateway/binaries/environment-server/)
-- [Current Python implementation](../../src/toolfront/cli/serve.py)
 - [Axum web framework](https://github.com/tokio-rs/axum)
 - [Oxide's Omicron patterns](https://github.com/oxidecomputer/omicron)

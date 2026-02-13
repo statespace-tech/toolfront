@@ -11,29 +11,13 @@ Build custom agents to connect to Statespace apps
 
 Add an HTTP tool to your agent in your framework of choice:
 
-=== ":simple-python: &nbsp; Python"
-
-    ```python
-    import subprocess
-
-    @tool
-    def curl_tool(url: str, args: list[str]) -> str:
-        """Execute curl commands to interact with ToolFront apps."""
-        result = subprocess.run(
-            ['curl', *args, url],
-            capture_output=True,
-            text=True
-        )
-        return result.stdout
-    ```
-
 === ":simple-typescript: &nbsp; TypeScript"
 
     ```typescript
     import { execFileSync } from 'child_process';
 
     /**
-     * Execute curl commands to interact with ToolFront apps.
+     * Execute curl commands to interact with Statespace apps.
      */
     function curlTool(url: string, args: string[]): string {
         const result = execFileSync('curl', [...args, url], {
@@ -48,7 +32,7 @@ Add an HTTP tool to your agent in your framework of choice:
     ```rust
     use std::process::Command;
 
-    /// Execute curl commands to interact with ToolFront apps.
+    /// Execute curl commands to interact with Statespace apps.
     fn curl_tool(url: &str, args: Vec<&str>) -> String {
         let output = Command::new("curl")
             .args(&args)
@@ -69,7 +53,7 @@ Modify your HTTP tool to include the `Authorization` header for personal access 
 
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  https://your-app.toolfront.ai/README.md
+  https://your-app.app.statespace.com/README.md
 ```
 
 ### Environment variables
@@ -79,7 +63,7 @@ Modify the request body for apps using environment variables (e.g., `$API_KEY`, 
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
-  https://your-app.toolfront.ai/README.md \
+  https://your-app.app.statespace.com/README.md \
   -d '{
     "command": ["psql", "-c", "SELECT * FROM users"],
     "env": {"USER": "admin", "DATABASE": "prod"}

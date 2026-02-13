@@ -17,7 +17,6 @@ tools:
   - [cat]
   - [grep, -r, "error", "logs/"]
   - [curl, -X, GET, "https://api.com/v1"]
-  - [python3, scripts/analyze.py]
 ---
 
 # Instructions
@@ -109,7 +108,7 @@ Use custom scripts and compiled binaries as tools.
 project/
 ├── README.md
 └── custom/
-    ├── analyze.py
+    ├── analyze.sh
     └── process.sh
     └── index.js
 
@@ -121,7 +120,7 @@ project/
 ```yaml
 ---
 tools:
-  - [python3, scripts/analyze.py]
+  - [bash, scripts/analyze.sh]
   - [bash, scripts/process.sh, { }, { }]
   - [node, index.js, --port, { }]
 ---

@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for toolfront-docs on 2025-08-14T16:18:02-04:00
+# fly.toml app configuration file generated for statespace-docs on 2025-08-14T16:18:02-04:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'toolfront-docs'
+app = 'statespace-docs'
 primary_region = 'ord'
 
 [http_service]

@@ -4,11 +4,11 @@ icon: lucide/users
 
 # Contributing
 
-Thank you for your interest in contributing to ToolFront!
+Thank you for your interest in contributing to Statespace!
 
 ## Getting Started
 
-1. **Fork the repository** on [GitHub](https://github.com/statespace-tech/toolfront)
+1. **Fork the repository** on [GitHub](https://github.com/statespace-tech/statespace)
 2. **Clone your fork** and set up your development environment
 3. **Create a branch** for your changes (`git checkout -b feature/your-feature-name`)
 
@@ -16,28 +16,26 @@ Thank you for your interest in contributing to ToolFront!
 
 ```bash
 # Clone the repository
-git clone https://github.com/statespace-tech/toolfront.git
-cd toolfront
+git clone https://github.com/statespace-tech/statespace.git
+cd statespace
 
-# Install dependencies (using uv or pip)
-uv sync
-# or
-pip install -e ".[dev]"
+# Build
+cargo build
 
 # Run tests
-pytest
+cargo test
 ```
 
 ## Ways to Contribute
 
 ### Report Issues
 
-Found a bug or have a feature request? Please [open an issue](https://github.com/statespace-tech/toolfront/issues) on GitHub. Include:
+Found a bug or have a feature request? Please [open an issue](https://github.com/statespace-tech/statespace/issues) on GitHub. Include:
 
 - A clear description of the problem or feature
 - Steps to reproduce (for bugs)
 - Expected vs actual behavior
-- Your environment details (Python version, OS, etc.)
+- Your environment details (OS, Rust version, etc.)
 
 ### Submit Pull Requests
 
@@ -49,7 +47,7 @@ Found a bug or have a feature request? Please [open an issue](https://github.com
 
 ### Improve Documentation
 
-Documentation improvements are always welcome! Help us make ToolFront easier to understand by:
+Documentation improvements are always welcome! Help us make Statespace easier to understand by:
 
 - Fixing typos or clarifying confusing sections
 - Adding examples or use cases
@@ -58,7 +56,7 @@ Documentation improvements are always welcome! Help us make ToolFront easier to 
 
 ## Code Standards
 
-- Follow Python style guidelines (PEP 8)
+- Follow Rust style and clippy guidelines
 - Write meaningful commit messages
 - Keep PRs focused and reasonably sized
 - Add docstrings for new functions and classes
@@ -74,7 +72,7 @@ Documentation improvements are always welcome! Help us make ToolFront easier to 
 If you have questions about contributing, feel free to:
 
 - Ask in our [Discord server](https://discord.gg/rRyM7zkZTf)
-- Open a [GitHub Discussion](https://github.com/statespace-tech/toolfront/discussions)
+- Open a [GitHub Discussion](https://github.com/statespace-tech/statespace/discussions)
 - Email `esteban[at]statespace[dot]com`
 
 Statespace :heart: open-source.
