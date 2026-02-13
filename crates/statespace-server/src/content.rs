@@ -17,8 +17,17 @@ pub struct LocalContentResolver {
 }
 
 impl LocalContentResolver {
-    pub fn new(root: PathBuf) -> Self {
-        Self { root }
+    /// # Errors
+    ///
+    /// Returns an error if the root path cannot be canonicalized.
+    pub fn new(root: &Path) -> Result<Self, Error> {
+        let root = root.canonicalize().map_err(|e| {
+            Error::Io(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Failed to canonicalize root path: {e}"),
+            ))
+        })?;
+        Ok(Self { root })
     }
 
     #[must_use]
@@ -124,7 +133,7 @@ mod tests {
     #[tokio::test]
     async fn test_resolve_root_readme() {
         let dir = setup_test_dir();
-        let resolver = LocalContentResolver::new(dir.path().to_path_buf());
+        let resolver = LocalContentResolver::new(dir.path()).unwrap();
 
         let content = resolver.resolve("").await.unwrap();
         assert!(content.contains("# Root README"));
@@ -133,7 +142,7 @@ mod tests {
     #[tokio::test]
     async fn test_resolve_file() {
         let dir = setup_test_dir();
-        let resolver = LocalContentResolver::new(dir.path().to_path_buf());
+        let resolver = LocalContentResolver::new(dir.path()).unwrap();
 
         let content = resolver.resolve("file.md").await.unwrap();
         assert!(content.contains("# File"));
@@ -142,7 +151,7 @@ mod tests {
     #[tokio::test]
     async fn test_resolve_file_without_extension() {
         let dir = setup_test_dir();
-        let resolver = LocalContentResolver::new(dir.path().to_path_buf());
+        let resolver = LocalContentResolver::new(dir.path()).unwrap();
 
         let content = resolver.resolve("file").await.unwrap();
         assert!(content.contains("# File"));
@@ -151,7 +160,7 @@ mod tests {
     #[tokio::test]
     async fn test_resolve_subdir_readme() {
         let dir = setup_test_dir();
-        let resolver = LocalContentResolver::new(dir.path().to_path_buf());
+        let resolver = LocalContentResolver::new(dir.path()).unwrap();
 
         let content = resolver.resolve("subdir").await.unwrap();
         assert!(content.contains("# Subdir README"));
@@ -160,7 +169,7 @@ mod tests {
     #[tokio::test]
     async fn test_resolve_not_found() {
         let dir = setup_test_dir();
-        let resolver = LocalContentResolver::new(dir.path().to_path_buf());
+        let resolver = LocalContentResolver::new(dir.path()).unwrap();
 
         let result = resolver.resolve("nonexistent").await;
         assert!(matches!(result, Err(Error::NotFound(_))));
@@ -169,7 +178,7 @@ mod tests {
     #[tokio::test]
     async fn test_resolve_path_traversal() {
         let dir = setup_test_dir();
-        let resolver = LocalContentResolver::new(dir.path().to_path_buf());
+        let resolver = LocalContentResolver::new(dir.path()).unwrap();
 
         let result = resolver.resolve("../../../etc/passwd").await;
         assert!(matches!(result, Err(Error::PathTraversal { .. })));

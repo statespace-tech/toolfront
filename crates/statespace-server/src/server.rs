@@ -86,32 +86,37 @@ impl std::fmt::Debug for ServerState {
 }
 
 impl ServerState {
-    #[must_use]
-    pub fn from_config(config: &ServerConfig) -> Self {
-        Self {
-            content_resolver: Arc::new(LocalContentResolver::new(config.content_root.clone())),
+    /// # Errors
+    ///
+    /// Returns an error if the content root path cannot be canonicalized.
+    pub fn from_config(config: &ServerConfig) -> crate::error::Result<Self> {
+        Ok(Self {
+            content_resolver: Arc::new(LocalContentResolver::new(&config.content_root)?),
             limits: config.limits.clone(),
             content_root: config.content_root.clone(),
-        }
+        })
     }
 }
 
-pub fn build_router(config: &ServerConfig) -> Router {
-    let state = ServerState::from_config(config);
+/// # Errors
+///
+/// Returns an error if the content root path cannot be canonicalized.
+pub fn build_router(config: &ServerConfig) -> crate::error::Result<Router> {
+    let state = ServerState::from_config(config)?;
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
         .allow_headers(Any);
 
-    Router::new()
+    Ok(Router::new()
         .route("/", get(index_handler).post(action_handler_root))
         .route("/favicon.svg", get(favicon_handler))
         .route("/favicon.ico", get(favicon_handler))
         .route("/{*path}", get(file_handler).post(action_handler))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
-        .with_state(state)
+        .with_state(state))
 }
 
 async fn index_handler(State(state): State<ServerState>) -> Response {

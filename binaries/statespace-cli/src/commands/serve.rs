@@ -21,7 +21,8 @@ pub(crate) async fn run_serve(args: ServeArgs) -> Result<()> {
 
     let addr = config.socket_addr();
     let base_url = config.base_url();
-    let router = build_router(&config);
+    let router =
+        build_router(&config).map_err(|e| Error::cli(format!("Failed to build router: {e}")))?;
 
     let listener = TcpListener::bind(&addr).await?;
     eprintln!("Serving on {base_url}");

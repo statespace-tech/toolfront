@@ -8,7 +8,7 @@
 //!
 //! let config = ServerConfig::new(PathBuf::from("./toolsite"));
 //! initialize_templates(&config.content_root, &config.base_url()).await?;
-//! let router = build_router(&config);
+//! let router = build_router(&config)?;
 //! ```
 
 pub mod content;
