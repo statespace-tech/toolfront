@@ -1,0 +1,13 @@
+#!/bin/sh
+# Pre-commit hook: runs cargo fmt and clippy checks
+# Install: git config core.hooksPath .githooks
+
+set -e
+
+echo "Running cargo fmt..."
+cargo fmt --all -- --check
+
+echo "Running cargo clippy..."
+cargo clippy --all-targets --all-features -- -D warnings
+
+echo "Pre-commit checks passed!"

@@ -146,7 +146,7 @@ The server resolves paths using three strategies for both GET and POST requests.
 Exact path to a file with extension:
 
 ```bash
-curl https://your-app.toolfront.ai/file.md
+curl https://your-app.app.statespace.com/file.md
 ```
 
 **Implicit extension**
@@ -154,7 +154,7 @@ curl https://your-app.toolfront.ai/file.md
 Path without `.md` automatically appends it:
 
 ```bash
-curl https://your-app.toolfront.ai/path/file
+curl https://your-app.app.statespace.com/path/file
 ```
 > Maps to `path/file.md`
 
@@ -163,6 +163,6 @@ curl https://your-app.toolfront.ai/path/file
 Directory path defaults to `index.md` (for human-readable navigation):
 
 ```bash
-curl https://your-app.toolfront.ai/path/
+curl https://your-app.app.statespace.com/path/
 ```
 > Maps to `path/index.md`

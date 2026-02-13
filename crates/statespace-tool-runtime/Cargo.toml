@@ -1,0 +1,49 @@
+[package]
+name = "statespace-tool-runtime"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Core tool execution runtime for Statespace"
+readme = "README.md"
+keywords = ["ai", "tools", "mcp", "agents"]
+categories = ["development-tools"]
+
+[lib]
+name = "statespace_tool_runtime"
+path = "src/lib.rs"
+
+[dependencies]
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+toml.workspace = true
+
+# Async
+tokio.workspace = true
+async-trait.workspace = true
+
+# Logging
+tracing.workspace = true
+
+# Error handling
+thiserror.workspace = true
+
+# HTTP client (for curl tool)
+reqwest.workspace = true
+
+# Utilities
+glob.workspace = true
+regex.workspace = true
+chrono.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true
+
+[features]
+default = []

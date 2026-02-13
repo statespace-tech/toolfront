@@ -1,37 +1,65 @@
-# Contributing to ToolFront
+# Contributing to Statespace
 
-We welcome contributions to ToolFront! Here's how you can help:
+Thanks for your interest in contributing. This repo is 100% open-source Rust. This guide covers how to build, test, and submit changes in a way that keeps the codebase tight and reliable.
 
-## Getting Started
+## Requirements
 
-1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/toolfront.git`
-3. Install dependencies: `uv sync`
-4. Create a new branch: `git checkout -b feature/your-feature-name`
+- Rust **1.85+** (MSRV) with `rustfmt` and `clippy` components
+- Optional: `direnv` (for macOS linker env), `just` (release helper)
 
-## Development Guidelines
+To install MSRV explicitly:
 
-- Follow the existing code style and conventions
-- Add tests for new features or bug fixes
-- Update documentation as needed
-- Ensure all tests pass before submitting
+```bash
+rustup toolchain install 1.85.0
+rustup override set 1.85.0
+```
 
-## Submitting Changes
+## Getting started
 
-1. Push your changes to your fork
-2. Create a Pull Request with a clear description of your changes
-3. Wait for review and address any feedback
+1. Fork and clone:
+   ```bash
+   git clone https://github.com/<your-username>/statespace.git
+   cd statespace
+   ```
+2. Build:
+   ```bash
+   cargo build
+   ```
+   The CLI binary lives in `binaries/statespace-cli`.
 
-## Reporting Issues
+## Development workflow
 
-- Use GitHub Issues to report bugs or request features
-- Provide detailed information about the issue
-- Include steps to reproduce for bug reports
+Run these before opening a PR:
 
-## Code of Conduct
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+```
 
-Please be respectful and constructive in all interactions. We're committed to providing a welcoming and inclusive environment for all contributors.
+Pre-commit hooks (format + clippy):
 
-## Questions?
+```bash
+git config core.hooksPath .githooks
+```
 
-If you have questions about contributing, feel free to open an issue or reach out to the maintainers. 
+## Code standards
+
+- No `unwrap()`, `expect()`, or `panic!()` in library code (tests are fine).
+- Prefer explicit error handling with `Result` and typed enums.
+- Keep public APIs documented and test new behavior.
+- Follow existing module boundaries and naming conventions.
+
+## Changelog
+
+If your change is user-facing, add a short entry under `## Unreleased` in `CHANGELOG.md`.
+
+## Submitting changes
+
+1. Create a branch from `main`.
+2. Keep commits focused and scoped.
+3. Open a PR with a clear description, motivation, and test notes.
+
+## License
+
+Contributions are accepted under the [MIT License](LICENSE).

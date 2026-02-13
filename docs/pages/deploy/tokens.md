@@ -12,93 +12,35 @@ Access tokens authenticate requests to private applications.
 
 ## Quick start
 
-1. Deploy a private app with `$ toolfront app deploy ./project --private`
+1. Deploy a private app with `statespace app create ./project --visibility private`
 
-2. Get an access token with `toolfront token create`
+2. Log in and fetch your API key with `statespace auth login` and `statespace auth token`
 
 3. `curl` your app with the access token
 
 ```bash
 curl -X GET \
   -H "Authorization: Bearer YOUR-TOKEN" \
-  https://127.0.0.1:8000/README.md
+  https://your-app.app.statespace.com/README.md
 ```
 
 ## CLI reference
 
-### `toolfront token create`
+### `statespace auth login`
 
-Generate a new access token for authenticating requests to private apps.
-
-**Usage:**
+Authenticate and store credentials locally.
 
 ```bash
-toolfront token create [OPTIONS]
+statespace auth login
 ```
 
-**Options:**
+### `statespace auth token`
 
-`--name`
-
-: Optional name to identify the token
-
-`--api-key`
-
-: Gateway API key (overrides config)
-
-`--gateway-url`
-
-: Gateway base URL (overrides config)
-
-### `toolfront token list`
-
-View all your access tokens.
-
-**Usage:**
+Print the current API token for authenticated requests.
 
 ```bash
-toolfront token list [OPTIONS]
+statespace auth token
 ```
-
-**Options:**
-
-`--api-key`
-
-: Gateway API key (overrides config)
-
-`--gateway-url`
-
-: Gateway base URL (overrides config)
-
-### `toolfront token revoke`
-
-Revoke an access token to prevent further use.
-
-**Usage:**
-
-```bash
-toolfront token revoke [OPTIONS] TOKEN_ID
-```
-
-**Arguments:**
-
-`TOKEN_ID`
-
-: ID of token to revoke
-
-**Options:**
-
-`--api-key`
-
-: Gateway API key (overrides config)
-
-`--gateway-url`
-
-: Gateway base URL (overrides config)
-
-`--yes, -y`
-
-: Skip confirmation prompt
 
 !!! warning "Security"
     Keep tokens secure and never commit them to version control

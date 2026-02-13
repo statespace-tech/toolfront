@@ -8,8 +8,6 @@ on:
     paths:
       - 'docs/**'
       - 'zensical.toml'
-      - 'pyproject.toml'
-      - 'src/**'
 
 jobs:
   deploy:

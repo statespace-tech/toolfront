@@ -65,7 +65,7 @@ project/
 │   ├── events.parquet
 │   └── logs.txt
 └── scripts/
-    ├── analyze.py
+    ├── analyze.sh
     └── process.sh
 
 2 directories, 6 files
@@ -76,7 +76,7 @@ Tools interact with these files directly:
 ```yaml
 ---
 tools:
-  - [python3, scripts/analyze.py]
+  - [bash, scripts/analyze.sh]
   - [cat, data/logs.txt]
   - [duckdb, data/events.parquet, -c, { }]
 ---

@@ -1,19 +1,19 @@
 <p align="center">
-  <a href="https://github.com/statespace-tech/toolfront">
-    <img src="https://raw.githubusercontent.com/statespace-tech/toolfront/main/docs/assets/images/favicon.svg" width="150" alt="ToolFront">
+  <a href="https://github.com/statespace-tech/statespace">
+    <img src="https://raw.githubusercontent.com/statespace-tech/statespace/main/docs/assets/images/favicon.svg" width="150" alt="Statespace">
   </a>
 </p>
 
 <div align="center">
 
-# ToolFront
+# Statespace
 
 **Turn your data into shareable LLM apps in minutes. All in pure Markdown. Zero boilerplate.**
 
-[![Test Suite](https://github.com/statespace-tech/toolfront/actions/workflows/test.yml/badge.svg)](https://github.com/statespace-tech/toolfront/actions/workflows/test.yml)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-3775A9?style=flat-square)](https://www.python.org/downloads/)
-[![PyPI package](https://img.shields.io/pypi/v/toolfront?color=3775A9&label=pypi%20package&style=flat-square)](https://pypi.org/project/toolfront/)
-[![License](https://img.shields.io/badge/license-MIT-007ec6?style=flat-square)](https://github.com/statespace-tech/toolfront/blob/main/LICENSE)
+[![Test Suite](https://github.com/statespace-tech/statespace/actions/workflows/test.yml/badge.svg)](https://github.com/statespace-tech/statespace/actions/workflows/test.yml)
+[![License](https://img.shields.io/badge/license-MIT-007ec6?style=flat-square)](https://github.com/statespace-tech/statespace/blob/main/LICENSE)
+[![Crate: statespace-tool-runtime](https://img.shields.io/crates/v/statespace-tool-runtime?style=flat-square)](https://crates.io/crates/statespace-tool-runtime)
+[![Crate: statespace-server](https://img.shields.io/crates/v/statespace-server?style=flat-square)](https://crates.io/crates/statespace-server)
 [![Discord](https://img.shields.io/discord/1323415085011701870?label=Discord&logo=discord&logoColor=white&color=5865F2&style=flat-square)](https://discord.gg/rRyM7zkZTf)
 [![X](https://img.shields.io/badge/Statespace-black?style=flat-square&logo=x&logoColor=white)](https://x.com/statespace_tech)
 
@@ -21,13 +21,30 @@
 
 ---
 
-**Documentation: [docs.toolfront.ai](http://docs.toolfront.ai/)**
+**Documentation: [docs.statespace.com](https://docs.statespace.com/)**
 
-**Source code: [https://github.com/statespace-tech/toolfront](https://github.com/statespace-tech/toolfront)**
+**Source code: [https://github.com/statespace-tech/statespace](https://github.com/statespace-tech/statespace)**
 
 ---
 
-_ToolFront is a declarative framework for building modular LLM applications in Markdown._
+_Statespace is a declarative framework for building modular LLM applications in Markdown._
+
+## Open source vs hosted
+
+All code in this repository is open source. The paid Statespace product is a hosted service that runs this same open-source runtime with managed infrastructure, auth, and billing. No closed-source components are required to run the software yourself.
+
+## Installation
+
+Install the CLI with the same script used on the landing page:
+
+```bash
+curl -fsSL https://statespace.com/install.sh | bash
+```
+
+## Published crates
+
+- `statespace-tool-runtime`: https://crates.io/crates/statespace-tool-runtime
+- `statespace-server`: https://crates.io/crates/statespace-server
 
 ## Example
 
@@ -47,11 +64,12 @@ tools:
 
 ### Serve it
 
-Run your app locally:
+Run your app locally (no account required):
 
 ```bash
-toolfront serve .
+statespace serve .
 ```
+
 > **Note**: Runs on `http://127.0.0.1:8000`
 
 ### Ask it
@@ -86,25 +104,6 @@ codex "Get today's date from http://127.0.0.1:8000"
 </details>
 
 For custom agents, add an HTTP request tool:
-
-<details>
-<summary><b>Python</b></summary>
-
-```python
-import subprocess
-
-@tool
-def curl_tool(url: str, args: list[str]) -> str:
-    """Execute curl commands to interact with Statespace apps."""
-    result = subprocess.run(
-        ['curl', *args, url],
-        capture_output=True,
-        text=True
-    )
-    return result.stdout
-```
-
-</details>
 
 <details>
 <summary><b>TypeScript</b></summary>
@@ -240,53 +239,22 @@ tools:
 Create a free [Statespace account](https://statespace.com/) to deploy authenticated private apps:
 
 ```bash
-toolfront deploy . --private
+statespace app create . --visibility private
 ```
 
 Alternatively, share public apps with the community:
 
 ```bash
-toolfront deploy . --public
+statespace app create . --visibility public
 ```
 
 > **Note** Statespace gives you app URLs you can paste in prompts and instructions.
-
-## Installation
-
-Install `toolfront` with your favorite PyPI package manager:
-
-<details open>
-<summary><b>pip</b></summary>
-
-```bash
-pip install toolfront
-```
-
-</details>
-
-<details>
-<summary><b>uv</b></summary>
-
-```bash
-uv add toolfront
-```
-
-</details>
-
-<details>
-<summary><b>poetry</b></summary>
-
-```bash
-poetry add toolfront
-```
-
-</details>
 
 ## Community & Contributing
 
 - **Discord**: Join our [community server](https://discord.gg/rRyM7zkZTf) for real-time help and discussions
 - **X**: Follow us [@statespace_tech](https://x.com/statespace_tech) for updates and news
-- **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/statespace-tech/toolfront/issues)
+- **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/statespace-tech/statespace/issues)
 
 ## License
 
