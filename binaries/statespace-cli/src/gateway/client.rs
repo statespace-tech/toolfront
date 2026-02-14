@@ -1,9 +1,10 @@
 use crate::config::Credentials;
 use crate::error::{GatewayError, Result};
-use crate::gateway::types::{
-    DeployResult, DeviceCodeResponse, DeviceTokenResponse, Environment, EnvironmentFile,
-    Organization, SshConnectionConfig, SshKey, Token, TokenCreateResult, UpsertResult,
-};
+use crate::gateway::auth::{DeviceCodeResponse, DeviceTokenResponse};
+use crate::gateway::environments::{DeployResult, Environment, EnvironmentFile, UpsertResult};
+use crate::gateway::organizations::Organization;
+use crate::gateway::ssh::{SshConnectionConfig, SshKey};
+use crate::gateway::tokens::{Token, TokenCreateResult};
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
 use reqwest::Client;
 use serde::Serialize;
@@ -532,7 +533,7 @@ impl AuthClient {
     pub(crate) async fn exchange_token(
         &self,
         access_token: &str,
-    ) -> Result<crate::gateway::types::ExchangeTokenResponse> {
+    ) -> Result<crate::gateway::auth::ExchangeTokenResponse> {
         let url = format!("{}/api/v1/cli/tokens:exchange", self.base_url);
         let resp = self
             .http
