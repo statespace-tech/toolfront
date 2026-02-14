@@ -1,7 +1,7 @@
 use crate::args::{AppCreateArgs, AppDeleteArgs, AppGetArgs};
 use crate::error::{Error, Result};
 use crate::gateway::GatewayClient;
-use crate::identifiers::{EnvironmentReference, normalize_environment_reference, slugify_name};
+use crate::identifiers::normalize_environment_reference;
 use std::io::{self, Write};
 use std::path::Path;
 
@@ -24,10 +24,6 @@ pub(crate) async fn run_create(args: AppCreateArgs, gateway: GatewayClient) -> R
             .ok_or_else(|| Error::cli("--name is required when no directory path is provided"))?;
         (name, Vec::new())
     };
-
-    if let Some(slug) = slugify_name(&name) {
-        eprintln!("Slug preview: {slug} (final slug may include suffix)");
-    }
 
     if files.is_empty() {
         eprintln!("Creating empty environment '{name}'...");
@@ -82,8 +78,8 @@ pub(crate) async fn run_list(gateway: GatewayClient) -> Result<()> {
         if envs.len() == 1 { "" } else { "s" }
     );
 
-    println!("{:<36}  {:<24}  {:<10}  URL", "ID", "NAME", "STATUS");
-    println!("{}", "─".repeat(100));
+    println!("{:<24}  {:<10}  URL", "NAME", "STATUS");
+    println!("{}", "─".repeat(80));
 
     for env in &envs {
         let status = match env.status.as_str() {
@@ -92,7 +88,7 @@ pub(crate) async fn run_list(gateway: GatewayClient) -> Result<()> {
             _ => format!("✗ {}", env.status),
         };
         let url = env.url.as_deref().unwrap_or("—");
-        println!("{:<36}  {:<24}  {:<10}  {}", env.id, env.name, status, url);
+        println!("{:<24}  {:<10}  {}", env.name, status, url);
     }
 
     Ok(())
@@ -100,10 +96,10 @@ pub(crate) async fn run_list(gateway: GatewayClient) -> Result<()> {
 
 pub(crate) async fn run_get(args: AppGetArgs, gateway: GatewayClient) -> Result<()> {
     let reference = normalize_environment_reference(&args.id).map_err(Error::cli)?;
-    let env = gateway.get_environment(reference.value()).await?;
+    let env = gateway.get_environment(&reference).await?;
 
-    println!("ID:         {}", env.id);
     println!("Name:       {}", env.name);
+    println!("ID:         {}", env.id);
     println!("Status:     {}", env.status);
     println!("Created:    {}", env.created_at);
     if let Some(ref url) = env.url {
@@ -114,7 +110,7 @@ pub(crate) async fn run_get(args: AppGetArgs, gateway: GatewayClient) -> Result<
 }
 
 pub(crate) async fn run_delete(args: AppDeleteArgs, gateway: GatewayClient) -> Result<()> {
-    let id = resolve_environment_id(&args.id, &gateway).await?;
+    let reference = normalize_environment_reference(&args.id).map_err(Error::cli)?;
 
     if !args.yes {
         eprint!("Delete environment '{}'? [y/N] ", args.id);
@@ -129,22 +125,10 @@ pub(crate) async fn run_delete(args: AppDeleteArgs, gateway: GatewayClient) -> R
         }
     }
 
-    gateway.delete_environment(&id).await?;
+    gateway.delete_environment(&reference).await?;
     eprintln!("Deleted '{}'.", args.id);
 
     Ok(())
-}
-
-async fn resolve_environment_id(id_or_name: &str, gateway: &GatewayClient) -> Result<String> {
-    let reference = normalize_environment_reference(id_or_name).map_err(Error::cli)?;
-
-    match reference {
-        EnvironmentReference::Uuid(value) | EnvironmentReference::Slug(value) => Ok(value),
-        EnvironmentReference::Name(value) => {
-            let env = gateway.get_environment(&value).await?;
-            Ok(env.id)
-        }
-    }
 }
 
 fn resolve_name(explicit: Option<&str>, dir: &Path) -> String {

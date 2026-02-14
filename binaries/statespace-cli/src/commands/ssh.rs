@@ -22,7 +22,7 @@ fn ssh_host_from_api_url(api_url: &str) -> String {
 
 pub(crate) async fn run_ssh(args: AppSshArgs, gateway: GatewayClient) -> Result<()> {
     let reference = normalize_environment_reference(&args.app).map_err(Error::cli)?;
-    let env = gateway.get_environment(reference.value()).await?;
+    let env = gateway.get_environment(&reference).await?;
 
     let short_id: String = env.id.chars().take(8).collect();
     let ssh_host = ssh_host_from_api_url(gateway.base_url());
