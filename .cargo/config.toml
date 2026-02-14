@@ -1,0 +1,5 @@
+[target.aarch64-apple-darwin]
+rustflags = ["-L", "native=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"]
+
+[target.x86_64-apple-darwin]
+rustflags = ["-L", "native=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"]
