@@ -12,7 +12,6 @@ cp ../zensical.toml .
 echo "Deploying to Fly.io..."
 flyctl deploy
 
-# Clean up copied files
 echo "Cleaning up..."
 rm -f zensical.toml
 

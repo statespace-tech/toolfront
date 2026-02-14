@@ -1,7 +1,7 @@
 [project]
-site_name = "ToolFront"
-site_description = "Build AI applications in Markdown"
-site_url = "https://docs.toolfront.ai"
+site_name = "Statespace"
+site_description = "Build and share LLM apps in pure Markdown"
+site_url = "https://docs.statespace.com"
 repo_url = "https://github.com/statespace-tech/statespace"
 repo_name = "statespace-tech/statespace"
 extra_css = [
@@ -66,11 +66,6 @@ generator = false
   icon = "fontawesome/brands/github"
   link = "https://github.com/statespace-tech/statespace/"
   name = "Star us on GitHub"
-
-[[project.extra.social]]
-  icon = "fontawesome/brands/python"
-  link = "https://pypi.org/project/toolfront/"
-  name = "Install from PyPI"
 
 [[project.extra.social]]
   icon = "fontawesome/brands/discord"
