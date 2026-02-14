@@ -46,6 +46,12 @@ pub(crate) enum Commands {
         #[command(subcommand)]
         command: SshCommands,
     },
+
+    /// Token management commands
+    Tokens {
+        #[command(subcommand)]
+        command: TokensCommands,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -237,4 +243,93 @@ pub(crate) enum SshCommands {
         #[command(subcommand)]
         command: SshKeyCommands,
     },
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum TokensCommands {
+    /// Create a new personal access token
+    Create(TokenCreateArgs),
+
+    /// List personal access tokens
+    List(TokenListArgs),
+
+    /// Show details for a token
+    Get(TokenGetArgs),
+
+    /// Rotate a token (revoke old, issue new)
+    Rotate(TokenRotateArgs),
+
+    /// Revoke a token
+    Revoke(TokenRevokeArgs),
+}
+
+#[derive(Debug, Parser)]
+pub(crate) struct TokenCreateArgs {
+    /// Token name
+    pub name: String,
+
+    /// Token scope (read or admin)
+    #[arg(long, short, default_value = "read")]
+    pub scope: String,
+
+    /// Restrict token to specific environment IDs
+    #[arg(long = "app-id")]
+    pub app_ids: Vec<String>,
+
+    /// Expiration (ISO 8601 datetime, e.g. 2026-12-31T00:00:00Z)
+    #[arg(long)]
+    pub expires: Option<String>,
+}
+
+#[derive(Debug, Parser)]
+pub(crate) struct TokenListArgs {
+    /// Show all tokens including revoked
+    #[arg(long, short)]
+    pub all: bool,
+
+    /// Maximum number of tokens to return
+    #[arg(long, short, default_value = "100")]
+    pub limit: u32,
+}
+
+#[derive(Debug, Parser)]
+pub(crate) struct TokenGetArgs {
+    /// Token ID
+    pub token_id: String,
+}
+
+#[derive(Debug, Parser)]
+pub(crate) struct TokenRotateArgs {
+    /// Token ID to rotate
+    pub token_id: String,
+
+    /// New name
+    #[arg(long)]
+    pub name: Option<String>,
+
+    /// New scope (read or admin)
+    #[arg(long)]
+    pub scope: Option<String>,
+
+    /// Restrict to specific environment IDs
+    #[arg(long = "app-id")]
+    pub app_ids: Vec<String>,
+
+    /// New expiration (ISO 8601 datetime)
+    #[arg(long)]
+    pub expires: Option<String>,
+}
+
+#[derive(Debug, Parser)]
+pub(crate) struct TokenRevokeArgs {
+    /// Token ID to revoke
+    pub token_id: String,
+
+    /// Revocation reason
+    #[arg(long, short)]
+    pub reason: Option<String>,
+
+    /// Skip confirmation prompt
+    #[arg(long, short)]
+    pub yes: bool,
 }

@@ -207,7 +207,7 @@ impl GatewayClient {
         Ok(false)
     }
 
-    #[allow(dead_code, clippy::items_after_statements)]
+    #[allow(clippy::items_after_statements)]
     pub(crate) async fn create_token(
         &self,
         name: &str,
@@ -244,7 +244,6 @@ impl GatewayClient {
         parse_api_response(resp).await
     }
 
-    #[allow(dead_code)]
     pub(crate) async fn list_tokens(
         &self,
         only_active: bool,
@@ -268,7 +267,6 @@ impl GatewayClient {
         parse_api_list_response(resp).await
     }
 
-    #[allow(dead_code)]
     pub(crate) async fn get_token(&self, token_id: &str) -> Result<Token> {
         let url = format!("{}/api/v1/tokens/{}", self.base_url, token_id);
         let resp = self.with_headers(self.http.get(&url)).send().await?;
@@ -276,7 +274,6 @@ impl GatewayClient {
         parse_api_response(resp).await
     }
 
-    #[allow(dead_code)]
     pub(crate) async fn rotate_token(
         &self,
         token_id: &str,
@@ -313,7 +310,6 @@ impl GatewayClient {
         parse_api_response(resp).await
     }
 
-    #[allow(dead_code)]
     pub(crate) async fn revoke_token(&self, token_id: &str, reason: Option<&str>) -> Result<()> {
         #[derive(Serialize)]
         struct Payload<'a> {

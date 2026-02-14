@@ -6,3 +6,4 @@ pub(crate) mod ssh;
 pub(crate) mod ssh_config;
 pub(crate) mod ssh_key;
 pub(crate) mod sync;
+pub(crate) mod tokens;
